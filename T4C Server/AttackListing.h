@@ -1,0 +1,1 @@
+const unsigned int __ATT_NORMAL				= 1;
