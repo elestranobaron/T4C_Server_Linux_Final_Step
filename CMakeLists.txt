@@ -97,3 +97,4 @@ add_custom_target(run
 message(STATUS "Project directory: ${CMAKE_SOURCE_DIR}")
 message(STATUS "SDL3 include dirs: ${SDL3_INCLUDE_DIRS}")
 message(STATUS "OpenSSL include dir: ${OPENSSL_INCLUDE_DIR}")
+set(CMAKE_BUILD_TYPE Debug)
