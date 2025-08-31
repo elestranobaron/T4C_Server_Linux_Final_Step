@@ -1,130 +1,132 @@
-#include "stdafx.h"
 #include "RegKeyHandler.h"
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <cstring>
 
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
-#define new DEBUG_NEW
+#define new new
 #endif
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-
 RegKeyHandler::RegKeyHandler()
-{	keyhandle = NULL;	
+{ keyhandle = NULL;
 }
-
 RegKeyHandler::~RegKeyHandler(){
-if(keyhandle != NULL) RegCloseKey(keyhandle);
+if(keyhandle != NULL) fclose((FILE*)keyhandle);
 }
-
 ////////////////////////////////////////////////////////////////////////////
-BOOL RegKeyHandler::Create(HKEY main_key, LPCTSTR sub_key){	
-	DWORD exists;
-	DWORD err;
-	err = RegCreateKeyEx(main_key, sub_key, 0, _T(""), REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &keyhandle, &exists);
-	mainkey = main_key;
-	subkey = sub_key;
-	
-	if(err != ERROR_SUCCESS) return FALSE;	
-	return TRUE;
+BOOL RegKeyHandler::Create(HKEY main_key, LPCTSTR sub_key){
+        std::string ini_file = "/home/tll/T4C_Server_Linux_Final_Step/config.ini";
+        FILE* fp = fopen(ini_file.c_str(), "a"); // Create or append
+        if (!fp) return FALSE;
+        keyhandle = fp;
+        mainkey = main_key;
+        subkey = sub_key;
+        return TRUE;
 }
 ///////////////////////////////////////////////////////////////////////////////
-BOOL RegKeyHandler::Open(HKEY main_key, LPCTSTR sub_key){		
-	DWORD err;
-	
-	if( keyhandle != NULL ){
-		RegCloseKey( keyhandle );
-	}
-
-	err = RegOpenKeyEx(main_key, sub_key, 0, KEY_ALL_ACCESS, &keyhandle);
-
-#ifdef _DEBUG
-    if( err != ERROR_SUCCESS ){
-        TRACE( "\r\nError 0x%x(%u) opening registry key %s.", err,err,sub_key );
-    }
-#endif
-
-	mainkey = main_key;
-	subkey = sub_key;
-
-	if(err != ERROR_SUCCESS) return FALSE;	
-	return TRUE;
+BOOL RegKeyHandler::Open(HKEY main_key, LPCTSTR sub_key){
+        DWORD err;
+        if( keyhandle != NULL ){
+                fclose((FILE*)keyhandle);
+        }
+        std::string ini_file = "/home/tll/T4C_Server_Linux_Final_Step/config.ini";
+        FILE* fp = fopen(ini_file.c_str(), "r+");
+        if (!fp) {
+                #ifdef _DEBUG
+                std::cerr << "\r\nError 0x" << std::hex << err << "(" << std::dec << err << ") opening INI file " << sub_key << "." << std::endl;
+                #endif
+                return FALSE;
+        }
+        keyhandle = fp;
+        mainkey = main_key;
+        subkey = sub_key;
+        return TRUE;
 }
-
-
 ////////////////////////////////////////////////////////////////////////////
 void RegKeyHandler::WriteProfileString(LPCTSTR item, LPCTSTR value){
-	RegSetValueEx(keyhandle, item, 0, REG_SZ, (CONST BYTE *)value, lstrlen(value));
-}; 
-		
+        std::ofstream out("/home/tll/T4C_Server_Linux_Final_Step/config.ini", std::ios::app);
+        out << item << "=" << value << "\n";
+        out.close();
+};
 ////////////////////////////////////////////////////////////////////////////
 void RegKeyHandler::WriteProfileInt(LPCTSTR item, DWORD value){
-	RegSetValueEx(keyhandle, item, 0, REG_DWORD, (unsigned char *)&value, sizeof(DWORD));
+        std::ofstream out("/home/tll/T4C_Server_Linux_Final_Step/config.ini", std::ios::app);
+        out << item << "=" << value << "\n";
+        out.close();
 }
-
 ////////////////////////////////////////////////////////////////////////////
-LPCTSTR RegKeyHandler::GetProfileString(LPCTSTR item, LPCTSTR default_arg){	
-	DWORD count = 1020;
-	DWORD type;
-	
-    returnstr[ 0 ] = 0;
-	if(RegQueryValueEx(keyhandle, item, 0, &type, (LPBYTE)returnstr, &count) != ERROR_SUCCESS){		
-		lstrcpy(returnstr, default_arg);
-		return returnstr;
-	}	
-	return returnstr;
+LPCTSTR RegKeyHandler::GetProfileString(LPCTSTR item, LPCTSTR default_arg){
+        std::ifstream in("/home/tll/T4C_Server_Linux_Final_Step/config.ini");
+        std::string line, key, val;
+        returnstr[ 0 ] = 0;
+        while (std::getline(in, line)) {
+                size_t pos = line.find('=');
+                if (pos != std::string::npos) {
+                        key = line.substr(0, pos);
+                        val = line.substr(pos + 1);
+                        if (key == item) {
+                                strcpy(returnstr, val.c_str());
+                                in.close();
+                                return returnstr;
+                        }
+                }
+        }
+        in.close();
+        strcpy(returnstr, default_arg);
+        return returnstr;
 }
 ////////////////////////////////////////////////////////////////////////////////
 DWORD RegKeyHandler::GetProfileInt(LPCTSTR item, DWORD default_arg)
-{	
-	DWORD count;
-	DWORD type;
-	unsigned char *value;
-
-	if(RegQueryValueEx(keyhandle, item, NULL, &type, NULL, &count) != ERROR_SUCCESS) return default_arg;
-	
-	value = new unsigned char[count];
-	
-	if(RegQueryValueEx(keyhandle, item, NULL, &type, value, &count) != ERROR_SUCCESS){
-		delete [] value;
-		return default_arg;
-	}
-
-	if(type != REG_DWORD){
-		delete [] value;
-		return default_arg;
-	}
-
-	DWORD return_var = 0;
-	
-	for(signed int i = count - 1; i >= 0; i--){
-		return_var *= 256;
-		return_var += value[i];
-	}
-	delete[] value;
-	return return_var;
+{
+        std::ifstream in("/home/tll/T4C_Server_Linux_Final_Step/config.ini");
+        std::string line, key, val;
+        while (std::getline(in, line)) {
+                size_t pos = line.find('=');
+                if (pos != std::string::npos) {
+                        key = line.substr(0, pos);
+                        val = line.substr(pos + 1);
+                        if (key == item) {
+                                in.close();
+                                try { return std::stoul(val); } catch (...) { return default_arg; }
+                        }
+                }
+        }
+        in.close();
+        return default_arg;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void RegKeyHandler::Close( void ){
-	if(keyhandle != NULL) RegCloseKey(keyhandle);
-	keyhandle = NULL;
+        if(keyhandle != NULL) fclose((FILE*)keyhandle);
+        keyhandle = NULL;
 }
-
 //////////////////////////////////////////////////////////////////////////////////////////
 BOOL RegKeyHandler::DeleteValue( LPCTSTR lpszItem ){
-	if( RegDeleteValue( keyhandle, lpszItem ) == ERROR_SUCCESS ){
-		return TRUE;
-	}
-
-	return FALSE;
+        std::ifstream in("/home/tll/T4C_Server_Linux_Final_Step/config.ini");
+        std::ofstream out("/home/tll/T4C_Server_Linux_Final_Step/config_temp.ini");
+        std::string line, key;
+        bool found = false;
+        while (std::getline(in, line)) {
+                size_t pos = line.find('=');
+                if (pos != std::string::npos) {
+                        key = line.substr(0, pos);
+                        if (key != lpszItem) out << line << "\n";
+                        else found = true;
+                } else {
+                        out << line << "\n";
+                }
+        }
+        in.close();
+        out.close();
+        rename("/home/tll/T4C_Server_Linux_Final_Step/config_temp.ini", "/home/tll/T4C_Server_Linux_Final_Step/config.ini");
+        return found;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 BOOL RegKeyHandler::DeleteKey( LPCTSTR subkey ){
-	if( RegDeleteKey( keyhandle, subkey ) == ERROR_SUCCESS ){
-		return TRUE;
-	}
-
-	return FALSE;
+        if (remove("/home/tll/T4C_Server_Linux_Final_Step/config.ini") == 0) return TRUE;
+        return FALSE;
 }
