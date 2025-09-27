@@ -6,25 +6,35 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
-find_package(MySQL REQUIRED)
+# Find MySQL/MariaDB using the connector
+find_library(MYSQL_LIBRARIES NAMES mysqlcppconn mariadbclient
+             HINTS /usr/lib/x86_64-linux-gnu)
+find_path(MYSQL_INCLUDE_DIR NAMES mysql_connection.h
+          HINTS /usr/include/cppconn /usr/include/mysql)
+if(NOT MYSQL_LIBRARIES OR NOT MYSQL_INCLUDE_DIR)
+    message(FATAL_ERROR "MySQL/MariaDB development libraries not found. Please ensure libmysqlcppconn-dev is installed: sudo apt install libmysqlcppconn-dev")
+endif()
 include_directories(${MYSQL_INCLUDE_DIR})
-target_link_libraries(T4CServer PRIVATE ${MYSQL_LIBRARIES})
-# Find dependencies
+
+# Find SDL3
 find_package(SDL3 REQUIRED CONFIG)
 if(NOT SDL3_FOUND)
     message(FATAL_ERROR "SDL3 not found. Install libsdl3-dev: sudo apt install libsdl3-dev")
 endif()
 
+# Find OpenSSL
 find_package(OpenSSL REQUIRED)
 if(NOT OPENSSL_FOUND)
     message(FATAL_ERROR "OpenSSL not found. Install libssl-dev: sudo apt install libssl-dev")
 endif()
 
+# Find ODBC
 find_package(ODBC REQUIRED)
 if(NOT ODBC_FOUND)
     message(FATAL_ERROR "ODBC not found. Install unixodbc-dev: sudo apt install unixodbc-dev")
 endif()
 
+# Find Threads
 find_package(Threads REQUIRED)
 
 # Include directories
@@ -32,28 +42,28 @@ include_directories(
     ${SDL3_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
     ${ODBC_INCLUDE_DIRS}
-    ${CMAKE_SOURCE_DIR}/T4C Server
-    ${CMAKE_SOURCE_DIR}/T4C Server/Core
-    ${CMAKE_SOURCE_DIR}/T4C Server/crypt
-    ${CMAKE_SOURCE_DIR}/T4C Server/NPC_Editor
-    ${CMAKE_SOURCE_DIR}/T4C Server/Skills
-    ${CMAKE_SOURCE_DIR}/T4C Server/SpellEffects
-    ${CMAKE_SOURCE_DIR}/T4C Server/TinyXML
-    ${CMAKE_SOURCE_DIR}/T4C Server/UDP
-    ${CMAKE_SOURCE_DIR}/T4C Server/World Objects
+    "${CMAKE_SOURCE_DIR}/T4C Server"
+    "${CMAKE_SOURCE_DIR}/T4C Server/Core"
+    "${CMAKE_SOURCE_DIR}/T4C Server/crypt"
+    "${CMAKE_SOURCE_DIR}/T4C Server/NPC_Editor"
+    "${CMAKE_SOURCE_DIR}/T4C Server/Skills"
+    "${CMAKE_SOURCE_DIR}/T4C Server/SpellEffects"
+    "${CMAKE_SOURCE_DIR}/T4C Server/TinyXML"
+    "${CMAKE_SOURCE_DIR}/T4C Server/UDP"
+    "${CMAKE_SOURCE_DIR}/T4C Server/World Objects"
     ${CMAKE_SOURCE_DIR}/Crypto
     ${CMAKE_SOURCE_DIR}/GameOps
     ${CMAKE_SOURCE_DIR}/NPCs
-    ${CMAKE_SOURCE_DIR}/NPC AddOn
-    ${CMAKE_SOURCE_DIR}/NPC Arakas
-    ${CMAKE_SOURCE_DIR}/NPC RavensDust
-    ${CMAKE_SOURCE_DIR}/NPC Remort
-    ${CMAKE_SOURCE_DIR}/NPC Stoneheim
-    ${CMAKE_SOURCE_DIR}/NPC WindHowl
+    "${CMAKE_SOURCE_DIR}/NPC AddOn"
+    "${CMAKE_SOURCE_DIR}/NPC Arakas"
+    "${CMAKE_SOURCE_DIR}/NPC RavensDust"
+    "${CMAKE_SOURCE_DIR}/NPC Remort"
+    "${CMAKE_SOURCE_DIR}/NPC Stoneheim"
+    "${CMAKE_SOURCE_DIR}/NPC WindHowl"
 )
 
 # Source files
-file(GLOB_RECURSIVE SOURCES
+file(GLOB_RECURSE SOURCES
     "${CMAKE_SOURCE_DIR}/T4C Server/*.cpp"
     "${CMAKE_SOURCE_DIR}/Crypto/*.cpp"
     "${CMAKE_SOURCE_DIR}/GameOps/*.cpp"
@@ -65,7 +75,6 @@ file(GLOB_RECURSIVE SOURCES
     "${CMAKE_SOURCE_DIR}/NPC Stoneheim/*.cpp"
     "${CMAKE_SOURCE_DIR}/NPC WindHowl/*.cpp"
 )
-
 # Exclude build and temp directories
 list(FILTER SOURCES EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/build/.*")
 list(FILTER SOURCES EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/keeprolling/.*")
@@ -75,6 +84,7 @@ add_executable(T4CServer ${SOURCES})
 
 # Link libraries
 target_link_libraries(T4CServer PRIVATE
+    ${MYSQL_LIBRARIES}
     SDL3::SDL3
     OpenSSL::SSL
     OpenSSL::Crypto

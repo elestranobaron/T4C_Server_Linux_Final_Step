@@ -1,0 +1,35 @@
+# Dossiers de build générés par CMake
+build/
+cmake-build-debug/
+
+# Fichiers et dossiers de l'IDE JetBrains (déjà présent)
+.idea/
+
+# Fichiers objets et exécutables générés par la compilation
+*.o
+*.so
+T4CServer  # Ton exécutable final, s'il est généré ici
+
+# Fichiers temporaires et logs
+*.log
+*.bak
+*.tmp
+*.swp  # Fichiers de swap de Vim
+
+# Fichiers générés par l'OS ou éditeurs
+.DS_Store
+Thumbs.db
+
+# Dépendances ou fichiers téléchargés (si applicables)
+vendor/
+node_modules/  # Si tu ajoutes des dépendances JS/Node plus tard
+
+# Fichiers de configuration locaux (optionnel, si tu en crées)
+*.local
+*.config
+
+# Ignorer les fichiers binaires ou artefacts spécifiques
+*.dll
+*.exe
+*.a
+*.lib
