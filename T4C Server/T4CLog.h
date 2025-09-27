@@ -6,6 +6,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "OldLogger.h"
+#include "Portability.h"
 
 #define LOG_DEATH       0
 #define LOG_GAMEOP      1
@@ -35,7 +36,7 @@ public:
 
     static BOOL IsInit( void );
 	static void SaveToLog( DWORD dwType, WORD wLogLevels, const char *szText, ...);
-	 static void SaveDeathLog(CString &strVictime,CString &strAssassin, int dwType);
+	 static void SaveDeathLog(String &strVictime,String &strAssassin, int dwType);
 	static const char* GetLogTableName( DWORD dwType );
 private:
     CT4CLog( void );

@@ -8,7 +8,9 @@
 #include "Lock.h"
 #include <map>
 
+#ifdef _WIN32
 #pragma warning( disable: 4786 )
+#endif
 
 #ifdef _DEBUG
 #define DEADLOCK_TIME 120000

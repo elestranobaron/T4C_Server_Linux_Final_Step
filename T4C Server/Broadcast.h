@@ -9,6 +9,7 @@
 #include "SharedStructures.h"
 #include "EventListing.h"
 #include "SendPacketVisitor.h"
+#include "Portability.h"
 
 class __declspec(dllexport) Broadcast  
 {
@@ -56,7 +57,7 @@ public:
                     SendPacketVisitor *packetVisitor = NULL );
 
     static void BCServerMessage( WorldPos where, unsigned char range,
-                    CString serverMsg,
+                    String serverMsg,
                     SendPacketVisitor *packetVisitor = NULL,
 					DWORD color = 0x000A64E0/*RGB( 0, 100, 255 )*/);
 	static void BCWeatherMsg( WorldPos where, unsigned char range, 

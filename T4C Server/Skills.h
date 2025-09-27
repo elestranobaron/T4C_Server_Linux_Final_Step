@@ -8,6 +8,8 @@
 #include "VDList.h"
 #include "SkillListing.h"
 #include "IntlText.h"
+#include "Portability.h"
+#include <vector>
 
 #define NB_CLASS 4
 
@@ -124,9 +126,9 @@ public:
 	//static int GetSkillIDByName(LPCTSTR lpszName);
 
 	// returns TRUE if nID is a skill ID
-	static BOOL IsSkill(int nID, LPINT lpnHook);
+	static BOOL IsSkill(int nID, int* lpnHook);
 
-	static BOOL IsSkillLearnable(int nID, Unit *uForWho,CString &reqText);
+	static BOOL IsSkillLearnable(int nID, Unit *uForWho,String &reqText);
 
 	static LPSKILL GetSkill(int nID);
     static LPSKILL GetSkillByName( std::string skillName, WORD wLang );
@@ -136,7 +138,7 @@ public:
 private:
 	static int nSkillID;
 
-	static CPtrArray c_aSkills;
+	static std::vector<LPSKILL> c_aSkills;
 };
 
 #endif // !defined(AFX_SKILLS_H__D02F3B81_5542_11D1_BD7A_00E029058623__INCLUDED_)

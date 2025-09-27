@@ -1,4 +1,14 @@
+#ifdef _WIN32
 #include <afx.h>
+#else
+#include <cstdlib> // for std::abs
+// Define Windows types for Linux
+typedef unsigned short WORD;
+typedef unsigned char BYTE;
+typedef unsigned int DWORD;
+typedef void* LPVOID;
+#define __declspec(x)
+#endif
 
 #ifndef __SHAREDSTRUCTURES_H
 #define __SHAREDSTRUCTURES_H
@@ -27,9 +37,9 @@ struct WorldPos
 	bool operator== (const WorldPos &otherPos) const {
 		return (X == otherPos.X && Y == otherPos.Y && world == otherPos.world);
 	}
-	bool AreInRange(const WorldPos &otherPos, int range) const {
-		return ( world == otherPos.world && ::abs(X - otherPos.X) <= range && ::abs(Y - otherPos.Y) <= range );
-	}
+bool AreInRange(const WorldPos &otherPos, int range) const {
+	return ( world == otherPos.world && std::abs(X - otherPos.X) <= range && std::abs(Y - otherPos.Y) <= range );
+}
 };
 //////////////////////////////////////////////////////////////////////////////////////////
 struct MonsterEncounter

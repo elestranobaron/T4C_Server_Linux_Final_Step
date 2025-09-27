@@ -5,7 +5,21 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+// Define Windows types for Linux if needed
+typedef unsigned short WORD;
+typedef unsigned char BYTE;
+typedef unsigned int UINT;
+typedef long LONG;
+typedef unsigned long ULONG;
+typedef BYTE* LPBYTE;
+typedef short SHORT;
+typedef int BOOL;
+#define FALSE 0
+#define TRUE 1
+#endif
 #include <vector>
 #include <string>
 
@@ -25,7 +39,11 @@ typedef short RQ_SIZE;
 typedef WORD KEY;
 typedef WORD CHECKSUM;
 
+#ifdef _WIN32
 class __declspec(dllexport) TFCPacket 
+#else
+class TFCPacket 
+#endif
 {
 public:
 	TFCPacket();
@@ -42,7 +60,7 @@ public:
 	void Get(unsigned char *);
 	void Get(unsigned long *);
     void Get( string &str );
-	// Mestoph : VÈrification de la taille des strings avant de lire le contenu du data
+	// Mestoph : VÃˆrification de la taille des strings avant de lire le contenu du data
 	bool CheckLen(WORD usLen);
 
 	void EncryptPacket( void );

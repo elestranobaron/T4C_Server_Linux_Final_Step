@@ -26,8 +26,8 @@ public:
 
     int attacked(LPATTACK_STRUCTURE strike, Unit *Mechant){ return Unit::attacked( strike, Mechant ); };
 
-    CString GetName( WORD wLang );
-    void    SetName( CString csName );
+    String GetName( WORD wLang );
+    void    SetName( String csName );
     bool    IsNameOverriden();
 
     void VaporizeUnit( void );

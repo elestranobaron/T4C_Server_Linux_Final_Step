@@ -1,4 +1,6 @@
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 #if !defined(AFX_UNIT_H__7F4A9E93_0C24_11D1_BCD5_00E029058623__INCLUDED_)
 #define AFX_UNIT_H__7F4A9E93_0C24_11D1_BCD5_00E029058623__INCLUDED_
@@ -26,6 +28,7 @@
 #include "SendPacketVisitor.h"
 #include <list>
 #include <map>
+#include <string>
 
 #define UNIT_FUNC_PROTOTYPE	Unit *self, Unit *medium, Unit *target, LPVOID valueIN, LPVOID valueOUT
 #define UNIT_FUNC_PARAM		self, medium, target, valueIN, valueOUT
@@ -205,12 +208,12 @@ public:
 											BOOL boFindNextValidID,
                                             BOOL boForceRegistration = FALSE
 										  );
-	static void Unit::UnRegisterUnits( void );
+	static void UnRegisterUnits( void );
     static void UnregisterUnit( WORD wBaseReferenceID );
 	static Unit *GetByID(DWORD id);
 	static void SendGlobalUnitMessage( UINT MessageID, Unit *self, Unit *medium, Unit *target, LPVOID valueIN = NULL, LPVOID valueOUT = NULL );
 
-	static WORD GetIDFromName( CString csName, BYTE bUnitType = 0, BOOL boInsensitiveSearch = FALSE );
+	static WORD GetIDFromName( std::string csName, BYTE bUnitType = 0, BOOL boInsensitiveSearch = FALSE );
 	static BOOL GetNameFromID( WORD wID, LPTSTR lpszNameHolder, BYTE bUnitType = 0 );
 
 	inline void *GetPlayer();
@@ -219,7 +222,7 @@ public:
 
 	virtual BOOL Create(UINT UnitType, UINT BaseReferenceID);
 
-	inline char GetType();				// Returns the type (U_PC, U_NPC or U_OBJECT) of the current unit.	
+	inline char GetType() { return UnitType; }				// Returns the type (U_PC, U_NPC or U_OBJECT) of the current unit.	
 	
 	virtual WorldPos GetWL();			// Gets the position of the current unit
 	virtual void SetWL(WorldPos pos);	// Sets the position of the unit.
@@ -232,7 +235,7 @@ public:
 	virtual UINT GetAppearance();
 	virtual void SetAppearance(UINT new_appearance);
 	
-	inline UINT GetID();					// Gives the global ID of the unit
+	inline UINT GetID() { return GlobalID; }					// Gives the global ID of the unit
 	inline void SetID(UINT ID);			// Sets (of necessary) the global ID of the unit
 
 	// Fighting functions
@@ -242,13 +245,13 @@ public:
 	virtual int attack_hit(LPATTACK_STRUCTURE strike, Unit *Target);
 	virtual void Death( LPATTACK_STRUCTURE lpBlow, Unit *WhoHit );
 
-	virtual CString GetName( WORD wLang );
-	virtual void SetName(CString newname);
+	virtual String GetName( WORD wLang );
+	virtual void SetName(std::string newname);
 
-	virtual void SetXP(__int64 xp);
-	virtual __int64 GetXP();
-    virtual __int64 NextLevelXP( void ){ return 0;};
-    virtual __int64 XPtoLevel( void ){ return 0; };
+	virtual void SetXP(long long xp);
+	virtual long long GetXP();
+    virtual long long NextLevelXP( void ){ return 0;};
+    virtual long long XPtoLevel( void ){ return 0; };
 
 
 	virtual TemplateList <Unit> *GetBackpack();
@@ -339,7 +342,7 @@ public:
 
 	virtual BYTE GetClass();
 	
-	virtual LPWORD GetClassPoints();
+	virtual WORD* GetClassPoints();
 
 	virtual void SendPlayerMessage(TFCPacket &sending);
 
@@ -483,29 +486,29 @@ public:
     virtual void SetPrivateTalk( BOOL boPrivate );
     virtual BOOL IsPrivateTalk( void );
 
-    virtual void SendPrivateMessage( CString &csMessage, Unit *lpuUnit, DWORD dwColor = LIGHT_YELLOW );
+    virtual void SendPrivateMessage( const String &csMessage, Unit *lpuUnit, DWORD dwColor = LIGHT_YELLOW );
 
     virtual void PacketUnitInformation( TFCPacket &sending );
 
-    void SendSystemMessage( CString csText, DWORD dwColor = 0x0A64E0/*RGB( 0, 100, 255 )*/ ){
-        const INT RQ_ServerMessage = 63; // steph ajout de INT
+    void SendSystemMessage( String csText, DWORD dwColor = 0x0A64E0/*RGB( 0, 100, 255 )*/ ){
+        const int RQ_ServerMessage = 63; // steph ajout de INT
         TFCPacket sending;
 		sending << (RQ_SIZE)RQ_ServerMessage;
 		sending << (short)30;
 		sending << (short)3;        
-		sending << (CString &)csText;
+		sending << (String &)csText;
 		sending << (long) dwColor;
 		SendPlayerMessage( sending );
     }
 
-	void SendInfoMessage( CString csText, DWORD color = 0x0A64E0/*0xFF6400*/, DWORD type = 0 ){
+	void SendInfoMessage( std::string csText, DWORD color = 0x0A64E0/*0xFF6400*/, DWORD type = 0 ){
 		// 0xFF6400 => RGB(0,100,255) => default sysmsg color (blue)
-        const INT RQ_InfoMessage = 102; // steph ajout de INT
+        const int RQ_InfoMessage = 102; // steph ajout de INT
         TFCPacket sending;
 		sending << (RQ_SIZE)RQ_InfoMessage;
 		sending << (long)type;
 		sending << (long)color;
-		sending << (CString &)csText;
+		sending << (String &)csText;
 		SendPlayerMessage( sending );
     }
 
@@ -618,7 +621,7 @@ public:
 	void  SetUserSpeed( short sVal ) { userSpeed = sVal; }
 	short GetUserSpeed( void ) { return userSpeed; }
 
-	BOOL bRainState;//BLBLBL 08/12/2010 ajout des variables pour gestion météo
+	BOOL bRainState;//BLBLBL 08/12/2010 ajout des variables pour gestion mÃ©tÃ©o
 	BOOL bSnowState;
 	BOOL bFogState;
 
@@ -641,7 +644,7 @@ private:
 
 	// This structure saves the names of all units
 	struct UNIT_TYPE{
-		CString csName;
+		std::string csName;
 		BYTE bUnitType;
 		WORD wBaseReferenceID;
 	};
@@ -703,19 +706,19 @@ private:
 	    DWORD effectTimer;
         DWORD totalDuration;
         DWORD bindedSpellId;
-	    CString effectData;
+	    std::string effectData;
         DWORD bindedFlagId;
     };
     struct LOAD_BOOST_DATA{
         DWORD dwBoostID;
         WORD  wStat;
-        CString boostFormula;
+        std::string boostFormula;
     };
     std::list< LOAD_EFFECT_DATA > deferredEffectLoad;
     std::list< LOAD_BOOST_DATA > deferredBoostLoad;
 
     // Prohibit assignements for units.
-    INT PROHIBIT_ASSIGNEMENT( Unit ); // steph ajout de INT
+    int PROHIBIT_ASSIGNEMENT( Unit ); // steph ajout de INT
 	
     BYTE bStatus;                   // General status of unit.
 	BYTE doing;						// Sets what the creature is doing now
@@ -726,7 +729,7 @@ private:
 
 	Unit *Bond;
 
-//	CString  Name;					// String defining the name of the unit
+//	std::string  Name;					// String defining the name of the unit
 	WorldPos WL;					// World position of the unit
 	WorldPos wlOriginalPos;			// Original world position of unit.
 
@@ -778,4 +781,3 @@ void USER_SKILL::SetSkillID( SkillID nID ){
 
 
 #endif // !defined(AFX_UNIT_H__7F4A9E93_0C24_11D1_BCD5_00E029058623__INCLUDED_)
-

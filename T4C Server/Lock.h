@@ -7,6 +7,11 @@
 
 #include "stackhlp.h"
 #include <string>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <pthread.h>
+#endif
 
 class CLock;
 class CDebugLockManager{
@@ -28,10 +33,18 @@ class CLock
 public:
     CLock(){ 
         lockEntry = CDebugLockManager::EmptyEntry;
+#ifdef _WIN32
         InitializeCriticalSection( &csThreadLock ); 
+#else
+        pthread_mutex_init(&mutex, NULL);
+#endif
     };
     virtual ~CLock(){
+#ifdef _WIN32
         DeleteCriticalSection( &csThreadLock );
+#else
+        pthread_mutex_destroy(&mutex);
+#endif
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +59,11 @@ public:
         // Register that we are waiting for the lock to be released.
         CDebugLockManager::GetInstance()->Locking( callerAddr, this, newLockEntry );
 
+#ifdef _WIN32
         EnterCriticalSection( &csThreadLock );
+#else
+        pthread_mutex_lock(&mutex);
+#endif
 
         // Register that we are inside the lock.
         CDebugLockManager::GetInstance()->GotLock( newLockEntry, lockEntry );
@@ -56,7 +73,11 @@ public:
         // Log that this lock was released.
         CDebugLockManager::GetInstance()->Unlocking( lockEntry );
 
+#ifdef _WIN32
         LeaveCriticalSection( &csThreadLock );
+#else
+        pthread_mutex_unlock(&mutex);
+#endif
     }
     
 // Picklock only works on WinNT 4.0 or more.
@@ -74,6 +95,19 @@ public:
         }
         return false;
     }
+#else
+    // On Linux, implement TryLock using pthread_mutex_trylock
+    virtual int PickLock( ){
+        if( pthread_mutex_trylock(&mutex) == 0 ){
+            DWORD callerAddr;
+            GET_CALLER_ADDR( callerAddr );
+
+            // Log picklog
+            CDebugLockManager::GetInstance()->Picklock( callerAddr, this, lockEntry );
+            return true;
+        }
+        return false;
+    }
 #endif
 
 private:
@@ -81,7 +115,11 @@ private:
     DWORD lockEntry;
 
     // The underlying critical section.
+#ifdef _WIN32
     CRITICAL_SECTION csThreadLock;
+#else
+    pthread_mutex_t mutex;
+#endif
 
 };
 
@@ -109,7 +147,11 @@ inline void MultiLock( CLock *cLockL, CLock *cLockR ){
     cLockL->Lock();
     while( !cLockR->PickLock() ){
         cLockL->Unlock();
+#ifdef _WIN32
         Sleep( 0 );
+#else
+        sched_yield();
+#endif
         cLockL->Lock();
     }
 }

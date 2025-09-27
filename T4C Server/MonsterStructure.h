@@ -6,7 +6,9 @@
 #include "random.h"
 #include <vector>
 
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 #define _NORMAL		0
 #define _UNDEAD		1

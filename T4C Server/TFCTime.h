@@ -33,7 +33,11 @@ typedef struct _TFCTIME {
 } TFCTIME, *LPTFCTIME;
 
 
-class __declspec( dllexport ) TFCTime  
+#ifdef _WIN32
+class __declspec(dllexport) TFCTime
+#else
+class TFCTime
+#endif
 {
 public:
 	static void Create(TFCTIME &tCurrTime, TFCTIME &tMaxTime);

@@ -3,6 +3,7 @@
 
 #include "Lock.h"
 #include "Colors.h"
+#include "Portability.h"
 
 //class Trade2;
 class Character;
@@ -118,26 +119,26 @@ public:
 	ErrorCodes::SetCharacterStatus	SetCharacterStatus(TradeMgr2::Status::CharacterStatus newStatus); // Set the character status on the trade.
 	ErrorCodes::IsTradeValid		IsTradeValid(); // Returns a value stating if trade is invalid, is inviting or is trading.
 	CLock*							GetCLock(); // Returns the static CLock object used to lock Trade operations!
-	BOOL							GetItemName(DWORD pItemID, CString &pItemName, WORD pLanguageID); // Searchs for the item and if found, sets pItemName to its name and return TRUE. Else, returns FALSE.
-	BOOL							GetItemNameFromOther(DWORD pItemID, CString &pItemName, WORD pLanguageID); // Searchs for the item on the other's container and if found, sets pItemName to its name and return TRUE. Else, returns FALSE.
+	BOOL							GetItemName(DWORD pItemID, String &pItemName, WORD pLanguageID); // Searchs for the item and if found, sets pItemName to its name and return TRUE. Else, returns FALSE.
+	BOOL							GetItemNameFromOther(DWORD pItemID, String &pItemName, WORD pLanguageID); // Searchs for the item on the other's container and if found, sets pItemName to its name and return TRUE. Else, returns FALSE.
 	ItemContainer*					GetItemContainer(); // Return the internal item container. BE CAREFULL and never forget to Lock/Unlock the TradeMgr.
 	unsigned int					GetFreeWeight(); // Return the amount of space available on the other character's backpack
-	void							TradeSendInfoMessage(const CString &pMessage); // Send a message to the player properly identified as a Trade System Message
+	void							TradeSendInfoMessage(const String &pMessage); // Send a message to the player properly identified as a Trade System Message
 	void							TradeSendInfoMessage(DWORD pID); // Send a message to the player properly identified as a Trade System Message
 	//BLBLBL
 	//void							SetOwner(Character &newOwner);//assign the owner character
-	//BLBLBL : passé variable en public :
+	//BLBLBL : passÃ© variable en public :
 	Character							&m_ThisCharacter; // The character who owns this instance of the TradeMgr
 private:
 
 //	inline Character*				GetOtherCharacter(); // Return the other character involved on the trade
 //	Objects*						TakeFirstItemFromContainer(); // Take the top object from the container and returns it; NULL if none.
 	inline void						CheckInitialization(); // Verify if the TradeMgr have been initialized
-	void							PutItemsFromTradeToBackpack(CString *pItemNamesLog = NULL); // Move all items from the trade container to the backpack. If pItemNamesLog is not NULL, it's value will be set to a comma separated list with name and qty of moved items.
+	void							PutItemsFromTradeToBackpack(String *pItemNamesLog = NULL); // Move all items from the trade container to the backpack. If pItemNamesLog is not NULL, it's value will be set to a comma separated list with name and qty of moved items.
 	ErrorCodes::SetTradeStatus		SetTradeStatus(TradeMgr2::Status::TradeStatus newStatus); // Sets the status of the trade
 	void							UpdateContainersSize(); // Updates the size of the containers.
 	void							ResetTradeData(); // Reset all trade data
-	void							LogTradeFinish(const CString &pMyItems, const CString &pOtherItems); // Saves the log of the finished trade, stating which items where given by each characters
+	void							LogTradeFinish(const String &pMyItems, const String &pOtherItems); // Saves the log of the finished trade, stating which items where given by each characters
 	void							EventInviteSent(TradeMgr2 &pInvited); // You sent an invite to the other player
 	void							EventInviteReceived(TradeMgr2 &pInvitor); // Received an invite from someone
 	void							EventTradeStarted(TradeMgr2 &otherParty); // The trade started!
@@ -145,8 +146,8 @@ private:
 	void							EventTradeFinished(); // The trade got finished
 	void							EventTradeStatusChanged(TradeMgr2::AffectedCharacter pWhoChanged, TradeMgr2::Status::CharacterStatus pNewStatus); // The status of the other character changed
 	void							EventTradeContentChanged(); // The items being traded changed
-	void							EventItemAdded(TradeMgr2::AffectedCharacter pWhoAdded, CString pItemDescription); // Notify character an item got added to the trade
-	void							EventItemRemoved(TradeMgr2::AffectedCharacter pWhoAdded, CString pItemDescription); // Notify character an item got removed from the trade
+	void							EventItemAdded(TradeMgr2::AffectedCharacter pWhoAdded, String pItemDescription); // Notify character an item got added to the trade
+	void							EventItemRemoved(TradeMgr2::AffectedCharacter pWhoAdded, String pItemDescription); // Notify character an item got removed from the trade
 
 	void							PacketSendInviteReceived(TradeMgr2 &pInvitor); // Send a packet to tell the client that pInvitor is asking him for a trade
 	void 							PacketSendTradeStarted(TradeMgr2 &pInvitor); // Send a packet to tell the client that a trade between him and pInvitor has just started!

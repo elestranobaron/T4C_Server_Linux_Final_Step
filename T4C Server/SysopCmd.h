@@ -6,6 +6,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "Players.h"
+#include "Portability.h"
 
 class __declspec(dllexport) SysopCmd  
 {
@@ -13,9 +14,9 @@ public:
 	SysopCmd();
 	~SysopCmd();
 
-	static BOOL VerifySysopCommand( Players *self, CString csCommand );
-	static BOOL GetParameters( LPCTSTR lpszCommandTemplate, CString csCommandLine, CString *lpcsFoundParameters );    
-   static BOOL GetParametersForNPC( LPCTSTR lpszCommandTemplate, CString csCommandLine, CString *lpcsFoundParameters );    
+	static BOOL VerifySysopCommand( Players *self, String csCommand );
+	static BOOL GetParameters( LPCTSTR lpszCommandTemplate, String csCommandLine, String *lpcsFoundParameters );    
+   static BOOL GetParametersForNPC( LPCTSTR lpszCommandTemplate, String csCommandLine, String *lpcsFoundParameters );    
 
     static void Create();
 
@@ -24,7 +25,7 @@ private:
 
 	static CLock csSysLock;
 
-	static Players *FindCharacter( CString csName );
+	static Players *FindCharacter( String csName );
 	
 
 };

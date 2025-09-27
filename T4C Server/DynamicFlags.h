@@ -9,7 +9,9 @@
 #include <map>
 #include <vector>
 
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 class __declspec(dllexport) DynamicFlags  
 {

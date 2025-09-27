@@ -9,7 +9,9 @@
 #include <vector>
 #include "Lock.h"
 
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 class Character;
 class __declspec( dllexport ) Group : public CLock

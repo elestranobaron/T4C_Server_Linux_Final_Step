@@ -36,7 +36,7 @@ void DemoPortal5::OnTalk( UNIT_FUNC_PROTOTYPE )
 InitTalk
 
 Begin
-""
+"" ;
 IF(CheckFlag(__GUARDIANS_KILLED) >= 1)
 	IF (IsInRange(4))
 		TELEPORT( 2600, 3000, 0)

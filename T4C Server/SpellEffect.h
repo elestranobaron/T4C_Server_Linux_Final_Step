@@ -38,6 +38,7 @@
 #include "Unit.h"
 #include "Skills.h"
 #include "IntlText.h"
+#include "Portability.h"
 #include <memory>
 
 #define SPELL_EFFECT_PROTOTYPE  Unit *self, Unit *medium, Unit *target, WorldPos wlPos, double range
@@ -124,7 +125,7 @@ private:
 class __declspec( dllexport ) SpellEffect  
 {
 public:
-    virtual BOOL InputParameter( CString csParam, WORD wParamID ) = 0;
+    virtual BOOL InputParameter( String csParam, WORD wParamID ) = 0;
 	virtual void CallEffect( SPELL_EFFECT_PROTOTYPE ) = 0;
 
     static void CreateEffectStatus( Unit *target, DWORD effectId, DWORD time, DWORD totalDuration, _SPELL_STRUCT *lpSpell );

@@ -1,6 +1,8 @@
 #ifndef __COLORS_H
 #define __COLORS_H
 
+#include "Portability.h"
+
 #define WHITE			RGB( 255, 255, 255 )
 #define ORANGE			0x80FF //RGB( 255, 128, 0 )
 #define RED				RGB( 255, 0, 0 )
@@ -14,4 +16,3 @@
 
 
 #endif
-

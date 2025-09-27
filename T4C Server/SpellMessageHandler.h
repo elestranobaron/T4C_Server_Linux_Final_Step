@@ -2,6 +2,7 @@
 #define AFX_SPELLMESSAGEHANDLER_H__184E5E03_90FC_11D1_AD0B_00E029058623__INCLUDED_
 
 #include "SpellEffect.h"
+#include "Portability.h"
 #include <string>
 
 #if _MSC_VER >= 1000
@@ -33,7 +34,7 @@ public:
 	static LPSPELL_STRUCT GetSpell( WORD wSpellID );
     static LPSPELL_STRUCT GetSpellByName( std::string spellName, WORD wLang );
 
-	static BOOL IsSpellLearnable( WORD wSpellID, Unit *lpuLearner, CString &reqText );
+	static BOOL IsSpellLearnable( WORD wSpellID, Unit *lpuLearner, String &reqText );
 
 
 

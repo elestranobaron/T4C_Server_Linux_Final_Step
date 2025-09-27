@@ -5,12 +5,14 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#include "Portability.h"
 
-// shainon pour éviter les warnings
+
+// shainon pour Ã©viter les warnings
 #ifndef MAXINT
 	#define MAXINT 0xFFFFFFFF 
 #endif
-typedef unsigned __int64 uhyper;
+typedef uhyper uhyper;
 //typedef __int64          hyper;
 
 class dice{

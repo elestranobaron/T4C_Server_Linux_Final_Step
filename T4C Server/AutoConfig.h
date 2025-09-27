@@ -5,7 +5,9 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 #include <string>
 using namespace std;

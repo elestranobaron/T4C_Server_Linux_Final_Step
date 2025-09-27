@@ -2,7 +2,9 @@
 #include "Lock.h"
 #include "RegKeyHandler.h"
 
+#ifdef _WIN32
 #pragma warning(disable:4786 )
+#endif
 
 namespace{
     enum LockState{

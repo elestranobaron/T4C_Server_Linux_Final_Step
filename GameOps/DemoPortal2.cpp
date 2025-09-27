@@ -37,7 +37,7 @@ void DemoPortal2::OnTalk( UNIT_FUNC_PROTOTYPE )
 InitTalk
 
 Begin
-""
+"" ;
 IF(CheckFlag(__NEWBIE_QUEST) == 0)
 	IF (IsInRange(4))
 		TELEPORT( 2939, 1069, 0)

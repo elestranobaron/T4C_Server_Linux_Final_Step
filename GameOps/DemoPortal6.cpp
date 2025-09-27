@@ -35,7 +35,7 @@ void DemoPortal6::OnTalk( UNIT_FUNC_PROTOTYPE )
 InitTalk
 
 Begin
-""
+"" ;
 IF(CheckFlag(__NEWBIE_QUEST) == 2)
 	IF (IsInRange(4))
 		SUMMON("NPCFORESTGUARDIAN", 2784, 176)

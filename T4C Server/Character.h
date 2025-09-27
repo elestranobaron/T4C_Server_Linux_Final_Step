@@ -38,6 +38,7 @@
 #include "SendPacketVisitor.h"
 #include "ItemContainer.h"
 #include "Trade.h"
+#include "Portability.h"
 
 //#include "Guilds.h"
 
@@ -85,11 +86,11 @@ public:
 	static void DestroyODBC( void );
     
     void	  SetPlayer( Players *Player);
-    char      load_character(CString name, CString account, LPBYTE lpbAnswers );
-	char      DeleteCharacter(CString name, CString account, BOOL Report = TRUE);
+    char      load_character(String name, String account, LPBYTE lpbAnswers );
+	char      DeleteCharacter(String name, String account, BOOL Report = TRUE);
 	char	  PutPlayerInGame( );
 
-	static bool IsNameValid( CString &name );
+	static bool IsNameValid( String &name );
 	
 	//	WorldPos  MoveUnit(DIR::MOVE where);
 	WorldPos  teleport_character(WorldPos where);	
@@ -156,8 +157,8 @@ public:
 	
 //	UINT GetAppearance();
 
-	void SetXP(__int64 XP);
-	__int64 GetXP();
+	void SetXP(long long XP);
+	long long GetXP();
 
 	TemplateList <Unit> *GetBackpack();
 	void SetBackpack(TemplateList <Unit> *list);
@@ -190,21 +191,21 @@ public:
 	EXHAUST GetExhaust();
 	void SetExhaust(EXHAUST newExhaust);
 
-	void	SetName(CString name);
-	CString GetName( WORD wLang );
-	CString GetName();
-    void    SetPseudoName( CString csName );
-    CString GetTrueName( void );
+	void	SetName(String name);
+	String GetName( WORD wLang );
+	String GetName();
+    void    SetPseudoName( String csName );
+    String GetTrueName( void );
 
 	BOOL SaveCharacter( BOOL boCallback = TRUE );
-	int LoadCharacter(CString csName);
+	int LoadCharacter(String csName);
 
 	Unit **GetEquipment( void );		
 
 	void TrainUnit();
 
 	Players *GetPlayer();
-	inline unsigned __int64 GetGodFlags();
+	inline unsigned long long GetGodFlags();
 
 
 	BOOL UseSkillPnts( WORD bQuantity );
@@ -231,14 +232,14 @@ public:
 
 	void Regenerate( void );
 
-    LPUSER_SKILL LearnSkill( DWORD dwSkill, WORD wInitialStrength, bool boEcho, CString &errMsg );
+    LPUSER_SKILL LearnSkill( DWORD dwSkill, WORD wInitialStrength, bool boEcho, String &errMsg );
 
 	LPUSER_SKILL GetSkill(DWORD dwSkill);
 
 	TemplateList<USER_SKILL> *GetSkillLists( void );
 	TemplateList<USER_SKILL> *GetSpells( void );
 
-	static __int64 sm_n64XPchart[MAX_LEVEL];
+	static long long sm_n64XPchart[MAX_LEVEL];
 
 	WORD GetSkillPoints();
 	WORD GetStatPoints();
@@ -258,7 +259,7 @@ public:
 
 	inline void WaitForSaving( void );
 
-    BOOL CanEquip( Unit *lpuUnit, _item *lpProvidedItem = NULL, BOOL boEcho = TRUE, CString *reqText = NULL );
+    BOOL CanEquip( Unit *lpuUnit, _item *lpProvidedItem = NULL, BOOL boEcho = TRUE, String *reqText = NULL );
 
     inline WORD GetLang( void ) const;
 
@@ -266,17 +267,17 @@ public:
     int  GetMaxWeight( void );
 	int  GetFreeWeight( void );
 
-    void SendPrivateMessage( CString &csMessage, Unit *lpuUnit, DWORD dwColor );
+    void SendPrivateMessage( String &csMessage, Unit *lpuUnit, DWORD dwColor );
 
-    __int64 NextLevelXP( void );
-    __int64 PreviousLevelXP( void );
-    __int64 XPtoLevel( void );
+    long long NextLevelXP( void );
+    long long PreviousLevelXP( void );
+    long long XPtoLevel( void );
 
     void PacketPuppetInfo( TFCPacket &sending );
 
     void Disturbed( WORD pTriggers = 0 ); //Called when the unit gets disturbed. Parameter are which triggers will be triggered by the call
 
-    bool PreTranslateInGameMessage( CString csText );
+    bool PreTranslateInGameMessage( String csText );
 
     static cODBCMage *GetODBC();
 
@@ -290,31 +291,31 @@ public:
 
     void VaporizeUnit( void );
 
-    CString GetTitle( bool getAccountName );
-    void    SetTitle( CString csNewTitle ){ csListingTitle = csNewTitle; csListingTitle.Remove('\''); };
+    String GetTitle( bool getAccountName );
+    void    SetTitle( String csNewTitle ){ csListingTitle = csNewTitle; csListingTitle.Remove('\''); };
 	
 	
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// steph ajout
 	//////////////////////////////////////////////////////////////////////////////////////////
-	CString GetGuild(bool getAccountName);
-	void    SetGuild(CString csNewGuild) { csGuildName = csNewGuild; csGuildName.Remove('\''); };
+	String GetGuild(bool getAccountName);
+	void    SetGuild(String csNewGuild) { csGuildName = csNewGuild; csGuildName.Remove('\''); };
 
 
 
 
 	//BLBLBL GetGuildName/SetGuildName functions
-	CString GetGuildName( void );
-	void    SetGuildName( CString csNewGuildName );
+	String GetGuildName( void );
+	void    SetGuildName( String csNewGuildName );
 
 	// asteryth guild
 	void	SetGuildChestAccess(int newGuildChestAccess);
 	int		GetGuildChestAccess();
 
 
-    CString GetListingMiscDesc( void )             { return csListingMisc; };
-    void    SetListingMiscDesc( CString csNewMisc ){ csListingMisc = csNewMisc; csListingMisc.Remove('\''); };
+    String GetListingMiscDesc( void )             { return csListingMisc; };
+    void    SetListingMiscDesc( String csNewMisc ){ csListingMisc = csNewMisc; csListingMisc.Remove('\''); };
     
 	// Guild stuff
 	int		GetGuildPoints() const { return GuildPoints; };
@@ -398,9 +399,9 @@ END : Remove BL Anti SpeedHack */
     //BEGIN : Black Lemming -> GM COMMAND : SENDBACK $ (to put player where he was before last teleport command)
 	WorldPos	prevTeleportPos;
 	//END : Black Lemming -> GM COMMAND : SENDBACK $ (to put player where he was before last teleport command)
-	BOOL boLoaded;//BLBLBL passé en variable publique
+	BOOL boLoaded;//BLBLBL passÃ© en variable publique
 
-	//BLBLBL : Ajout d'une variable pour mémoriser le fait qu'un personnage est en cours de sauvegarde
+	//BLBLBL : Ajout d'une variable pour mÃ©moriser le fait qu'un personnage est en cours de sauvegarde
 	BOOL boSavingOnProgress;
 	//END : BLBLBL
 private:
@@ -415,7 +416,7 @@ private:
     void RangeAttack( Unit *target );
     static void AutoConfigUpdate( void );
 
-    BOOL CreateCharacter(CString csName, LPBYTE lpbAnswers );
+    BOOL CreateCharacter(String csName, LPBYTE lpbAnswers );
 
     //inline Unit *FindSmallestGoldStack( void );
     void SynchronizeGold( void );
@@ -458,17 +459,17 @@ private:
 
     //BOOL boLoaded; //BLBL passage en public
     
-    unsigned __int64 xp;
+    unsigned long long xp;
     
-    CString account;
+    String account;
     
-    CString PlayerName;
-    CString csPseudoName;
+    String PlayerName;
+    String csPseudoName;
     
     // Title and extra information for user listing.
-    CString csListingTitle;
-    CString csListingMisc;
-	CString csGuildName;//BLBLBL csGuildName
+    String csListingTitle;
+    String csListingMisc;
+	String csGuildName;//BLBLBL csGuildName
 	int GuildChestAccess;
     
     // Guild ref, rank, points

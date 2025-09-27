@@ -35,8 +35,8 @@ void GMassistant::OnTalk( UNIT_FUNC_PROTOTYPE )
 
 UseC
 static int iMonsterAmount[4];
-static CString csMonsterID[4];
-static CString csLastUserID;  
+static String csMonsterID[4];
+static String csLastUserID;
 												  
 InitTalk
 
@@ -68,12 +68,11 @@ ELSE
 ENDIF
 
 ParamCmd(INTL( 7305, "SHOUT $"))
-""
-;if ((strstr( PARAM(0), INTL( 7306, "!")) == 0) && (strstr( PARAM(0), INTL( 3771, "?")) == 0))
+;if ((PARAM(0).find(INTL( 7306, "!")) == String::npos) && (PARAM(0).find(INTL( 3771, "?")) == String::npos))
 {
-	CHATTER_SHOUT(FORMAT(INTL( 7307, "%s."), PARAM(0)));
+	CHATTER_SHOUT(FORMAT(INTL( 7307, "%s."), PARAM(0).c_str()));
 }else{
-	CHATTER_SHOUT( PARAM(0) )
+	CHATTER_SHOUT( PARAM(0).c_str() )
 };
 
 /*
@@ -171,7 +170,7 @@ INTL( 7328, "Accessing... ");
 	for( nCount = 0; nCount <= 3; nCount++){
 		if(iMonsterAmount[nCount] > 0){
 			Conversation
-			FORMAT(INTL( 7329, "Monster parameter %u is set to summon %u %s(s). "), nCount + 1, iMonsterAmount[nCount], csMonsterID[nCount]);
+			FORMAT(INTL( 7329, "Monster parameter %u is set to summon %u %s(s). "), nCount + 1, iMonsterAmount[nCount], csMonsterID[nCount].c_str());
 		};
 	};																					  
 }
@@ -182,7 +181,6 @@ INTL( 7479, "Processing... This command is temporarily disabled.")
 */
 
 ParamCmd(INTL( 7687, "MASS SUMMON2 $ $ $ $")) 
-"";
 int x1 = NUM_PARAM(0);
 int y1 =	NUM_PARAM(1);
 int x3 = NUM_PARAM(2);
@@ -210,11 +208,13 @@ if(x1 < x2 && x1 < x3 && x1 < x4){
 		for( nCount = 0; nCount < 3; nCount++){
 			if(iMonsterAmount[nCount] > 0){
 				for(NumberOfMonstersSummoned = 0; NumberOfMonstersSummoned <= iMonsterAmount[nCount];){
-					int x = (rnd.roll(dice(1, x3 - x1 + 1)) + x1 - 1);
-					int y = (rnd.roll(dice(1, y4 - y2 + 1)) + y2 - 1);
+					dice dx(1, x3 - x1 + 1);
+					int x = (rnd.roll(dx) + x1 - 1);
+					dice dy(1, y4 - y2 + 1);
+					int y = (rnd.roll(dy) + y2 - 1);
 					if((y >= m1 * x + b1) && (y >= m2 * x + b2) && (y <= m3 * x + b3) && (y <= m4 * x + b4)){
 						NumberOfMonstersSummoned++;
-						SUMMON( csMonsterID[nCount], x, y)
+						SUMMON( csMonsterID[nCount].c_str(), x, y)
 					};
 				};
 			};
@@ -231,7 +231,6 @@ if(x1 < x2 && x1 < x3 && x1 < x4){
 };
 
 ParamCmd(INTL( 7480, "MASS SUMMON $ $ $ $")) 	
-""
 ;if(NUM_PARAM(0) <= NUM_PARAM(2)){
 	;if(NUM_PARAM(1) <= NUM_PARAM(3)){
 		;if(NUM_PARAM(0) >= 0 && NUM_PARAM(0) <= 3071 && NUM_PARAM(1) >= 0 && NUM_PARAM(1) <= 3071 && NUM_PARAM(2) >= 0 && NUM_PARAM(2) <= 3071 && NUM_PARAM(3) >= 0 && NUM_PARAM(3) <= 3071){
@@ -245,7 +244,9 @@ ParamCmd(INTL( 7480, "MASS SUMMON $ $ $ $"))
 						{
 							int iNumberOfMonstersSummoned;
 							for(iNumberOfMonstersSummoned = 1; iNumberOfMonstersSummoned <= iMonsterAmount[nCount]; iNumberOfMonstersSummoned++){
-								SUMMON( csMonsterID[nCount], rnd.roll(dice(1, NUM_PARAM(2) - NUM_PARAM(0) + 1, NUM_PARAM(0) - 1)), rnd.roll(dice(1, NUM_PARAM(3) - NUM_PARAM(1) + 1, NUM_PARAM(1) - 1)))
+								dice dx(1, NUM_PARAM(2) - NUM_PARAM(0) + 1, NUM_PARAM(0) - 1);
+								dice dy(1, NUM_PARAM(3) - NUM_PARAM(1) + 1, NUM_PARAM(1) - 1);
+								SUMMON( csMonsterID[nCount].c_str(), rnd.roll(dx), rnd.roll(dy))
 							};
 						};
 					};
@@ -272,8 +273,7 @@ ParamCmd(INTL( 7480, "MASS SUMMON $ $ $ $"))
 } 
 			  
 ParamCmd(INTL( 7330, "SET PORTAL $ REWARD XP TO $"))
-"";
-CString csPortalID = PARAM(0);
+String csPortalID = PARAM(0);
 int nXP = NUM_PARAM( 1 );
 csPortalID.MakeUpper();
 BYTE bPortalIndex = csPortalID[0] - 'A';			  
@@ -288,12 +288,11 @@ if(bPortalIndex >= 0 && bPortalIndex <= 25){
 	};
 }else{
 	Conversation
-	FORMAT(INTL( 7333, "Error executing command. %s is not a valid dynamic portal ID. Input command:"), PARAM(0) );
+	FORMAT(INTL( 7333, "Error executing command. %s is not a valid dynamic portal ID. Input command:"), PARAM(0).c_str() );
 };
 
 ParamCmd(INTL( 7334, "SET PORTAL $ REWARD GP TO $"))
-"";
-CString csPortalID = PARAM(0);
+String csPortalID = PARAM(0);
 int nGP = NUM_PARAM( 1 );
 csPortalID.MakeUpper();
 BYTE bPortalIndex = csPortalID[0] - 'A';
@@ -308,12 +307,11 @@ if(bPortalIndex >= 0 && bPortalIndex <= 25){
 	};
 }else{
 	Conversation
-	FORMAT(INTL( 7333, "Error executing command. %s is not a valid dynamic portal ID. Input command:"), PARAM(0) );
+	FORMAT(INTL( 7333, "Error executing command. %s is not a valid dynamic portal ID. Input command:"), PARAM(0).c_str() );
 };
  
 ParamCmd(INTL( 7336, "SET PORTAL $ TO $ $ $"))
-"";
-CString csPortalID = PARAM(0);
+String csPortalID = PARAM(0);
 csPortalID.MakeUpper();
 BYTE bPortalIndex = csPortalID[0] - 'A';
 if(bPortalIndex >= 0 && bPortalIndex <= 25){
@@ -330,11 +328,10 @@ if(bPortalIndex >= 0 && bPortalIndex <= 25){
 	};
 }else{
 	Conversation
-	FORMAT(INTL( 7333, "Error executing command. %s is not a valid dynamic portal ID. Input command:"), PARAM(0) );
+	FORMAT(INTL( 7333, "Error executing command. %s is not a valid dynamic portal ID. Input command:"), PARAM(0).c_str() );
 };
 
 ParamCmd(INTL( 7905, "CONVERT $ $ $ TO SANCTUARY"))
-""
 IF ((NUM_PARAM(0) > 3071) || (NUM_PARAM(0) < 0))
 	Conversation
 	INTL( 11717, "Error executing command. The X coordinate entered is incorrect.") 
@@ -364,7 +361,6 @@ INTL( 11721, "Processing... The monster summoning of the Colosseum is now disabl
 GiveGlobalFlag(__COLOSSEUM_MONSTER_DISABLE, 1) 
 
 CmdAND3(INTL( 11722, "STATUS"),INTL( 10737, "COLOSSEUM"),INTL( 1856, "MONSTER")) 
-""
 IF (CheckGlobalFlag(__COLOSSEUM_MONSTER_DISABLE) == 0) 
 	Conversation
 	INTL( 11723, "Processing... It is currently possible for players to summon monsters inside "
@@ -383,7 +379,6 @@ INTL( 11721, "Processing... The Battle Mode is now disabled.")
 GiveGlobalFlag(__BATTLE_MODE_ENABLE, 0) 
 
 CmdAND3(INTL( 20005, "STATUS"),INTL( 20001, "BATTLE"),INTL( 20002, "MODE")) 
-""
 IF (CheckGlobalFlag(__BATTLE_MODE_ENABLE) == 1) 
 	Conversation
 	INTL( 20006, "Processing... the Battle Mode is now enabled. Players can fight,"
@@ -409,7 +404,6 @@ INTL( 7689, "Processing... Command successfully executed. Target completely disp
 CastSpellTarget(__SPELL_MOB_COMPLETE_DISPEL_SPELL)
 
 Command2(INTL( 7344, "DELETE"), INTL( 7345, "SELF-DESTRUCT"))
-""
 CastSpellSelf(__SPELL_NPC_CANTRIP_FREEZE)
 SELF_DESTRUCT;
 

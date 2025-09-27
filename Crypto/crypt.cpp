@@ -1,5 +1,20 @@
 #include "Crypt.h"
 
+#include <cstdlib> // for srand, rand, malloc, free
+#include <cstring> // for memcpy
+
+#ifdef _WIN32
+#include <windows.h> // for GetTickCount
+#else
+#include <sys/time.h> // for gettimeofday
+
+unsigned long GetTickCount() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+}
+#endif
+
 #define HEADER_SIZE						2
 #define MAX_PASS						1
 #define PASS_BREAK						50
@@ -84,7 +99,7 @@ int TFCCrypt::EncryptS(unsigned char *&pBuffer, int &pBufferSize, unsigned int d
 	return 0;
 }
 /******************************************************************************/
-unsigned long TFCCrypt::DecryptS2(unsigned char *&pBuffer, int &pBufferSize,unsigned int dwKey)
+unsigned long TFCCrypt::DecryptS2(unsigned char *&pBuffer, int &pBufferSize, unsigned int dwKey)
 /******************************************************************************/
 {
 	if (pBufferSize < 1) 

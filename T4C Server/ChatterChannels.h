@@ -3,7 +3,9 @@
 
 #if _MSC_VER >= 1000
 #pragma once
+#ifdef _WIN32
 #pragma warning( disable:4786 )
+#endif
 #endif // _MSC_VER >= 1000
 
 #include <map>

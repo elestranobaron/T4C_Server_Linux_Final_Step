@@ -2,6 +2,7 @@
 #define DIALSOFT_ITEMCONTAINER_H_2005_06_29_MNABVNDKJH987SH7_9H5VA1L4M2V0__INCLUDED_
 
 #include "Objects.h"
+#include "Portability.h"
 
 class __declspec(dllexport) ItemContainer
 {
@@ -13,7 +14,7 @@ public:
 	Objects*				TakeTop					(void); // Takes the top object from the container. NULL if empty
 	BOOL					Destroy					(DWORD dwObjectID, DWORD qty); //Destroy an object (junk it). Returns: TRUE if the object got destroyed or FALSE if nothing destroyed
 	BOOL					GetItemWeight			(DWORD dwObjectID, int &iObjectWeight); // Searches for the item and if found, sets uiItemWeight to the found's item weight and returns TRUE. Else, returns false.
-	BOOL					GetItemName				(DWORD dwObjectID, CString &pObjectName, WORD pLanguageID); // Searches for the item and if found, sets pObjectName to the found's item name and returns TRUE. Else, returns false;
+	BOOL					GetItemName				(DWORD dwObjectID, String &pObjectName, WORD pLanguageID); // Searches for the item and if found, sets pObjectName to the found's item name and returns TRUE. Else, returns false;
 	unsigned int			GetWeight				(void); //Get how many weight the chest is carrying (encumbrance)
 	unsigned int			GetFreeWeight			(void); //Get how many weight the chest can still carry (emcumbrance left)
 	unsigned int			GetMaxWeight			(void); //Returns the maximum allowed weight for this container

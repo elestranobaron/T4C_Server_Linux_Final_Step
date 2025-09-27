@@ -9,7 +9,9 @@
 #include <deque>
 #include "Lock.h"
 
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 class DebugLogger : public CLock
 {

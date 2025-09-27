@@ -8,6 +8,7 @@
 #include "Unit.h"
 #include "GenRef.h"
 #include "Random.h"
+#include "Portability.h"
 
 #define NB_SUPPORTED_LNG    7
 
@@ -26,12 +27,12 @@ public:
         IntlText::Destroy();
     }
     
-    static void LoadLngDB( CString csFile );
+    static void LoadLngDB( String csFile );
     static BOOL IsLngOK( void );            // Determines if at least one language is loaded!    
     
     // Returns a string given its ID and a language.
-    static CString &GetString( DWORD dwID, WORD wLanguage, CString &csSource );
-    static CString &AppendString( DWORD dwID, WORD wLanguage, CString &csSource );
+    static String &GetString( DWORD dwID, WORD wLanguage, String &csSource );
+    static String &AppendString( DWORD dwID, WORD wLanguage, String &csSource );
 
     // Returns a string given its ID and a language.
     static const char *GetString( DWORD dwID, WORD wLanguage, const char *szDefault = "" );
@@ -52,12 +53,12 @@ private:
     static void Destroy( void );            // Frees the language resources.
 
     struct STR_ID{
-        CString csString;
+        String csString;
         DWORD dwStringID;
     };
     
     struct LNG_STR{
-        CString *lpcsStrings;
+        String *lpcsStrings;
         DWORD dwMaxStrings;
     };
 
@@ -78,7 +79,7 @@ private:
 
     static BOOL ParseLngFile( EncParse &fFile, WORD wLangID, TemplateList <STR_ID> &tlStrings );
     static BOOL FetchNumber( EncParse &fFile, DWORD &dwNum, WORD &wLine );
-    static BOOL FetchString( EncParse &fFile, CString &csString, WORD &wLine );
+    static BOOL FetchString( EncParse &fFile, String &csString, WORD &wLine );
     static BOOL ToChar( EncParse &fFile, char ch, const char *invalid, WORD &wLine );
 
     static WORD wDefaultLng;

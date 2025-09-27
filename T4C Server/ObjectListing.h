@@ -1,7 +1,11 @@
 #ifndef __STATICOBJECTREFERENCES_H
 #define __STATICOBJECTREFERENCES_H
 
-#define VARTYPE	extern "C" const int __declspec(dllimport) 
+#ifdef _WIN32
+#define VARTYPE extern "C" const int __declspec(dllimport)
+#else
+#define VARTYPE extern "C" const int
+#endif
 
 VARTYPE __OBJ_DECOR001;
 VARTYPE __OBJ_DECOR002;

@@ -21,7 +21,9 @@
 #define MAX_EFFECT_STACK_LEVELS 1
 #define MAX_MESSAGE_STACK_LEVELS 1
 
+#ifdef _WIN32
 #pragma warning(disable:4786)
+#endif
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -432,7 +434,7 @@ Unit::Unit( bool boDbgLock )
     loadMoveExhaust = 0;
     loadAttackExhaust = 0;
 
-	userSpeed = 1;//Nombre de cases pour chaque ordre de dÈplacement
+	userSpeed = 1;//Nombre de cases pour chaque ordre de d◊ôplacement
 
 	bRainState=0;//BLBLBL 08/12/2010 initially no weather effect
 	bFogState=0;
@@ -978,13 +980,13 @@ WorldPos Unit::MoveUnit(DIR::MOVE where, BOOL boAbsolute, bool boCompressMove, b
             boSendMove = false;
         }
         
-		//4 aout 2009 : apparement Áa cause des lags d'aprËs les joueurs... on enlËve ‡ nouveau pour rÈÈssayer.
-		//13 janvier : nouvelle tentative !! oula, bah en fait Áa fait carrÈ rouge sur carrÈ rouge et 
-		//apparement des pointes ‡ 6mb d'upload sur la bande passante du servuer ...
+		//4 aout 2009 : apparement ◊óa cause des lags d'apr◊òs les joueurs... on enl◊òve ◊ê nouveau pour r◊ô◊ôssayer.
+		//13 janvier : nouvelle tentative !! oula, bah en fait ◊óa fait carr◊ô rouge sur carr◊ô rouge et 
+		//apparement des pointes ◊ê 6mb d'upload sur la bande passante du servuer ...
 		//boSendMove = true;//BLBLBL 28 juillet 2009 : test de toujours envoyer le broadcast, (donc plus de "compression")
-						  //en espÈrant que cela rÈduise les ghosts de monstres qui du coup peuvent ne pas se trouver
-						  //‡ l'endroit o˘ le client pense qu'ils sont.
-						  //en espÈrant aussi rÈduire les "sauts temporels" en cas de lag ou de speedhack volontaire
+						  //en esp◊ôrant que cela r◊ôduise les ghosts de monstres qui du coup peuvent ne pas se trouver
+						  //◊ê l'endroit o◊© le client pense qu'ils sont.
+						  //en esp◊ôrant aussi r◊ôduire les "sauts temporels" en cas de lag ou de speedhack volontaire
 						  //d'un GM (en bidouillant le userspeed).
 			
 		if( !world->move_world_unit(CurrentWL, WL, GetID(), (char)where, boAbsolute, boSendMove ) ){
@@ -1247,9 +1249,9 @@ BOOL Unit::Teleport(WorldPos to, BYTE How){
                     if( pPlayer != NULL ){
 				        // Remove player from the game and put it in pre-in game waiting state.
 						
-						//BLBLBL Truc bizare ici, ‡ vÈrifier pourquoi on sort du ingame
-						//Áa a l'air de causer des freezes (le joueur ne peut plut bouger/lancer de sort)
-						//mais peut continuer ‡ lire les CC et voir les autres choses bouger ‡ son Ècran.
+						//BLBLBL Truc bizare ici, ◊ê v◊ôrifier pourquoi on sort du ingame
+						//◊óa a l'air de causer des freezes (le joueur ne peut plut bouger/lancer de sort)
+						//mais peut continuer ◊ê lire les CC et voir les autres choses bouger ◊ê son ◊ôcran.
 
 				        pPlayer->in_game = FALSE;
 				        pPlayer->boPreInGame = TRUE;
@@ -1261,7 +1263,7 @@ BOOL Unit::Teleport(WorldPos to, BYTE How){
                     }
                 }
 
-				sending.Destroy();//sending est re-peuplÈ ‡ l'appel de packet_inview_units plusbas
+				sending.Destroy();//sending est re-peupl◊ô ◊ê l'appel de packet_inview_units plusbas
 
                 int read;
 				read = TargetWorld->packet_inview_units( to, sending, 40, this );//BLBLBL _DEFAULT_RANGE visiblement trop peu, pour la porte de du couloir oracle, je vais essayer 40
@@ -1476,7 +1478,7 @@ void Unit::Talk
 	
 	TRACE( "\r\nSent color %u and direction %u\r\n", dwColor, bDirection );
 
-    Broadcast::BCast( GetWL(), 24, sending );//BLBLBL 20 => 24 (pour que les paroles locales atteignent tout l'Ècran 1024)
+    Broadcast::BCast( GetWL(), 24, sending );//BLBLBL 20 => 24 (pour que les paroles locales atteignent tout l'◊ôcran 1024)
 }
 
 // virtual
@@ -3275,7 +3277,7 @@ void Unit::DealExhaust
         }
     }
 
-//	_LOG_DEBUG LOG_DEBUG_LVL4, "Setting new exhaust Mental %u,Move %u,Atk %u.", sExhaust.mental,sExhaust.move,sExhaust.attack LOG_//BLBLBL ajoutÈ un peu d'info
+//	_LOG_DEBUG LOG_DEBUG_LVL4, "Setting new exhaust Mental %u,Move %u,Atk %u.", sExhaust.mental,sExhaust.move,sExhaust.attack LOG_//BLBLBL ajout◊ô un peu d'info
 
     // Set new exhaust.
     SetExhaust( sExhaust );
@@ -3288,7 +3290,7 @@ void Unit::BroadcastPopup
 // 
 (
  WorldPos wlAppearPos,
- int nBroadcast //BLBL dans le prototype de la fonction, il semble que la valeur soit mise ‡ true par dÈfaut !
+ int nBroadcast //BLBL dans le prototype de la fonction, il semble que la valeur soit mise ◊ê true par d◊ôfaut !
 				//(ce qui est rassurant dans un sens)
 )
 //////////////////////////////////////////////////////////////////////////////////////////

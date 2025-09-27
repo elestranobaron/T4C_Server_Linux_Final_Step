@@ -37,7 +37,7 @@ void DemoPortal1::OnTalk( UNIT_FUNC_PROTOTYPE )
 InitTalk
 
 Begin
-""
+"" ;
 IF(CheckFlag(__NEWBIE_QUEST) == 0)
 	IF (IsInRange(4))
 		IF(target->GetHP() <= 500)

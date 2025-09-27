@@ -35,7 +35,7 @@ void DemoPortal4::OnTalk( UNIT_FUNC_PROTOTYPE )
 InitTalk
 
 Begin
-""
+"" ;
 IF(CheckFlag(__FLAG_KILLED_TOMB_RAIDER) >= 1)
 	IF (IsInRange(4))
 		TELEPORT( 2850, 1102, 0)

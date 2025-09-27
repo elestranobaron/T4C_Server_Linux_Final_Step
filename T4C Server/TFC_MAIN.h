@@ -17,13 +17,14 @@
 #include "Unit.h"
 #include "GAME_RULES.h"
 #include "SpellMessageHandler.h"
+#include "Portability.h"
 
 #if _MSC_VER >= 1000
 #pragma once
 #endif // _MSC_VER >= 1000
 
 #define _DEFAULT_TOUCH_RANGE		3
-#define _DEFAULT_RANGE				32 // BLBL (ait essayé 50 (c'est trop), 40 (c'est pas mal) je teste 30, soit une fenêtre de : 1920x960 autour du joueur ) // steph 32 au lieu de 30
+#define _DEFAULT_RANGE				32 // BLBL (ait essayÃ© 50 (c'est trop), 40 (c'est pas mal) je teste 30, soit une fenÃªtre de : 1920x960 autour du joueur ) // steph 32 au lieu de 30
 #define _NB_MAINTAINED_MONSTERS		500
 #define  _MONSTER_LIFE_SPAN			1 MINUTE
 
@@ -238,9 +239,9 @@ public:
 	static DWORD GetGoldbonus3();
 
 
-	static CString GetHomeDir();
-	static CString GetPlayerDir();
-	static CString GetAccountDir();
+	static String GetHomeDir();
+	static String GetPlayerDir();
+	static String GetAccountDir();
 	
 	static WORD GetMaxWorlds();
 

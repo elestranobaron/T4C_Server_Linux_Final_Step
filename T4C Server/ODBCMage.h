@@ -1,7 +1,42 @@
 #ifndef _ODBCMAGE_H
 #define _ODBCMAGE_H
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+// Define Windows types for Linux
+typedef unsigned short WORD;
+typedef unsigned char BYTE;
+typedef unsigned int UINT;
+typedef unsigned int DWORD;
+typedef long LONG;
+typedef unsigned long ULONG;
+typedef void* LPVOID;
+typedef short SHORT;
+typedef int BOOL;
+typedef const char* LPCSTR;
+typedef char* LPTSTR;
+typedef const char* LPCTSTR;
+typedef void* HANDLE;
+typedef void* HENV;
+typedef void* HDBC;
+typedef void* HSTMT;
+typedef short RETCODE;
+#define FALSE 0
+#define TRUE 1
+#include <sql.h>
+#include <sqlext.h>
+#include <string>
+
+// Pointer types
+typedef DWORD* LPDWORD;
+typedef WORD* LPWORD;
+typedef BYTE* LPBYTE;
+typedef double* LPDOUBLE;
+typedef void** LPPVOID;
+typedef short* LPSHORT;
+typedef long* LPLONG;
+#endif
 #include <stdio.h>
 #include <sql.h>
 #include <sqlext.h>
@@ -15,7 +50,7 @@
 // This type defines single sql requests to send in batch writing.
 typedef struct _SQL_REQUEST{
 	BYTE		bFailBehavior;	// Behavior of batch request upon failure
-	CString		csQuery;		// The query.
+	std::string	csQuery;		// The query.
 } SQL_REQUEST, *LPSQL_REQUEST;
 
 typedef void ( *SQLTERMINATION )( DWORD dwResult, LPVOID lpData );
@@ -60,7 +95,7 @@ public:
     void Unlock(  );
 	
 	void Connect(LPCSTR szDataSource, LPCSTR szUsername, LPCSTR szPassword);
-	void cODBCMage::AllocStmt( void );
+	void AllocStmt( void );
 
     void CheckDisconnectError( void );
 	void Disconnect();	
@@ -98,7 +133,7 @@ public:
     RETCODE GetSDWORD   ( UWORD uwCol, long *lpsFetch );
 
 	// Initializes the write thread.
-	void cODBCMage::InitializeWriteThread( void );
+	void InitializeWriteThread( void );
 	// Sends a batch request to ODBC. Uses OBDCWriteThread to queue calls asynchronously.
 	void SendBatchRequest( TemplateList <SQL_REQUEST> *lptlRequests,
 						   SQLTERMINATION lpTerminationCallback, 

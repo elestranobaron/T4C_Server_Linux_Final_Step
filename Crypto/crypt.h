@@ -1,7 +1,9 @@
 #ifndef CRYPT_H
 #define CRYPT_H
 
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include "Xorkey.h"
 
 namespace TFCCrypt 

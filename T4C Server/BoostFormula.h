@@ -5,6 +5,7 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#include "Portability.h"
 #include "vdlist.h"
 #include <map>
 
@@ -23,13 +24,13 @@ public:
     BoostFormula();
 	virtual ~BoostFormula();
 
-    BOOL   SetFormula( CString csFormula );
+    BOOL   SetFormula( String csFormula );
     double GetBoost( LPVOID self, LPVOID target = NULL, double dblX = 0, double dblY = 0, double dblR = 0, VarMap *varMap = NULL );
 	double GetMinBoost( LPVOID self, LPVOID target = NULL, double dblX = 0, double dblY = 0, double dblR = 0, VarMap *varMap = NULL );
     double GetMaxBoost( LPVOID self, LPVOID target = NULL, double dblX = 0, double dblY = 0, double dblR = 0, VarMap *varMap = NULL );
 	char *GetOriginalFormula( void );
 
-	static CString TranslateStringFormula(CString csStringFormula, Unit *self, Unit *target = NULL, VarMap *varMap = NULL );
+	static String TranslateStringFormula(String csStringFormula, Unit *self, Unit *target = NULL, VarMap *varMap = NULL );
 
 private:    
     typedef struct _OPERAND{
@@ -49,7 +50,7 @@ private:
 
     OPERAND opFirstOperand;
     
-    CString csOriginalFormula;
+    String csOriginalFormula;
 
     // List of operands used by the formula, for easy deletion.
     TemplateList< OPERAND > tlOperands;

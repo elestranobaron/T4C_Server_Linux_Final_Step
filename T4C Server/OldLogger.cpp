@@ -8,7 +8,9 @@
 #include <stack>
 #include <queue>
 
+#ifdef _WIN32
 #pragma warning( disable : 4786 )
+#endif
 
 using namespace std;
 

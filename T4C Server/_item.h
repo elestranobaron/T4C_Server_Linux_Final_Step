@@ -2,6 +2,7 @@
 #define ___ITEM_H_041097_1911
 
 #include "BoostFormula.h"
+#include "Portability.h"
 
 #define SET_NAME( obj, newname )	if( obj.name ) delete obj.name;\
 									obj.name = new char[ strlen( newname ) + 1];\
@@ -95,7 +96,7 @@ struct _item{
 
 	// books always have a text associated with them
 	struct _text{
-		CString	csText;
+		String	csText;
 	} text;
 
 	struct _container{

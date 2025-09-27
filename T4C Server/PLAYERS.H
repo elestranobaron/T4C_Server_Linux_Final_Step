@@ -8,19 +8,37 @@
 #include "Character.h"
 #include "Objects.h"
 #include "Lock.h"
+#include "Portability.h"
+#ifdef _WIN32
 #include "WINSOCK.H"
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h> // for close
+#include <errno.h> // for errno
+typedef int SOCKET;
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define closesocket close
+#define WSAGetLastError() errno
+#define WSACleanup() // No-op on Linux
+#define ioctlsocket ioctl
+#define WSAEWOULDBLOCK EWOULDBLOCK
+// Add more as needed
+#endif
 #include <list>
 
 #define MAX_CHATTERS	5
 
 struct CStringAndRace{
-	CString name;
+	String name;
 	WORD level;
 	WORD race;
 };
 
 struct ChatterChannel{
-	CString Pwd;
+	String Pwd;
 	DWORD   ID;
 };
 
@@ -82,7 +100,7 @@ public:
 	virtual ~Players();    
 
 	void            SetInGame(BOOL status);
-	CString         GetIP();
+	String         GetIP();
 
 	int             GetPort();
 	BOOL            IsGod();
@@ -92,26 +110,26 @@ public:
 	UINT            NbPlayers();
 	
 	BOOL            SaveAccount(BOOL boPositioned = FALSE);
-	BOOL            LoadAccount(CString name);
+	BOOL            LoadAccount(String name);
 
-	void            AddPlayer(CString name, WORD race, WORD level);
-	void            ModifyPlayer(CString name, WORD race, WORD level);
-	void            RemovePlayer(CString name);
-	void            AddToHistory(unsigned long historyDate, CString historyText);//BLBLBL pour enregistrer l'historique des punitions modo.
+	void            AddPlayer(String name, WORD race, WORD level);
+	void            ModifyPlayer(String name, WORD race, WORD level);
+	void            RemovePlayer(String name);
+	void            AddToHistory(unsigned long historyDate, String historyText);//BLBLBL pour enregistrer l'historique des punitions modo.
 
-    static char *   QuotedAccount( char szBuffer[], CString &csAccount );
-	void            SetAccount(CString name);
-	CString         GetAccount() const;
-    CString         GetFullAccountName() const; // Account + realm
-    CString         GetRealm() const;
+    static char *   QuotedAccount( char szBuffer[], String &csAccount );
+	void            SetAccount(String name);
+	String         GetAccount() const;
+    String         GetFullAccountName() const; // Account + realm
+    String         GetRealm() const;
 
-	void            SetPwd(CString pwd);
-	CString         GetPwd() const;
+	void            SetPwd(String pwd);
+	String         GetPwd() const;
 
 	TemplateList <CStringAndRace> *GetPCs();	
 
-	void                SetGodFlags( unsigned __int64 i64Flags );
-	unsigned __int64    GetGodFlags();
+	void                SetGodFlags( uint64_t i64Flags );
+	uint64_t    GetGodFlags();
 
 	static void     InitializeODBC( void );
 	static void     DestroyODBC( void );
@@ -155,10 +173,10 @@ public:
 
     void            SetRadiusPortID( DWORD dwPortID ){ dwRadiusPortID = dwPortID; };
 
-    static bool     AccountLogged( const CString &csAccountName, LPCSTR szIP );
+	static bool     AccountLogged( const String &csAccountName, LPCSTR szIP );
 	static int 		IPLogged( LPCSTR szIP );
     static bool     AccountHeartBeat( void );
-    static void     AccountLoggonFailed( const CString &csAccountName );
+	static void     AccountLoggonFailed( const String &csAccountName );
     static bool     NameExists( const string &name );	
 
     void            TogglePage( bool newState ){
@@ -227,7 +245,7 @@ public:
 	//int GetMove();
 	std::list<int>   MoveList;
 //	unsigned long lFirstRound;
-//	unsigned long lMoveCounter; //compte le nombre de paquets reçus non pris
+//	unsigned long lMoveCounter; //compte le nombre de paquets reÃ§us non pris
 
 	// END : BL -> Anti Speedhack (2nd try)
 
@@ -256,11 +274,11 @@ private:
 
     DWORD dwCredits;
 
-	unsigned __int64 i64GodFlags;
+	uint64_t i64GodFlags;
 
-	CString m_Account;
-	CString m_Password;
-    CString m_Realm;
+	String m_Account;
+	String m_Password;
+    String m_Realm;
 
 	//TemplateList <CStringAndRace> PCs;
 	TemplateList <CStringAndRace> *pPCs;

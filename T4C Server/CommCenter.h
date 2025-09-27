@@ -7,7 +7,9 @@
 
 
 #include "ComPacketHeader.h"
+#ifdef _WIN32
 #pragma warning( disable:4786 )
+#endif
 #ifndef USE_CLIENT_CONNECTION
    #include <afxsock.h>
 #else
@@ -64,7 +66,7 @@ public:
 #ifdef ENABLE_CONNECTION_LOST_LISTING   
    // Returns the lost connection vector. The use *MUST* free the lost connection list using the FreeLostConnections
    vector< sockaddr_in > *GetLostConnections( void );
-   //std::list< sockaddr_in > *GetLostConnections( void );//BLBLBL 06/12/2010 remplacement par une liste à voir
+   //std::list< sockaddr_in > *GetLostConnections( void );//BLBLBL 06/12/2010 remplacement par une liste Ã  voir
    void FreeLostConnections( BOOL boFlushList = TRUE );
 #endif
 
@@ -166,7 +168,7 @@ private:
    #ifdef ENABLE_CONNECTION_LOST_LISTING
       CLock cConnectionLostLock;
       vector< sockaddr_in > vConnectionLost;
-	  //std::list< sockaddr_in > vConnectionLost;//BLBLBL 06/12/2010 remplacement par une liste à voir
+	  //std::list< sockaddr_in > vConnectionLost;//BLBLBL 06/12/2010 remplacement par une liste Ã  voir
    #endif
 };
 
@@ -196,7 +198,7 @@ private:
    WORD nOfPieces; // Number of pieces that make this packet
    WORD receivedPieces; // how many pieces we already received.
    vector<UDPPacket*> fragList; // vector with the pieces.
-   //std::list<UDPPacket*> fragList; // vector with the pieces.//BLBLBL 06/12/2010 remplacement par une liste// à voir
+   //std::list<UDPPacket*> fragList; // vector with the pieces.//BLBLBL 06/12/2010 remplacement par une liste// Ã  voir
    WORD sizeOfTheLastPiece;
    
    UDPPacket* AddPiece (UDPPacket* pPacket); // register a new received piece.
@@ -275,4 +277,3 @@ protected:
 };
 
 #endif // !defined(AFX_COMMCENTER_H__3742E71A_4727_11D2_83EF_00E02922FA40__INCLUDED_)
- 
