@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "..\TFCException.h"
+#include "../TFCException.h"
 #include "Doors.h"
 #include "../SkillListing.h"
 #include "../IntlText.h"

@@ -1,6 +1,7 @@
 #include "stdafx.h"
+#include "Portability.h"
 #include "WDACreatures.h"
-#include "format.h"
+#include "Format.h"
 #include <map>
 
 using namespace vir;

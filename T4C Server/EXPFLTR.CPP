@@ -1,4 +1,6 @@
+#ifdef _WIN32
 #include "stdafx.h"
+#endif
 #include <windows.h>
 #include <tchar.h>
 #include <imagehlp.h>
@@ -9,7 +11,7 @@
 //extern CLogger LoggerObj; // logger object
 
 // static globals
-CRITICAL_SECTION CExpFltr::m_crit;
+std::mutex CExpFltr::m_crit;
 TCHAR CExpFltr::m_report_file[_MAX_PATH];
 TCHAR CExpFltr::m_app_title[MAX_SZ_APP_TITLE];
 WORD CExpFltr::m_num_modules=0;
@@ -35,12 +37,10 @@ Constructor/Destructor
 
 CExpFltr::CExpFltr(void)
 {
-	InitializeCriticalSection(&CExpFltr::m_crit);
 }
 
 CExpFltr::~CExpFltr(void)
 {
-	DeleteCriticalSection(&CExpFltr::m_crit);
 }
 
 /**********************************************************************************/
@@ -137,7 +137,7 @@ void CExpFltr::log_exception(CONTEXT *ctxtRec, LPTSTR errorMsg, void *excpAddr)
 	__try
 	{
 		// file handling, so need a crit section
-		EnterCriticalSection(&m_crit);
+		m_crit.lock();
 
 		hFile=CreateFile(m_report_file, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, 
 		FILE_ATTRIBUTE_NORMAL, NULL);
@@ -218,7 +218,7 @@ void CExpFltr::log_exception(CONTEXT *ctxtRec, LPTSTR errorMsg, void *excpAddr)
 	}
 	__finally 
 	{
-		LeaveCriticalSection(&m_crit);
+		m_crit.unlock();
 		if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
 	}
 	return;
@@ -960,12 +960,12 @@ void CExpFltr::SetReportFile(LPTSTR file_name)
 {
 	__try
 	{
-		EnterCriticalSection(&m_crit);
+		m_crit.lock();
 		if (lstrlen(file_name) < _MAX_PATH)
 			lstrcpy(CExpFltr::m_report_file, file_name);
 	}
 	__finally{
-		LeaveCriticalSection(&m_crit); 
+		m_crit.unlock(); 
 	}
 	return;
 }
@@ -977,12 +977,12 @@ void CExpFltr::SetAppTitle(LPTSTR app_title)
 {
 	__try 
 	{
-		EnterCriticalSection(&m_crit);
+		m_crit.lock();
 		if (lstrlen(app_title) < MAX_SZ_APP_TITLE)
 			lstrcpy(CExpFltr::m_app_title, app_title);
 	}
 	__finally{ 
-		LeaveCriticalSection(&m_crit); 
+		m_crit.unlock();
 	}
 	return;
 }

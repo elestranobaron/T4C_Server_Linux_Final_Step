@@ -1,0 +1,4 @@
+#ifndef T4C_STATMODIFIERFLAGSLISTING_ALIAS_H
+#define T4C_STATMODIFIERFLAGSLISTING_ALIAS_H
+#include "StatModifierFlagsListing.h"
+#endif

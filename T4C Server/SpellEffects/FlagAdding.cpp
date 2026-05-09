@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "..\NPCmacroScriptLng.h"
+#include "../NPCmacroScriptLng.h"
 #include "FlagAdding.h"
 #include "../TFC_MAIN.h"
 

@@ -11,7 +11,7 @@
 #include "Food.h"
 #include "Potions.h"
 #include "Book.h"
-#include "DestinyGem.H"
+#include "DestinyGem.h"
 #include "GemOfLife.h"
 #include "IcySaber.h"
 #include "Gold.h"

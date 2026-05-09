@@ -32,7 +32,7 @@ NPCstructure::NPC HalamNPC;
 NPCstructure::NPC JalusNPC; 
 
 
-void CreateNPC( void );
+void T4C_CREATE_NPC_FUNC_NAME( void );
 
 INIT_MONSTER_STAT_SETUP
 
@@ -1212,9 +1212,9 @@ MOB_DRESS_BODY ( WHITEROBE )
 MOB_DRESS_FEET ( LEATHER_BOOTS )
 MOB_DRESS_WEAPON ( STAFF3 ) 
 
-	CreateNPC();
+	T4C_CALL_CREATE_NPC();
 CLOSE_MONSTER_STAT_SETUP
 
-void MonsterStatDestroy(){
+void MonsterStatDestroy_NPCs(){
 }
  

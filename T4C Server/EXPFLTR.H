@@ -6,9 +6,32 @@
 #define MAX_MODULES			512
 #define MAX_FUNC			20  // maximum number of functions in call stack
 
+#include <mutex>
+
 #define makePtr(cast,ptr,addValue) (cast)((DWORD)(ptr)+(DWORD)(addValue))
+
+#ifndef _WIN32
+#include "Win32Compat.h"
+#ifndef _MAX_PATH
+#define _MAX_PATH 260
+#endif
+typedef struct _MEMORY_BASIC_INFORMATION {
+	void *BaseAddress;
+	void *AllocationBase;
+	DWORD AllocationProtect;
+	DWORD RegionSize;
+	DWORD State;
+	DWORD Protect;
+	DWORD Type;
+} MEMORY_BASIC_INFORMATION, *PMEMORY_BASIC_INFORMATION;
+#endif
+
 #ifndef EXPORT
+#if defined(_WIN32)
 #define EXPORT	extern "C" __declspec (dllexport)
+#else
+#define EXPORT extern "C"
+#endif
 #endif
 
 typedef void (* VoidFunction)(void *);
@@ -53,7 +76,7 @@ private: // private functions
 	static LPTSTR memType2Text(DWORD memType);
 
 	// variables..
-	static CRITICAL_SECTION m_crit;
+	static std::mutex m_crit;
 	static TCHAR m_report_file[_MAX_PATH];
 	static TCHAR m_app_title[MAX_SZ_APP_TITLE];
 	static WORD m_num_modules;

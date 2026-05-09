@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "GorlokBloodaxe.H"
+#include "GorlokBloodaxe.h"
 
 GorlokBloodaxe::GorlokBloodaxe()
 {}

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "NPCManager.h"
 #include "InstructionFactory.h"
-#include "..\T4CLog.h"
+#include "T4CLog.h"
 
 using namespace std;
 

@@ -3,7 +3,7 @@
 #include "../Objects.h"
 #include "../Creatures.h"
 #include "../WorldMap.h"
-#include "../TFC_main.h"
+#include "../TFC_MAIN.h"
 #include "../T4CLog.h"
 
 //////////////////////////////////////////////////////////////////////

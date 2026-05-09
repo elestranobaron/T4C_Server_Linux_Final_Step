@@ -1,12 +1,14 @@
 #ifndef __AUTOLOCK_H
 #define __AUTOLOCH_H
 
+#include <mutex>
+
 class Autolock {
 	public:
-		Autolock(CRITICAL_SECTION *);
+		Autolock(std::mutex *);
 		~Autolock(void);
 	private:
-		CRITICAL_SECTION *m_cs;
+		std::mutex *m_cs;
 };
 
 #endif

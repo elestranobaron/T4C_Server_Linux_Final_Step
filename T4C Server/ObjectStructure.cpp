@@ -2,7 +2,7 @@
 #include "ObjectStructure.h"
 
 ObjectStructure::ObjectStructure(){
-	//InitializeCriticalSection(&csMyObject);
+	//Initialize object lock.
 	
 	blocking = __BLOCK_NONE;
 	appearance = 0;
@@ -35,7 +35,7 @@ ObjectStructure::ObjectStructure(){
 
 
 ObjectStructure::~ObjectStructure(){
-//	DeleteCriticalSection(&csMyObject);
+//	Destroy object lock.
 
 	tlSpells.AnnihilateList();
 	tlBoosts.AnnihilateList();

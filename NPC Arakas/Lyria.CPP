@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Lyria.H"
+#include "Lyria.h"
 
 Lyria::Lyria()
 {}

@@ -1,11 +1,13 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "Rob.h"
 #include "Peek.h"
 #include <math.h>
-#include "../blockinglisting.h"
-#include "../intltext.h"
+#include "../BlockingListing.h"
+#include "../IntlText.h"
 #include "../ObjectListing.h"
-#include "../t4clog.h"
+#include "../T4CLog.h"
+#include <cstdint>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -159,7 +161,7 @@ int Rob::Func
                         Objects *lpItem = static_cast< Objects * >( lpBackpack->Object() );
 
                         // If the object was found.
-                        if( lpItem->GetID() == (DWORD)valueOUT ){
+                        if( lpItem->GetID() == static_cast<DWORD>(reinterpret_cast<std::uintptr_t>(valueOUT)) ){
 
                             // Get the item's structure.
                             _item *lpItemStructure = NULL;

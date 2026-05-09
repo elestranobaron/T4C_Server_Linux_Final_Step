@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "TalonIrongaze.H"
+#include "TalonIrongaze.h"
 
 TalonIrongaze::TalonIrongaze()
 {}

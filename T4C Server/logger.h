@@ -7,6 +7,10 @@
 
 //
 // in your cpp files.
+#if !defined(_WIN32)
+#include <cwchar>
+#include <cstdlib>
+#endif
 namespace vir {
 
 // Debug Level will be use to set the debug level of the logging. It currently contain 32 bit field
@@ -67,10 +71,14 @@ class UnicodeToAnsi {
 
 		char *operator () ( const wchar_t *const ws, char s[] ) {
 		// Transfrom Unicode string to Ansi string.
-
-			// Converstion.
+#ifdef _WIN32
 			WideCharToMultiByte( CP_ACP, NULL, ws, -1, s, sizeof( s ), NULL, NULL );
-
+#else
+			if (ws == nullptr || s == nullptr) {
+				return s;
+			}
+			std::wcstombs(s, ws, 1024);
+#endif
 			return s;
 		}
 }; // End of Class UnicodeToAnsi.

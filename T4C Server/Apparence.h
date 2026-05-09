@@ -370,12 +370,12 @@ const unsigned int __OBJGROUP_WOODEN_DOOR8_OPENED_I= 859;
 //////////////////////////////////////////////////////////////////////////////////////////
 // steph ajout de INT
 //////////////////////////////////////////////////////////////////////////////////////////
-static const INT GET = 5;
-static const INT USE = 4;
-static const INT TALK = 3;
-static const INT ATTACK = 2;
-static const INT NONE = 0;
-static const INT USE_ONSITE = 6;
+static const int GET = 5;
+static const int USE = 4;
+static const int TALK = 3;
+static const int ATTACK = 2;
+static const int NONE = 0;
+static const int USE_ONSITE = 6;
 
 
 

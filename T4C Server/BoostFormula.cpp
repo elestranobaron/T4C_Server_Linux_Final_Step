@@ -5,7 +5,7 @@
 #include <math.h>
 #include "random.h"
 #include "IntlText.h"
-#include "NPCMacroScriptLng.h"
+#include "NPCmacroScriptLng.h"
 #include "TFC_MAIN.h"
 
 // Token values

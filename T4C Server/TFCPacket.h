@@ -5,20 +5,14 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#include "StandardTypes.h"
+#include <cstdint>
+
 #ifdef _WIN32
 #include <windows.h>
 #else
-// Define Windows types for Linux if needed
-typedef unsigned short WORD;
-typedef unsigned char BYTE;
-typedef unsigned int UINT;
-typedef long LONG;
-typedef unsigned long ULONG;
-typedef BYTE* LPBYTE;
-typedef short SHORT;
-typedef int BOOL;
-#define FALSE 0
-#define TRUE 1
+#include "Win32Compat.h"
+#include "Portability.h"
 #endif
 #include <vector>
 #include <string>
@@ -51,13 +45,15 @@ public:
 
 	void Create(unsigned int length); // Creates a packet
 	void Destroy();                   // Destroys a packet
-	void Seek(signed long where, char how);    // Seeks within a packet for << and >>
+	void Seek(std::int32_t where, char how);    // Seeks within a packet for << and >>
 
 	void Get(short *);				  // Same as >>
 	void Get(char *);				  // Gets a "number" from the packet	
-	void Get(long *);	
+	void Get(std::int32_t *);
+	void Get(long *);
 	void Get(unsigned short *);
 	void Get(unsigned char *);
+	void Get(std::uint32_t *);
 	void Get(unsigned long *);
     void Get( string &str );
 	// Mestoph : VÈrification de la taille des strings avant de lire le contenu du data
@@ -66,14 +62,15 @@ public:
 	void EncryptPacket( void );
 	BOOL DecryptPacket( unsigned int seedNumber = 0 );
 
-	TFCPacket & operator << (long);   // Insertion operators
+	TFCPacket & operator << (std::int32_t);   // Insertion operators
+	TFCPacket & operator << (long);
 	TFCPacket & operator << (short);
 	TFCPacket & operator << (char);
     TFCPacket & operator << (const char *);
     TFCPacket & operator << (const string & );
-#ifdef _AFXDLL
-    TFCPacket & operator << (CString &);
-	CString GetDebugPacketString( void );
+#if defined(_AFXDLL) || !defined(_WIN32)
+    TFCPacket & operator << (const CString &);
+    CString GetDebugPacketString( void );
 #endif
 
     BOOL SetBuffer( LPBYTE lpBuffer, int nBufferSize );

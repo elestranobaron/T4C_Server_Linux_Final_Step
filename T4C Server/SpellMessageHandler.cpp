@@ -5,7 +5,7 @@
 #include "TFC_MAIN.h"
 #include "BlockingListing.h"
 #include <math.h>
-#include "format.h"
+#include "Format.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE

@@ -11,9 +11,11 @@
 #include "WeatherEffect.h"
 //////////////////////////////////
 // Recordsets
-#include "SpellEFfectManager.h"
+#include "SpellEffectManager.h"
 #include "SpellMessageHandler.h"
+#ifndef NO_DAO_SUPPORT
 #include "InitDBSpellRequirements.h"
+#endif
 #include "SimpleMonster.h"
 #include "RegKeyHandler.h"
 
@@ -1106,7 +1108,7 @@ void TFCInitMaps( void )
 	std::vector<std::string> vWDAFilenames;
 	std::vector<std::string>::const_iterator fni;
 	vWDAFilenames.push_back(sBaseFolder+"T4C Worlds.WDA");
-	//vWDAFilenames.push_back(sBaseFolder+"DialsoftV2Edit.WDA"); // steph dÈsactivation
+	//vWDAFilenames.push_back(sBaseFolder+"DialsoftV2Edit.WDA"); // steph dùsactivation
 	vWDAFilenames.push_back(sBaseFolder+"T4C Edit.WDA");
 
 	std::vector<WDAFile*> vWDAFiles;
@@ -1242,7 +1244,7 @@ void TFCInitMaps( void )
 		delete wdaFilePtr;
 	}
 	
-	// Load the Weather map //BLBLBL Áa bouffe trop de ram 28mo par carte
+	// Load the Weather map //BLBLBL ùa bouffe trop de ram 28mo par carte
 	//printf( "\n- Loading Weather Maps" );
 	//WeatherEffect::GetInstance()->LoadWeatherMaps();
 }
@@ -1275,7 +1277,7 @@ void T4C_Initialization::WDAInitNPC( void )
 	
 	std::vector<std::string>::const_iterator fi;
 	std::vector<std::string> vFilesToLoad;
-	//vFilesToLoad.push_back( sBaseFolder + "DialsoftV2NPCS.WDA" ); // steph dÈsactivation
+	//vFilesToLoad.push_back( sBaseFolder + "DialsoftV2NPCS.WDA" ); // steph dùsactivation
 	vFilesToLoad.push_back( regKey.GetProfileString( "NPCFile", sNPCsWDA.c_str() ) );
 
 	NPC_Editor::NPCManager *npcMan = NPC_Editor::NPCManager::GetInstance();

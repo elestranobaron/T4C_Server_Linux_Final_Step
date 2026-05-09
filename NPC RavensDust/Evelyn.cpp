@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Evelyn.H"
+#include "Evelyn.h"
 
 
 Evelyn::Evelyn()

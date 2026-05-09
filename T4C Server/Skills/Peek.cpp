@@ -1,8 +1,9 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include <math.h>
 #include "../IntlText.h"
 #include "Peek.h"
-#include "../blockinglisting.h"
+#include "../BlockingListing.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -139,7 +140,8 @@ int Peek::Func
                 sending << (RQ_SIZE)RQ_Rob;
 	    	    sending << (char)canRob;
 		        sending << (long)target->GetID();		    		    
-                sending << (CString &)target->GetName( self->GetLang() );
+				CString nmRob = target->GetName( self->GetLang() );
+                sending << nmRob;
                 targetCh->PacketRobBackpack( self, sending );
             
                 // Send it to the peeking player.

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "OlinHaadCommander.H"
+#include "OlinHaadCommander.h"
 
 OlinHaadCommander::OlinHaadCommander()
 {}

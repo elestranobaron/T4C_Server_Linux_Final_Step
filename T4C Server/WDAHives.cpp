@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "WDAHives.h"
-#include "format.h"
+#include "Format.h"
 #include <map>
 
 using namespace std;

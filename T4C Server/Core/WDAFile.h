@@ -5,6 +5,10 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#ifndef _WIN32
+#include "../StandardTypes.h"
+#endif
+
 #include <string>
 
 class WDAFileException{

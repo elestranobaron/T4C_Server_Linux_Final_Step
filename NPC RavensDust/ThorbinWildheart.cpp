@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "ThorbinWildheart.H"
+#include "ThorbinWildheart.h"
 
 ThorbinWildheart::ThorbinWildheart()
 {}

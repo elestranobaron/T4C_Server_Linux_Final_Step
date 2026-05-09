@@ -5,7 +5,7 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#include "TFC_MAIN.H"
+#include "TFC_MAIN.h"
 
 #define PACKET_FUNC_PROTOTYPE	TFCPacket *msg, Players *user, RQ_SIZE rqRequestID, sockaddr_in sockAddr
 #define PACKET_FUNC_PARAM	msg, user, rqRequestID, sockAddr

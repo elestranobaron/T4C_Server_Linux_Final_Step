@@ -132,7 +132,7 @@ YesNoELSE(Ready)
 	INTL( 11971, "Do you know what the Rite of Passage means or not?")
 	SetYesNo(Ready)
 
-;} else if( ( msg.Find(INTL( 11972, "TO LOOK UPON ONE")) != -1 ) && ( msg.Find(INTL( 11973, "SELF")) != -1 ) && YesNo == Phrase1) {;YesNo = Phrase2;
+;} else if( ( msg.find(INTL( 11972, "TO LOOK UPON ONE")) != String::npos ) && ( msg.find(INTL( 11973, "SELF")) != String::npos ) && YesNo == Phrase1) {;YesNo = Phrase2;
 	Conversation
 	INTL( 11974, "Interesting... now tell me, what does the second phrase mean?")
 
@@ -141,7 +141,7 @@ YesNoELSE(Ready)
 	INTL( 11975, "I knew it... a barbarian, through and through.")
 	BREAK
 
-;} else if( ( msg.Find(INTL( 11976, "ONE MUST ONLY HAVE EYES")) != -1 ) && YesNo == Phrase2) {;YesNo = Phrase3;
+;} else if( ( msg.find(INTL( 11976, "ONE MUST ONLY HAVE EYES")) != String::npos ) && YesNo == Phrase2) {;YesNo = Phrase3;
 	Conversation
 	INTL( 11977, "Not bad... now tell me, what does the third phrase mean?")
 
@@ -150,7 +150,7 @@ YesNoELSE(Ready)
 	INTL( 11975, "I knew it... a barbarian, through and through.")
 	BREAK
 
-;} else if( ( msg.Find(INTL( 11978, "TO RECOGNIZE ONE")) != -1 ) && ( msg.Find(INTL( 11979, "OWN IGNORANCE")) != -1 ) &&  YesNo == Phrase3) {;YesNo = Phrase4;
+;} else if( ( msg.find(INTL( 11978, "TO RECOGNIZE ONE")) != String::npos ) && ( msg.find(INTL( 11979, "OWN IGNORANCE")) != String::npos ) &&  YesNo == Phrase3) {;YesNo = Phrase4;
 	Conversation
 	INTL( 11980, "Very good! You might actually make it... now tell me, what does the last phrase mean?")
 
@@ -159,7 +159,7 @@ YesNoELSE(Ready)
 	INTL( 11975, "I knew it... a barbarian, through and through.")
 	BREAK
 
-;} else if( ( msg.Find(INTL( 11981, "ONE MUST OPEN THESE EYES")) != -1 ) && YesNo == Phrase4) {;YesNo = 0;
+;} else if( ( msg.find(INTL( 11981, "ONE MUST OPEN THESE EYES")) != String::npos ) && YesNo == Phrase4) {;YesNo = 0;
 	Conversation
 	INTL( 11982, "Excellent! Nicely done! You have surpassed my expectations... for a barbarian that is. Alright, as "
 	"promised, I now grant you full \"access\" to the library. The librarians should be able to answer "

@@ -1,18 +1,19 @@
 #ifndef __MEMORY_MANAGER_H
 #define __MEMORY_MANAGER_H
 
-#include <windows.h>
+#include "StandardTypes.h"
+#include <mutex>
 
 #define MEMORY_LOGGING
 
 #define MEMTAB_SIZE			1024
 
 void *operator new(size_t size);
-void operator delete( void * );
+void operator delete(void *) noexcept;
 
 class MemManager {
 	friend void *operator new(size_t);
-	friend void operator delete( void * );
+	friend void operator delete(void *) noexcept;
 
 	public:
         enum{ CALL_STACK_SIZE = 10 };
@@ -41,7 +42,7 @@ class MemManager {
 
 		DWORD dwTotalAlloc;
       
-      CRITICAL_SECTION cs;
+      std::mutex cs;
       bool Init;
 		
 		MemWalk *memTop;

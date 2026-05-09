@@ -1,7 +1,7 @@
 #ifndef VIRCOMLIB_TRACER_TH083231012999
 #define VIRCOMLIB_TRACER_TH083231012999
 
-#include "Logger.h"
+#include "logger.h"
 
 namespace vir {
 

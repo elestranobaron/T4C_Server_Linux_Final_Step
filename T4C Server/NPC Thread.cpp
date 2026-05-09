@@ -2,7 +2,9 @@
 #include "TFC Server.h"
 #include "Unit.h"
 #include "TFC_MAIN.h"
+#ifdef _WIN32
 #include "TFC ServerDlg.h"
+#endif
 #include "VDList.h"
 #include "Random.h"
 #include "TFCTimers.h"
@@ -10,14 +12,20 @@
 #include "Players.h"
 #include "TFCServerGP.h"
 #include "MonsterStructure.h"
+#ifdef _WIN32
 #include <eh.h>
+#endif
 #include "PacketManager.h"
 #include "DeadlockDetector.h"
 #include <math.h>
 #include "IntlText.h"
 //#include "../T4C Monitor/T4C MonitorMap.h"
 #include "NPC Thread.h"
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
+#endif
+#endif
 #include "PlayerManager.h"
 #include "ThreadMonitor.h"
 
@@ -210,7 +218,7 @@ START_DEADLOCK_DETECTION( hNPCThread, "NPC Thread" );
 				nearObj->IsInView = wlWorld->IsNearPlayer( playerPos );
 			}else{
 				// otherwise destroy the unit
-				nearObj->IsInView = TRUE;//BLBLBL truc louche ici .. en thÈorie faudrait mettre FALSE !
+				nearObj->IsInView = TRUE;//BLBLBL truc louche ici .. en thùorie faudrait mettre FALSE !
 			}
 
 

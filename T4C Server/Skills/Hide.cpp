@@ -1,8 +1,9 @@
 #pragma hdrstop
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "Hide.h"
-#include "..\ObjectListing.h"
-#include "..\_item.h"
+#include "../ObjectListing.h"
+#include "../_item.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

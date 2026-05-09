@@ -3,7 +3,7 @@
 
 #define MAXSHRT 65535
 
-#include <windows.h>
+#include "StandardTypes.h"
 #include <time.h>
 
 class EncRandom  

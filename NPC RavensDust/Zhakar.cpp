@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Zhakar.H"
+#include "Zhakar.h"
 
 Zhakar::Zhakar()
 {}

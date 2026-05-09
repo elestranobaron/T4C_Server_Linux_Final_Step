@@ -22,6 +22,11 @@
 #define LOG_CHEAT       10
 // END : Mestoph -> Add Cheat Log
 
+#ifndef _WIN32
+#ifndef __declspec
+#define __declspec(x)
+#endif
+#endif
 
 class __declspec( dllexport ) CT4CLog  
 {

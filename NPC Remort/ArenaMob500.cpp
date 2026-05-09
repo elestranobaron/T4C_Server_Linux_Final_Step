@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "ArenaMob500.H"
+#include "ArenaMob500.h"
 
 ArenaMob500::ArenaMob500()
 {}

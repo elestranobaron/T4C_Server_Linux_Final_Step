@@ -1,15 +1,48 @@
+#ifdef _WIN32
 #include "stdafx.h"
+#endif
 #include "ScriptFile.h"
+#ifdef _WIN32
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
+#endif
+#endif
+#endif
+#include <chrono>
+#include <thread>
+#include <ctime>
+#include <cstdio>
+#include <cstring>
+#ifdef _WIN32
 #include "ThreadMonitor.h"
 #include "DeadlockDetector.h"
 #include "TFC Server.h"
 #include "PlayerManager.h"
 #include "Players.h"
 #include "SysopCmd.h"
+#endif
 #include <stdarg.h>
+#include <filesystem>
+#include <fstream>
 
+#if __cplusplus < 201703L
+#error "std::filesystem requires C++17 or later"
+#endif
+
+namespace fs = std::filesystem;
+
+#ifndef _WIN32
+#include "TFC Server.h"
+#include "ThreadMonitor.h"
+#include "DeadlockDetector.h"
+#include "TFCTimers.h"
 extern CTFCServerApp theApp;
+#endif
+
+#ifdef _WIN32
+extern CTFCServerApp theApp;
+#endif
 
 #define COMMENT				   if( strCmd[0] == '#' )
 #define CHECK_COMMAND( __cmd ) else if( strCmd.find( __cmd ) != -1 )
@@ -33,13 +66,19 @@ ScriptFile::ScriptFile()
 	if( theApp.dwScriptLoopLength > 0 )
 	{
 		boScriptThreadDone	 = false;
+#ifdef _WIN32
 		hScriptThread = (HANDLE)_beginthreadex( NULL, 0, ScriptThread, 0, 0, &nScriptThreadId );
-
+#else
+		hScriptThread = std::thread( []() { ScriptFile::ScriptThread( nullptr ); } );
+		nScriptThreadId = hScriptThread.get_id();
+#endif
+#ifdef _WIN32
 		_LOG_DEBUG
 			LOG_DEBUG_LVL1,
 			"Script Thread ID=%u",
 			GetThreadId()
 		LOG_
+#endif
 	}
 	else
 		boScriptThreadDone	 = true;
@@ -62,11 +101,23 @@ unsigned int CALLBACK ScriptFile::ScriptThread( void* pParam )
 	return 0;
 }
 
+#ifndef _WIN32
+std::uint64_t ScriptFile::GetThreadId() const
+{
+	// Hash thread::id to a stable numeric for logs.
+	return static_cast<std::uint64_t>( std::hash<std::thread::id>{}( nScriptThreadId ) );
+}
+#endif
+
 ////////////////////////////////////////////
 // Called by ScriptThread
 void ScriptFile::ThreadFunc( void )
 {
+#ifdef _WIN32
 	START_DEADLOCK_DETECTION( hScriptThread, "Script Thread" );
+#else
+	START_DEADLOCK_DETECTION( GetCurrentThread(), "Script Thread" );
+#endif
 
 	// Waiting the right time to start the thread
 	int PriorityChange = 1;
@@ -78,22 +129,32 @@ void ScriptFile::ThreadFunc( void )
 
 		// Run script if possible
 		if( theApp.dwScriptLoopLength > 0 )
-			RunScript( "Script\\script.txt" );
+			RunScript( fs::path("Script") / "script.txt" );
 
 		KEEP_ALIVE
 
 		// Verify global timers
 		TFCTimerManager::VerifyTimers();
 
-		Sleep( theApp.dwScriptLoopLength*1000 );
+		std::this_thread::sleep_for( std::chrono::milliseconds( theApp.dwScriptLoopLength * 1000 ) );
 	}
 
 	STOP_DEADLOCK_DETECTION
 }
 
+ScriptFile::~ScriptFile()
+{
+#ifndef _WIN32
+	if ( hScriptThread.joinable() )
+	{
+		hScriptThread.join();
+	}
+#endif
+}
+
 ////////////////////////////////////////////
 // Executes script content
-int ScriptFile::RunScript( char* szScriptPath )
+int ScriptFile::RunScript( const fs::path &scriptPath )
 {	
 	if( boScriptIsRunning )
 		return -1;
@@ -105,7 +166,7 @@ int ScriptFile::RunScript( char* szScriptPath )
 	try
 	{
 		// Open script
-		std::string strScript =	OpenScript( szScriptPath );
+		std::string strScript =	OpenScript( scriptPath );
 
 		// Default value is false
 		boTraceExecution = false;
@@ -113,7 +174,7 @@ int ScriptFile::RunScript( char* szScriptPath )
 		boKeepScript = false;
 		boStopScriptExecution = false;
 		strGodCharacter  = "";
-		strScriptFilename = szScriptPath;
+		strScriptFilename = scriptPath.string();
 
 		// Parse line after line
 		while( !strScript.empty() && !boStopScriptExecution )
@@ -150,7 +211,8 @@ int ScriptFile::RunScript( char* szScriptPath )
 		char newFilename[128];
 		sprintf( newFilename, "%d_%s", time( NULL ), strScriptFilename.c_str() );
 		
-		MoveFile( strScriptFilename.c_str(), newFilename );
+		std::error_code ec;
+		fs::rename( fs::path(strScriptFilename), fs::path(newFilename), ec );
 	}
 
 	strScriptFilename = "";
@@ -161,46 +223,31 @@ int ScriptFile::RunScript( char* szScriptPath )
 
 ////////////////////////////////////////////
 // Open script (if any errors, thows an exception )
-std::string ScriptFile::OpenScript( char* szFile )
+std::string ScriptFile::OpenScript( const fs::path &filePath )
 {
-	// Try to open the file
-	FILE* fp = fopen( szFile, "r+" );
-
-	if( fp == NULL )
+	std::ifstream in( filePath, std::ios::binary );
+	if( !in.is_open() )
 		throw 1;
 
-	// Get file size
-	fseek( fp, 0, SEEK_END );
-	int file_size = ftell( fp );
-	fseek( fp, 0, SEEK_SET );
-
-	if( file_size <= 0 )
+	std::string content(
+		(std::istreambuf_iterator<char>( in )),
+		std::istreambuf_iterator<char>()
+	);
+	if( content.empty() )
 		throw 2;
 
-	// Create buffer
-	char* buf = new char[file_size+1];
-
-	// Read file
-	fread( buf, file_size, 1, fp );
-	buf[file_size] = 0;
-
-	// Keep script
-	std::string strScript;
-	strScript = const_cast< const char* >( buf );
-
-	// Free buffer
-	delete buf;
-
-	// Close file
-	fclose( fp );
-
-	return strScript;
+	return content;
 }
 
 ////////////////////////////////////////////
 // Translate a command
 void ScriptFile::TranslateScript( std::string strCmd )
 {
+#ifndef _WIN32
+	(void)strCmd;
+	// Linux migration TODO: port Players/CPlayerManager/SysopCmd dependencies.
+	return;
+#else
 	// Comments
 	COMMENT
 	{
@@ -395,6 +442,7 @@ void ScriptFile::TranslateScript( std::string strCmd )
 		if( boTemporaryUser )
 			delete user;
 	}
+#endif
 }
 
 ////////////////////////////////////////////
@@ -407,33 +455,41 @@ void ScriptFile::TraceExecution( const char* msg, ... )
 	char buf[512];
 	char date[64];
 
-	_vsnprintf( buf, sizeof( buf ), msg, args );
+	vsnprintf( buf, sizeof( buf ), msg, args );
 	strcat( buf, "\r\n" );
 
-	SYSTEMTIME sysTime;
-	GetLocalTime( &sysTime );
+	std::time_t t = std::time( nullptr );
+	std::tm tmLocal{};
+#ifdef _WIN32
+	localtime_s( &tmLocal, &t );
+#else
+	localtime_r( &t, &tmLocal );
+#endif
 
 	// Format date/time
 	sprintf( date, "%04d/%02d/%02d %02d:%02d:%02d,", 
-		sysTime.wYear, 
-        sysTime.wMonth,
-        sysTime.wDay,
-        sysTime.wHour, 
-        sysTime.wMinute,
-        sysTime.wSecond  );
+		tmLocal.tm_year + 1900,
+        tmLocal.tm_mon + 1,
+        tmLocal.tm_mday,
+        tmLocal.tm_hour,
+        tmLocal.tm_min,
+        tmLocal.tm_sec  );
 
 	// Open report file
-	FILE* fp = fopen( "Script\\report.txt", "a" );
-	if( fp != NULL )
+	const fs::path reportDir = fs::path("Script");
+	const fs::path reportPath = reportDir / "report.txt";
+	std::error_code ec;
+	fs::create_directories( reportDir, ec );
+
+	std::ofstream out( reportPath, std::ios::app | std::ios::binary );
+	if( out.is_open() )
 	{
-		// Write trace
-		fwrite( date, strlen( date ), 1, fp );
-		fwrite( buf, strlen( buf ), 1, fp );
-		fclose( fp );
+		out.write( date, static_cast<std::streamsize>(strlen( date )) );
+		out.write( buf, static_cast<std::streamsize>(strlen( buf )) );
+		out.flush();
 	}
 	else
 	{
-		// Stop tracing if there's no way to write report
 		boTraceExecution = false;
 	}
 

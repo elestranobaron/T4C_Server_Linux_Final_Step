@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "BaldricSilverknife.H"
+#include "BaldricSilverknife.h"
 
 BaldricSilverknife::BaldricSilverknife()
 {}

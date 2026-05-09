@@ -1,6 +1,9 @@
+#ifdef _WIN32
 #include "stdafx.h"
+#endif
+#include "TimeUtils.h"
 
 DWORD __declspec( dllexport ) GetRunTime(){
-    static INT initialTime = GetTickCount(); // steph ajout de INT
-    return GetTickCount() - initialTime;
+    static DWORD initialTime = GetMonotonicTickCountMs();
+    return static_cast<DWORD>(GetMonotonicTickCountMs() - initialTime);
 }

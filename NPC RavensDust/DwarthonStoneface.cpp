@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "DwarthonStoneface.H"
+#include "DwarthonStoneface.h"
 
 DwarthonStoneface::DwarthonStoneface()
 {}

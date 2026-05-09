@@ -13,7 +13,7 @@
 #include "Character.h"
 #include "ObjectListing.h"
 #include "ObjectFlagsListing.h"
-#include "blockinglisting.h"
+#include "BlockingListing.h"
 #include "_item.h"
 #include "Lock.h"
 

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "AloysiusStarbolt.H"
+#include "AloysiusStarbolt.h"
 
 AloysiusStarbolt::AloysiusStarbolt()
 {}

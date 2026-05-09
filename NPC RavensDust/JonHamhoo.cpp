@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "JonHamhoo.H"
+#include "JonHamhoo.h"
 
 JonHamhoo::JonHamhoo()
 {}

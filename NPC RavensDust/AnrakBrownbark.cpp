@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "AnrakBrownbark.H"
+#include "AnrakBrownbark.h"
 
 AnrakBrownbark::AnrakBrownbark()
 {}

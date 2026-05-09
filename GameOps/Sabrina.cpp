@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Sabrina.H"
+#include "Sabrina.h"
 
 Sabrina::Sabrina()
 {}

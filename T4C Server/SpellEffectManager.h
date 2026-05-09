@@ -28,7 +28,8 @@ private:
 
 #define REGISTER_SPELL_EFFECT( __obj, __func, __id, __initfunc )  typedef class _INIT##__obj\
 {public: _INIT##__obj\
-    ( void ){ SpellEffectManager::RegisterSuperstructure( __func, __id ); if( __initfunc != NULL ){ __initfunc(); } }\
-} INIT; static INIT __init;
+    ( void ){ SpellEffectManager::RegisterSuperstructure( __func, __id ); \
+    if ( (__initfunc) ) { (reinterpret_cast<void(*)()>(__initfunc))(); } }\
+} INIT; static INIT __init {};
 
 #endif // !defined(AFX_SPELLEFFECTMANAGER_H__65AF1061_0C35_11D2_835C_00E02922FA40__INCLUDED_)

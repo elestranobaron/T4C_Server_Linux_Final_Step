@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "NPCRat.H"
+#include "NPCRat.h"
 
 NPCRat::NPCRat()
 {}

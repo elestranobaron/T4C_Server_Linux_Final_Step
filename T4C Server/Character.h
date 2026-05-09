@@ -109,7 +109,7 @@ public:
 	void StopUsingChest( void );
 	void SendChestContentPacket(void); //Send the character the chest packet! :)
 
-	inline TradeMgr2* GetTradeMgr2(); // Returns a pointer to the trade manager;
+	TradeMgr2* GetTradeMgr2(); // Returns a pointer to the trade manager;
 	void TradeRequest(Character *invitedCharacter); // Invites or accept a trade
 	void TradeCancel(); // Cancels the trade or invite
 	void TradeFinish(); // Finish the trade
@@ -205,7 +205,7 @@ public:
 	void TrainUnit();
 
 	Players *GetPlayer();
-	inline unsigned long long GetGodFlags();
+	unsigned long long GetGodFlags();
 
 
 	BOOL UseSkillPnts( WORD bQuantity );
@@ -221,14 +221,14 @@ public:
 
 	void SendPlayerMessage( TFCPacket &sending );
 
-	inline BOOL UseSkill( int nID, Unit *uTarget, LPVOID lpValueOUT );
-	inline BOOL UseSkill( int nID, WorldPos wlPos );
+	BOOL UseSkill( int nID, Unit *uTarget, LPVOID lpValueOUT );
+	BOOL UseSkill( int nID, WorldPos wlPos );
 
-	inline BOOL CastSpell( WORD wSpellID, Unit *uTarget );
-   inline BOOL CastSpellDirect( WORD wSpellID, Unit *uTarget );
-	inline BOOL CastSpell( WORD wSpellID, WorldPos wlPos );
+	BOOL CastSpell( WORD wSpellID, Unit *uTarget );
+   BOOL CastSpellDirect( WORD wSpellID, Unit *uTarget );
+	BOOL CastSpell( WORD wSpellID, WorldPos wlPos );
 
-	inline BOOL UseSpellEnergy( WORD wEnergy );
+	BOOL UseSpellEnergy( WORD wEnergy );
 
 	void Regenerate( void );
 
@@ -252,16 +252,16 @@ public:
 	double GetAC( void );
     double GetTrueAC( void );
 
-	inline char GetAgressivness( void );
-	inline void SetAgressivness( char cAgr );
+	char GetAgressivness( void );
+	void SetAgressivness( char cAgr );
 
 	BOOL CanAttack( void );
 
-	inline void WaitForSaving( void );
+	void WaitForSaving( void );
 
     BOOL CanEquip( Unit *lpuUnit, _item *lpProvidedItem = NULL, BOOL boEcho = TRUE, String *reqText = NULL );
 
-    inline WORD GetLang( void ) const;
+    WORD GetLang( void ) const;
 
     int  GetWeight( void );
     int  GetMaxWeight( void );
@@ -422,19 +422,19 @@ private:
     void SynchronizeGold( void );
     //bool SeparateGold( DWORD dwStackID, DWORD dwGoldAmount );
 
-    inline void DestroyEquipment( void );
+    void DestroyEquipment( void );
 
     WORD wLang;
 
     static void DataSaveCallback( DWORD dwSaveResult, LPVOID lpData );
     
-    inline void SavingStart( void );
-    inline void SavingStop( void );	
+    void SavingStart( void );
+    void SavingStop( void );	
     BYTE numberOfSaveFailures; // Counts how many sucessive times it failed to save player.
     
     HANDLE hCreationEvent;
     
-    inline void PacketSingleEquip( BYTE equip_pos, TFCPacket &sending );
+    void PacketSingleEquip( BYTE equip_pos, TFCPacket &sending );
     
     Group *lpGroup;
     

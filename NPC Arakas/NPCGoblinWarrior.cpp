@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "NPCGoblinWarrior.H"
+#include "NPCGoblinWarrior.h"
 
 NPCGoblinWarrior::NPCGoblinWarrior()
 {}

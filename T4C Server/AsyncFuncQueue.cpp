@@ -3,7 +3,10 @@
 #include "AsyncFuncQueue.h"
 #include "TFCServerGP.h"
 #include "DeadlockDetector.h"
+#ifdef _WIN32
 #include <process.h>
+#endif
+#include <cstdint>
 #include "ThreadMonitor.h"
 
 
@@ -54,7 +57,7 @@ void AsyncFuncQueue::Call
 	lpFuncData->lpFunc = lpFunc;
 	lpFuncData->lpData = lpData;
 
-	PostQueuedCompletionStatus( hIoCompletion, 0, (DWORD)lpFuncData, NULL );
+	PostQueuedCompletionStatus( hIoCompletion, 0, reinterpret_cast<std::uintptr_t>( lpFuncData ), NULL );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -87,9 +90,9 @@ void AsyncFuncQueue::AsyncFuncQueueFunc()
     LOG_
 
 	DWORD dwStopMessage = 0;
-	DWORD dwlpFuncData;
+	std::uintptr_t dwlpFuncData;
 	ASYNC_FUNC_DATA *lpFuncData;
-	LPOVERLAPPED s_oDummy;
+	LPOVERLAPPED s_oDummy = NULL;
 
     CDeadlockDetector cDeadlockDetector;
     cDeadlockDetector.RegisterThread( hThreadID, "AsyncFuncQueue Thread", 300000  );
@@ -102,7 +105,7 @@ void AsyncFuncQueue::AsyncFuncQueueFunc()
             LEAVE_TIMEOUT
 			// If this isn't a thread termination message
 			if( dwStopMessage == 0 ){
-				lpFuncData = (ASYNC_FUNC_DATA *)( dwlpFuncData );
+				lpFuncData = reinterpret_cast< ASYNC_FUNC_DATA * >( dwlpFuncData );
 				
 				// Call the function with its parameters
                 _LOG_DEBUG

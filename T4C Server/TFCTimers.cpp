@@ -366,7 +366,7 @@ BOOL TFCTimerManager::RemoveTimersByCallback
 // Return: BOOL, TRUE if timer was found and destroyed.
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-	return tGlobalTimer.RemoveTimersByParameter( tcbSearchFunc );
+	return tGlobalTimer.RemoveTimersByCallback( tcbSearchFunc );
 }
 
 BOOL TFCTimerManager::RemoveTimersByID( WORD wID ){

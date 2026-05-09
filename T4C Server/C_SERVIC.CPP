@@ -5,7 +5,11 @@
 
 #include <windows.h>
 
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
+#endif
+#endif
 #include "c_servic.h"
 #include "T4CLog.h"
 

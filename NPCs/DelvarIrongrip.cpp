@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "DelvarIrongrip.H"
+#include "DelvarIrongrip.h"
 
 DelvarIrongrip::DelvarIrongrip()
 {}

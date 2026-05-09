@@ -8,7 +8,7 @@
 #include "Unit.h"
 #include "Character.h"
 #include "SharedStructures.h"
-#include "TFC_Main.h"
+#include "TFC_MAIN.h"
 
 #include <vector>
 

@@ -7,6 +7,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////
 #include <vector>
 #include "Lock.h"
+#include "Portability.h"
 
 #define VECTOR_SIZE  99
 typedef std::vector <CString> csVectorRequest;

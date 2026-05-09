@@ -7,11 +7,16 @@
 
 
 #include "ComPacketHeader.h"
+#include "Win32Compat.h"
 #ifdef _WIN32
 #pragma warning( disable:4786 )
 #endif
 #ifndef USE_CLIENT_CONNECTION
+   #ifdef _WIN32
    #include <afxsock.h>
+   #else
+   #include <netinet/in.h>
+   #endif
 #else
    #include <windows.h>
    #include <queue>

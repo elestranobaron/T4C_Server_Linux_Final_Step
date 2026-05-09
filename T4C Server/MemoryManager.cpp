@@ -4,8 +4,8 @@
 
 #include "stdafx.h"
 
-#include <windows.h>
 #include <malloc.h>
+#include <cstdint>
 #include "stdio.h"
 #include "MemoryManager.h"
 #include "Lock.h"
@@ -28,7 +28,7 @@ void *operator new(size_t size)
 }
 
 
-void operator delete( void *ptr )
+void operator delete(void *ptr) noexcept
 {
    MemManager *Mem = MemManager::GetInstance();
 
@@ -64,7 +64,6 @@ void MemManager::Initialize(void) {
 	memTab = (MemTab *) malloc (sizeof(MemTab));
 	ZeroMemory(memTab, sizeof(MemTab));
 
-	InitializeCriticalSection(&cs);
    Init = false;
 }
 
@@ -142,7 +141,7 @@ void MemManager::Release(void) {
 DWORD
 MemManager::takeofs(void *ptr)
 {
-	DWORD ofs = ((DWORD)ptr & 0xffff) >> 6;
+	DWORD ofs = static_cast<DWORD>((reinterpret_cast<std::uintptr_t>(ptr) & 0xffffu) >> 6);
 	return ofs;
 }
 

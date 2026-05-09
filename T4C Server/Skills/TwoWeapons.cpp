@@ -1,6 +1,7 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "TwoWeapons.h"
-#include "..\T4CLog.h"
+#include "../T4CLog.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

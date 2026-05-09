@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Torgas.H"
+#include "Torgas.h"
 
 Torgas::Torgas()
 {}

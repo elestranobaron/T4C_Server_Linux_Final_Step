@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Grimish.H"
+#include "Grimish.h"
 
 Grimish::Grimish()
 {}

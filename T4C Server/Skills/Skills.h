@@ -1,12 +1,5 @@
-#include "..\stdafx.h"
-#include "..\Unit.h"
-#include "..\Skills.h"
-#include "..\TFCTimers.h"
-#include "..\Character.h"
-#include "..\Game_Rules.h"
-#include "..\WorldMap.h"
-#include "..\TFC_MAIN.h"
-#include "..\random.h"
-
-extern Random rnd;
-
+/* Subdirectory sources include "Skills.h"; resolve to parent Skills.h (Linux paths). */
+#ifndef T4C_SKILLS_SUBDIR_INCLUDE_H
+#define T4C_SKILLS_SUBDIR_INCLUDE_H
+#include "../Skills.h"
+#endif

@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "TFC Server.h"
 #include "TFC_MAIN.h"
+#ifdef _WIN32
 #include "TFC ServerDlg.h"
+#endif
 #include "TFCPacket.h"
 //#include "StaticObjects.h"
 #include "SharedStructures.h"
@@ -16,8 +18,10 @@
 #include "TFCTimers.h"
 #include "TFCTime.h"
 #include "Random.h"
+#ifdef _WIN32
 #include <eh.h>
 #include <process.h>
+#endif
 //#include "UsersDB.H"
 #include "Skills.h"
 #include "ODBCMage.h"
@@ -25,7 +29,7 @@
 #include "RegKeyHandler.h"
 #include "IntlText.h"
 #include "AutoConfig.h"
-#include "format.h"
+#include "Format.h"
 #include "ThreadMonitor.h"
 //BLBLBLB
 #include "WeatherEffect.h"
@@ -36,10 +40,11 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-LONG __stdcall DefaultExcpFilter( LPEXCEPTION_POINTERS lp );
-
 extern CTFCServerApp theApp;
+#ifdef _WIN32
+LONG __stdcall DefaultExcpFilter( LPEXCEPTION_POINTERS lp );
 extern CTFCServerDlg *MainDlg;
+#endif
 extern TemplateList <Players> SocketPlayerList;
 
 //TemplateList <Players> UsersList; // Auxiliary users list
@@ -48,11 +53,13 @@ extern TemplateList< Unit> AddCreatureList;
 
 TFC_MAIN* TFCServer;
 
+#ifdef _WIN32
 void FetchExceptionFunction(unsigned int u, EXCEPTION_POINTERS* pExp){
 	TFCException *excp = new TFCException;
 	excp->SetException(pExp);
 	throw excp;
 }
+#endif
 // Variables for personnal mailing //////////////////////////////////////////////////////////
 Random rnd;
 
@@ -323,25 +330,25 @@ int TFCMAIN::Attack(Unit *Attacker, Unit *Target, bool &blockedPath )
                         || 
                     Attacker->GetUnderBlock() == __INDOOR_SAFE_HAVEN 
                         ||
-                    Attacker->GetUnderBlock() == __BLOCK_ABSOLUTE//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Attacker->GetUnderBlock() == __BLOCK_ABSOLUTE//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
-                    Attacker->GetUnderBlock() == __BLOCK_CAN_FLY_OVER//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Attacker->GetUnderBlock() == __BLOCK_CAN_FLY_OVER//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
-                    Attacker->GetUnderBlock() == __BLOCK_DEEP_WATER//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Attacker->GetUnderBlock() == __BLOCK_DEEP_WATER//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
-                    Attacker->GetUnderBlock() == __BLOCK_SHALLOW_WATER//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Attacker->GetUnderBlock() == __BLOCK_SHALLOW_WATER//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
 				    Target->GetUnderBlock() == __SAFE_HAVEN
                         ||
                     Target->GetUnderBlock() == __INDOOR_SAFE_HAVEN 
                         ||
-                    Target->GetUnderBlock() == __BLOCK_ABSOLUTE//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Target->GetUnderBlock() == __BLOCK_ABSOLUTE//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
-                    Target->GetUnderBlock() == __BLOCK_CAN_FLY_OVER//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Target->GetUnderBlock() == __BLOCK_CAN_FLY_OVER//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
-                    Target->GetUnderBlock() == __BLOCK_DEEP_WATER//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Target->GetUnderBlock() == __BLOCK_DEEP_WATER//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                         ||
-                    Target->GetUnderBlock() == __BLOCK_SHALLOW_WATER//BLBLBL : ajoutÈ test pour Èviter que des tricheurs ayant rÈussi ‡ Ítre sur une case bloquante puisse tuer d'autres joueurs.
+                    Target->GetUnderBlock() == __BLOCK_SHALLOW_WATER//BLBLBL : ajoutù test pour ùviter que des tricheurs ayant rùussi ù ùtre sur une case bloquante puisse tuer d'autres joueurs.
                 )
                     && 
                 (   // If both the attacker and target are players.
@@ -759,7 +766,9 @@ void RegisterObjects( void );
     // Initialize ODBC
 	Players::InitializeODBC();
 	
+#ifdef _WIN32
     SetUnhandledExceptionFilter( DefaultExcpFilter );
+#endif
 
 	Character::InitializeODBC();    
 	Character::InitXPchart();

@@ -2,12 +2,12 @@
 #include "TFC_MAIN.h"
 #include "TFC Server.h"
 #include "IntlText.h"
-#include "format.h"
+#include "Format.h"
 #include "RegKeyHandler.h"
 
 #include "PlayerManager.h"
 
-#include "NPCMAcroscriptLng.h"
+#include "NPCmacroScriptLng.h"
 
 #ifdef EXPORT
 #undef EXPORT
@@ -1276,7 +1276,8 @@ void EXPORT ChatterShoutFunc
     
     sending << (RQ_SIZE)RQ_SendChatterMessage;
     sending << CPlayerManager::GetChatter().GetMainChannel();
-    sending << (CString &)npc->GetName(_DEFAULT_LNG);
+    CString npcNameShout = npc->GetName(_DEFAULT_LNG);
+    sending << npcNameShout;
     sending << (const char *)msg;
     
     Broadcast::BCast( npc->GetWL(), 0, sending );                
@@ -1300,7 +1301,8 @@ void EXPORT NewChatterShoutFunc
 
 	sending << (RQ_SIZE)RQ_SendChatterMessage;
 	sending << Channel;
-	sending << (CString &)npc->GetName(_DEFAULT_LNG);
+	CString npcNameCh = npc->GetName(_DEFAULT_LNG);
+	sending << npcNameCh;
 	sending << (const char *)msg;
 
 	Broadcast::BCast( npc->GetWL(), 0, sending);
@@ -1368,78 +1370,78 @@ BYTE GetMsgChar
 	}else{											//DC
 		// Check if the character is an accent character.
 		switch( ch ){
-		case 192: //'¿':
-		case 193: //'¡':
-		case 194: //'¬':
-		case 195: //'√':
-		case 196: //'ƒ':
-		case 197: //'≈':
-		case 198: //'∆':
+		case 192: //'ù':
+		case 193: //'ù':
+		case 194: //'ù':
+		case 195: //'ù':
+		case 196: //'ù':
+		case 197: //'ù':
+		case 198: //'ù':
 			return 'A';
-		case 199: //'«':
+		case 199: //'ù':
 			return 'C';
-		case 200: //'»':
-		case 201: //'…':
-		case 202: //' ':
-		case 203: //'À':
+		case 200: //'ù':
+		case 201: //'ù':
+		case 202: //'ù':
+		case 203: //'ù':
 			return 'E';
-		case 204: //'Ã':
-		case 205: //'Õ':
-		case 206: //'Œ':
-		case 207: //'œ':
+		case 204: //'ù':
+		case 205: //'ù':
+		case 206: //'ù':
+		case 207: //'ù':
 			return 'I';
-		case 209: //'—':
+		case 209: //'ù':
 			return 'N';
-		case 210: //'“':
-		case 211: //'”':
-		case 212: //'‘':
-		case 213: //'’':
-		case 214: //'÷':
+		case 210: //'ù':
+		case 211: //'ù':
+		case 212: //'ù':
+		case 213: //'ù':
+		case 214: //'ù':
 			return 'O';
-		case 217: //'Ÿ':
-		case 218: //'⁄':
-		case 219: //'€':
-		case 220: //'‹':
+		case 217: //'ù':
+		case 218: //'ù':
+		case 219: //'ù':
+		case 220: //'ù':
 			return 'U';
-		case 221: //'›':
+		case 221: //'ù':
 			return 'Y';
-		case 224: //'‡':
-		case 225: //'·':
-		case 226: //'‚':
-		case 227: //'„':
-		case 228: //'‰':
-		case 229: //'Â':
-		case 230: //'Ê':
+		case 224: //'ù':
+		case 225: //'ù':
+		case 226: //'ù':
+		case 227: //'ù':
+		case 228: //'ù':
+		case 229: //'ù':
+		case 230: //'ù':
 			return 'a';
-		case 231: //'Á':
+		case 231: //'ù':
 			return 'c';
-		case 232: //'Ë':
-		case 233: //'È':
-		case 234: //'Í':
-		case 235: //'Î':
+		case 232: //'ù':
+		case 233: //'ù':
+		case 234: //'ù':
+		case 235: //'ù':
 			return 'e';
-		case 236: //'Ï':
-		case 237: //'Ì':
-		case 238: //'Ó':
-		case 239: //'Ô':
+		case 236: //'ù':
+		case 237: //'ù':
+		case 238: //'ù':
+		case 239: //'ù':
 			return 'i';
 		case 240:
 			return 'o';
-		case 241: //'Ò':
+		case 241: //'ù':
 			return 'n';
-		case 242: //'Ú':
-		case 243: //'Û':
-		case 244: //'Ù':
-		case 245: //'ı':
-		case 246: //'ˆ':
+		case 242: //'ù':
+		case 243: //'ù':
+		case 244: //'ù':
+		case 245: //'ù':
+		case 246: //'ù':
 			return 'o';
-		case 249: //'˘':
-		case 250: //'˙':
-		case 251: //'˚':
-		case 252: //'¸':
+		case 249: //'ù':
+		case 250: //'ù':
+		case 251: //'ù':
+		case 252: //'ù':
 			return 'u';
-		case 253: //'˝':
-		case 255: //'ˇ':
+		case 253: //'ù':
+		case 255: //'ù':
 			return 'y';
 		};
 		return ch;

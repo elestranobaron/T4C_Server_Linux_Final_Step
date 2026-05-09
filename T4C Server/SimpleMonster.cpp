@@ -5,7 +5,7 @@
 #include "BlockingListing.h"
 #include "T4CLog.h"
 #include "IntlText.h"
-#include "format.h"
+#include "Format.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

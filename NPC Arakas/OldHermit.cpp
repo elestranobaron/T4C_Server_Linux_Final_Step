@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "OldHermit.H"
+#include "OldHermit.h"
 
 OldHermit::OldHermit()
 {}

@@ -1,10 +1,11 @@
 #include "stdafx.h"
 #include "int64stuff.h"
+#include <cstdint>
 
 //calcule piussance
-unsigned __int64 int64stuff::MyPow(unsigned __int64 val, unsigned __int64 pow)
+std::uint64_t int64stuff::MyPow(std::uint64_t val, std::uint64_t pow)
 {
-	unsigned __int64 answer = 1;
+	std::uint64_t answer = 1;
 	if (pow != 0)
 	{
 		for (; pow > 0; pow--)
@@ -15,7 +16,7 @@ unsigned __int64 int64stuff::MyPow(unsigned __int64 val, unsigned __int64 pow)
 }
 
 //calcule la taille
-int int64stuff::GetLenght(unsigned __int64 value)
+int int64stuff::GetLenght(std::uint64_t value)
 {
 	int lenght = 0;
 	do

@@ -7,7 +7,16 @@
 #include "NPCstructure.h"
 #include "T4CLog.h"
 #include "Apparence.h"
+#include "StandardTypes.h"
 
+#ifndef TRACE
+#define TRACE(...) ((void)0)
+#endif
+
+#ifndef T4C_CREATE_NPC_FUNC_NAME
+#define T4C_CREATE_NPC_FUNC_NAME CreateNPC
+#endif
+#define T4C_CALL_CREATE_NPC() T4C_CREATE_NPC_FUNC_NAME()
 
 void MonsterStatSetup( void );
 void InitCreatures( void );
@@ -18,9 +27,13 @@ const int _SPECIAL1 = 2;
 #define BASE_MONSTER_ID     20000
 
 //////////////////////////////////////////////////////////////////////////////////////////
-#define INIT_MONSTER_STAT_SETUP	static WORD wIDCount = 0; void MonsterStatSetup(){ \
+/* Linux links multiple MonsterStatSetup.cpp units into one binary; override per TU before including this header. */
+#ifndef T4C_MONSTER_STAT_SETUP_FUNC_NAME
+#define T4C_MONSTER_STAT_SETUP_FUNC_NAME MonsterStatSetup
+#endif
+#define INIT_MONSTER_STAT_SETUP	static WORD wIDCount = 0; void T4C_MONSTER_STAT_SETUP_FUNC_NAME(){ \
 TRACE( "\r\n====!wIDCount=%u..!====", wIDCount );\
-  LPBOOL lpInit = new BOOL[ wIDCount + 1 ]; \
+  BOOL *lpInit = new BOOL[ wIDCount + 1 ]; \
 {\
   int i;\
     for( i = 0; i < wIDCount; i++ ){\
@@ -53,7 +66,7 @@ MONSTER_ATTACK   *lpMonsterAttack;
         }\
     }\
 }\
-delete lpInit;\
+delete[] lpInit;\
 }
 
     /*MOB->nDeathGiveFlag = 0;\

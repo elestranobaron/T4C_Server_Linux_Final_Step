@@ -3,9 +3,13 @@
 #include "Random.h"
 #include "T4CLog.h"
 #include "Random.h"
+#ifdef _WIN32
 #include <process.h>
+#endif
 
+#ifdef _WIN32
 static HANDLE hWeatherHandle = NULL;
+#endif
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -30,6 +34,7 @@ WeatherEffect* WeatherEffect::GetInstance( void )
 }
 
 //////////////////////////////////////////////////////////////////////
+#ifdef _WIN32
 // The thread that randomly changes meteo //BLBLBL 08/12/2010
 void __cdecl WeatherMaintenance(void*)
 {
@@ -92,6 +97,11 @@ void WeatherEffect::StartWeatherRandom(void)
         hWeatherHandle = (HANDLE)_beginthread( WeatherMaintenance,0, NULL);
     }
 }
+#else
+void WeatherEffect::StartWeatherRandom(void)
+{
+}
+#endif
 
 
 //////////////////////////////////////////////////////////////////////
@@ -399,6 +409,7 @@ void WeatherEffect::FreeWeatherMaps( void )
 // Load a map in memory
 bool WeatherEffect::LoadBmpMap( char* szFile, int world )
 {
+#ifdef _WIN32
 	HANDLE hFile;
 	DWORD  dwRead;
 
@@ -524,4 +535,9 @@ bool WeatherEffect::LoadBmpMap( char* szFile, int world )
 	}
 
 	return true;
+#else
+	(void)szFile;
+	(void)world;
+	return false;
+#endif
 }

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Sweeper.H"
+#include "Sweeper.h"
 
 Sweeper::Sweeper()
 {}

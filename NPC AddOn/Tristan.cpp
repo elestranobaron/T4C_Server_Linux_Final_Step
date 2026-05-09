@@ -24,7 +24,7 @@ void Tristan::OnTalk( UNIT_FUNC_PROTOTYPE )
 CONSTANT FirstQuestion = 1; 
 CONSTANT SecondQuestion = 2;
 CONSTANT ThirdQuestion = 3;  
-;static CString csLastUserID;  
+;static String csLastUserID;  
 
 InitTalk
 

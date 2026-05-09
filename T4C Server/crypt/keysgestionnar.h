@@ -8,16 +8,17 @@
 */
 
 #include "int64stuff.h"
+#include <cstdint>
 
 class Key
 {
 public:
-	unsigned __int64 key;		//cle: e ou d
-	unsigned __int64 keymod;	//cle n	
+	std::uint64_t key;		//cle: e ou d
+	std::uint64_t keymod;	//cle n	
 	
 	//constructeur
 	Key();
-	Key(unsigned __int64, unsigned __int64);
+	Key(std::uint64_t, std::uint64_t);
 	Key& operator=(const Key &oldkey);
 
 

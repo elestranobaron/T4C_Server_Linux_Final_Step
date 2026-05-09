@@ -1,5 +1,6 @@
 #pragma hdrstop
-#include <NPC.H>
+#include <NPC.h>
+#include "NPC.H"
 
 #include "Amelia.h"
 #include "AnthorTheMad.h"

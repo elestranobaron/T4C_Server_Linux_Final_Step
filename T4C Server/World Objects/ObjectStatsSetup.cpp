@@ -16,7 +16,7 @@
 #include "IcySaber.h"
 #include "Gold.h"
 
-#include "..\Apparence.h"
+#include "../Apparence.h"
 
 // TO DELETE
 StandardObject DECOR001;

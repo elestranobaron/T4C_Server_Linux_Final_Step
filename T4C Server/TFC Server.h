@@ -9,8 +9,10 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#if defined(_WIN32)
 #ifndef __AFXWIN_H__
 	#error include 'stdafx.h' before including this file for PCH
+#endif
 #endif
 
 #define MESSAGES_THREADS    1
@@ -20,10 +22,37 @@ void ReportLastError(void);
 //#include "TFC Messages\ReportError.h"
 #include "T4CLog.h"
 #include "DebugLogger.h"
+#ifdef _WIN32
 #include "resource.h"		// main symbols
 #include <afxtempl.h>
+#else
+#include <vector>
+#include <list>
+#include "StandardTypes.h"
+#include "Portability.h"
+#ifndef LPCTSTR
+typedef const char *LPCTSTR;
+#endif
+#ifndef HANDLE
+typedef void *HANDLE;
+#endif
+template<class T, class U = T>
+class CArray : public std::vector<T> {
+public:
+	using std::vector<T>::vector;
+	void Add(const T &v) { this->push_back(v); }
+	void RemoveAll() { this->clear(); }
+	int GetSize() const { return static_cast<int>(this->size()); }
+	void SetAtGrow(int i, const T &v) {
+		if (i >= GetSize()) {
+			this->resize(static_cast<size_t>(i) + 1u);
+		}
+		(*this)[static_cast<size_t>(i)] = v;
+	}
+};
+#endif
 #include "TFCException.h"
-#include "Worldmap.h"
+#include "WorldMap.h"
 
 #define ROUND_TIMER 1
 #define TIME_SPAN   2
@@ -49,8 +78,8 @@ void ReportLastError(void);
 
 // BEGIN : Mestoph -> Anti SpeedHack
 //#define CHEAT_KEY			"CheatProtection"
-//#define SH_DEF_MOVMENTS		35  //75, BL : apparement speedhack reglé à 1.2 passe avec cette valeur
-//#define SH_DEF_DELAY		5  //10, BL : trop large pour détecter les "petits coups d'accelerateur"
+//#define SH_DEF_MOVMENTS		35  //75, BL : apparement speedhack regl  1.2 passe avec cette valeur
+//#define SH_DEF_DELAY		5  //10, BL : trop large pour dtecter les "petits coups d'accelerateur"
 // END : Mestoph -> Anti SpeedHack
 
 //#define DEBUG_EXCEPTION

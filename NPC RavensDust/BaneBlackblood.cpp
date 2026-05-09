@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "BaneBlackblood.H"
+#include "BaneBlackblood.h"
 
 BaneBlackblood::BaneBlackblood()
 {}

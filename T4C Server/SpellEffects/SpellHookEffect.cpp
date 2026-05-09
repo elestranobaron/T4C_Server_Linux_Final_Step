@@ -2,7 +2,7 @@
 #include "SpellHookEffect.h"
 #include "../SpellMessageHandler.h"
 #include "../T4CLog.h"
-#include "../tfc_main.h"
+#include "../TFC_MAIN.h"
 #include "../random.h"
 #include <math.h>
 

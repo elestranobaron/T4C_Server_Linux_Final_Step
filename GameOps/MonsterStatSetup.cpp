@@ -14,7 +14,7 @@ NPCstructure::NPC NPCSabrina;
 
 // Signs 
 
-void CreateNPC( void );
+void T4C_CREATE_NPC_FUNC_NAME( void );
 
 INIT_MONSTER_STAT_SETUP
 
@@ -378,10 +378,10 @@ MOB_LIGHT_RESIST      ( 5000 )
 MOB_DARK_RESIST       ( 5000 )
 MOB_CAN_ATTACK        ( FALSE )
 
-	CreateNPC();
+	T4C_CALL_CREATE_NPC();
 CLOSE_MONSTER_STAT_SETUP
 		
-void MonsterStatDestroy(){
+void MonsterStatDestroy_GameOps(){
 }
 
 

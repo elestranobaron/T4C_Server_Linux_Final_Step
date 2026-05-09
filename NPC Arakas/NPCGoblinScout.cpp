@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "NPCGoblinScout.H"
+#include "NPCGoblinScout.h"
 
 NPCGoblinScout::NPCGoblinScout()
 {}

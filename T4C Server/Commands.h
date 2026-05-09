@@ -40,6 +40,12 @@
 #include "WDAFile.h"
 #include <list>
 
+#ifndef _WIN32
+class CWnd;
+class CTreeCtrl;
+typedef void *HTREEITEM;
+#endif
+
 class Commands;
 class Script;
 class ScriptItem{

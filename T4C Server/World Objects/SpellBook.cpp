@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "SpellBook.h"
-#include "..\Character.h"
+#include "../Character.h"
 
 
 //////////////////////////////////////////////////////////////////////

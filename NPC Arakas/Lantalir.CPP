@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Lantalir.H"
+#include "Lantalir.h"
 
 Lantalir::Lantalir()
 {}

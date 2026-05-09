@@ -1,14 +1,15 @@
 #pragma hdrstop
-#include <NPC.H>
+#include <NPC.h>
+#include "NPC.H"
 
 #include "Araknor.h"
-#include "Balork.H"
+#include "Balork.h"
 #include "BrotherKiran.h"
 #include "DelvarIrongrip.h"
 #include "Dragon.h"
 #include "Edgar.h"
 #include "ElmertMerkiss.h"
-#include "Fali.H"
+#include "Fali.h"
 #include "Geena.h"
 #include "Guardman.h"
 #include "Halam.h"
@@ -17,7 +18,7 @@
 #include "JagarKar.h"
 #include "Jalus.h"
 #include "Kalastor.h"
-#include "Kilhiam.H"
+#include "Kilhiam.h"
 #include "KirlorDhul.h"
 #include "Lothan.h"
 #include "Markam.h"

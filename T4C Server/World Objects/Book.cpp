@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Book.h"
 
-#include "..\TFCPacket.h"
+#include "../TFCPacket.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

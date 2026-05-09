@@ -5,13 +5,11 @@
 #define UNLOCK_FUNC()   void Unlock( void )
 #define PICKLOCK_FUNC() BOOL PickLock( void )
 
+#include "StandardTypes.h"
 #include "stackhlp.h"
 #include <string>
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
+#include <mutex>
+#include <thread>
 
 class CLock;
 class CDebugLockManager{
@@ -33,18 +31,8 @@ class CLock
 public:
     CLock(){ 
         lockEntry = CDebugLockManager::EmptyEntry;
-#ifdef _WIN32
-        InitializeCriticalSection( &csThreadLock ); 
-#else
-        pthread_mutex_init(&mutex, NULL);
-#endif
     };
     virtual ~CLock(){
-#ifdef _WIN32
-        DeleteCriticalSection( &csThreadLock );
-#else
-        pthread_mutex_destroy(&mutex);
-#endif
     };
 
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -59,11 +47,7 @@ public:
         // Register that we are waiting for the lock to be released.
         CDebugLockManager::GetInstance()->Locking( callerAddr, this, newLockEntry );
 
-#ifdef _WIN32
-        EnterCriticalSection( &csThreadLock );
-#else
-        pthread_mutex_lock(&mutex);
-#endif
+        csThreadLock.lock();
 
         // Register that we are inside the lock.
         CDebugLockManager::GetInstance()->GotLock( newLockEntry, lockEntry );
@@ -73,19 +57,11 @@ public:
         // Log that this lock was released.
         CDebugLockManager::GetInstance()->Unlocking( lockEntry );
 
-#ifdef _WIN32
-        LeaveCriticalSection( &csThreadLock );
-#else
-        pthread_mutex_unlock(&mutex);
-#endif
+        csThreadLock.unlock();
     }
     
-// Picklock only works on WinNT 4.0 or more.
-#if( _WIN32_WINNT >= 0x400 )    
-    //////////////////////////////////////////////////////////////////////////////////////////    
     virtual int PickLock( ){
-        // If lock is successfull
-        if( TryEnterCriticalSection( &csThreadLock ) ){
+        if( csThreadLock.try_lock() ){
             DWORD callerAddr;
             GET_CALLER_ADDR( callerAddr );
 
@@ -95,31 +71,12 @@ public:
         }
         return false;
     }
-#else
-    // On Linux, implement TryLock using pthread_mutex_trylock
-    virtual int PickLock( ){
-        if( pthread_mutex_trylock(&mutex) == 0 ){
-            DWORD callerAddr;
-            GET_CALLER_ADDR( callerAddr );
-
-            // Log picklog
-            CDebugLockManager::GetInstance()->Picklock( callerAddr, this, lockEntry );
-            return true;
-        }
-        return false;
-    }
-#endif
 
 private:
     // Entry of lock in the lock table.
     DWORD lockEntry;
 
-    // The underlying critical section.
-#ifdef _WIN32
-    CRITICAL_SECTION csThreadLock;
-#else
-    pthread_mutex_t mutex;
-#endif
+    std::mutex csThreadLock;
 
 };
 
@@ -140,18 +97,13 @@ private:
 
 
 
-#if( _WIN32_WINNT >= 0x400 )
 //////////////////////////////////////////////////////////////////////////////////////////
 // Helper functions, allows safely locking multiple locks.
 inline void MultiLock( CLock *cLockL, CLock *cLockR ){
     cLockL->Lock();
     while( !cLockR->PickLock() ){
         cLockL->Unlock();
-#ifdef _WIN32
-        Sleep( 0 );
-#else
-        sched_yield();
-#endif
+        std::this_thread::yield();
         cLockL->Lock();
     }
 }
@@ -175,6 +127,5 @@ inline void MultiLock3( CLock *cLock1, CLock *cLock2, CLock *cLock3 ){
         }
     }
 }
-#endif
 
 #endif//#define LOCK_H_CLASS_DEFINITION

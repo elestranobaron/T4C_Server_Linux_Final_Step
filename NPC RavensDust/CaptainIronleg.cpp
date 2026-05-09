@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "CaptainIronleg.H"
+#include "CaptainIronleg.h"
 
 CaptainIronleg::CaptainIronleg()
 {}

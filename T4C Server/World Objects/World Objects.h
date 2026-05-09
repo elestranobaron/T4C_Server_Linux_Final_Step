@@ -1,9 +1,9 @@
-#include "..\Unit.h"
-#include "..\ObjectListing.h" // Header file that contains all object ID's
-#include "..\TFC_MAIN.h"
-#include "..\Broadcast.h"
-#include "..\DynObjManager.h"
-#include "..\random.h"
+#include "../Unit.h"
+#include "../ObjectListing.h" // Header file that contains all object ID's
+#include "../TFC_MAIN.h"
+#include "../Broadcast.h"
+#include "../DynObjManager.h"
+#include "../random.h"
 
 
 void ObjectStatsSetup();

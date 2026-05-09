@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "DerranIronstrife.H"
+#include "DerranIronstrife.h"
 
 DerranIronstrife::DerranIronstrife()
 {}

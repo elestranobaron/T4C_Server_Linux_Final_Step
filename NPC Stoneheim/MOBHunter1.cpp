@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "MOBHunter1.H"
+#include "MOBHunter1.h"
 
 MOBHunter1::MOBHunter1()
 {}

@@ -91,24 +91,24 @@ public:
 	// Finds a valid non-blocking area around the given point within the given range.
 	WorldPos FindValidSpot( WorldPos wlCenter, WORD wRange, BOOL bAllowPiles=false );//BLBLBL added BOOL bAllowPiles
 
-	inline void VerifyPeripheralHives( WorldPos wlPos, DIR::MOVE dirPOV );
-	inline void VerifyInviewHives( WorldPos wlPos );
+	void VerifyPeripheralHives( WorldPos wlPos, DIR::MOVE dirPOV );
+	void VerifyInviewHives( WorldPos wlPos );
 
     // Returns the position where it would collide betwen Pos1 and Pos2,
     BOOL GetCollisionPos( WorldPos Pos1, WorldPos Pos2, WorldPos *lpReturnPos, Unit **lpCollideUnit, bool boTargetPC = true, bool boTargetNPC = true );
 	bool AttackBlockTest( WorldPos Pos1, WorldPos Pos2, WorldPos *lpReturnPos);
-	void SetBlocking(WorldPos where, unsigned char which);//BLBLBL passage de privÈ en public
+	void SetBlocking(WorldPos where, unsigned char which);//BLBLBL passage de privù en public
 
 private:	
-	inline Unit *GetHiveAt( int nX, int nY );
-    inline BOOL IsCollideArea( BYTE bAreaType );
+	Unit *GetHiveAt( int nX, int nY );
+    BOOL IsCollideArea( BYTE bAreaType );
 
-    inline BOOL QueryPositionCollision( WorldPos wlPos, Unit **lpCollisionUnit, bool boTargetPC );
+    BOOL QueryPositionCollision( WorldPos wlPos, Unit **lpCollisionUnit, bool boTargetPC );
 
 	//Unit *search_unit(unsigned short X, unsigned short Y, DWORD ID);
 
 	// Blocking functions
-	inline BOOL internalIsBlocking(WorldPos where, Unit *lpuCheck = NULL,signed short xo = 0, signed short yo = 0);		
+	BOOL internalIsBlocking(WorldPos where, Unit *lpuCheck = NULL,signed short xo = 0, signed short yo = 0);		
 	//void SetBlocking(WorldPos where, unsigned char which);	//BLBLBL passage en public
 
 	//TemplateList <MonsterEncounter>    *WorldMonsters;

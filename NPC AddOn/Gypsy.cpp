@@ -159,14 +159,14 @@ YesNoELSE(SecondQuestion)
 	INTL( 12245, "Answer the question please... did you believe Olin Haad when he said that you were a Harvester of Life?")
 	SetYesNo(SecondQuestion)
 
-;} else if( ( msg.Find(INTL( 5333, "HARVESTER")) != -1 ) && YesNo == ThirdQuestion) {;YesNo = 0;
+;} else if( ( msg.find(INTL( 5333, "HARVESTER")) != String::npos ) && YesNo == ThirdQuestion) {;YesNo = 0;
 	Conversation
 	INTL( 12246, "I see... I have found the one you are searching for. He is in the ancient temple of a dead god called Gluriurl. "
 	"The temple is located on an island that was separated from the mainland by a large body of water during "
 	"the god's downfall. To reach this island, you must travel through a cave that lies north of here.")
 	GiveFlag(__FLAG_ADDON_STORYLINE_PROGRESS, 17)
 
-;} else if( ( msg.Find(INTL( 12247, "GIVER")) != -1 ) && YesNo == ThirdQuestion) {;YesNo = 0;
+;} else if( ( msg.find(INTL( 12247, "GIVER")) != String::npos ) && YesNo == ThirdQuestion) {;YesNo = 0;
 	Conversation
 	INTL( 12248, "I see... I have found the one you are searching for. He is in the ancient temple of a dead god called Gluriurl. "
 	"The temple is located on an island that was separated from the mainland by a large body of water during "
@@ -251,7 +251,7 @@ ELSE
 	INTL( 12232, "I see... you and I having this conversation, but not on this day.")
 ENDIF
 
-;} else if( ( msg.Find(INTL( 6621, "REGENERATION")) != -1 ) && YesNo == ItemChoice) {;YesNo = 0;
+;} else if( ( msg.find(INTL( 6621, "REGENERATION")) != String::npos ) && YesNo == ItemChoice) {;YesNo = 0;
 	Conversation
 	INTL( 12261, "A wise choice. The other two objects will go to other adventurers in need, rest assured. Now, you "
 	"should hurry and go to the Lighthaven temple before anything happens to you and you lose the stone.")
@@ -260,7 +260,7 @@ ENDIF
 	PRIVATE_SYSTEM_MESSAGE(INTL( 12262, "The gypsy gives you an Amulet of Regeneration and a Gem of Regeneration."))
 	GiveFlag(__FLAG_ADDON_STORYLINE_PROGRESS, 19)
 
-;} else if( ( msg.Find(INTL( 12263, "RENEWAL")) != -1 ) && YesNo == ItemChoice) {;YesNo = 0;
+;} else if( ( msg.find(INTL( 12263, "RENEWAL")) != String::npos ) && YesNo == ItemChoice) {;YesNo = 0;
 	Conversation
 	INTL( 12264, "A wise choice. The other two objects will go to other adventurers in need, rest assured. Now, you "
 	"should hurry and go to the Lighthaven temple before anything happens to you and you lose the stone.")
@@ -269,7 +269,7 @@ ENDIF
 	PRIVATE_SYSTEM_MESSAGE(INTL( 12265, "The gypsy gives you an Amulet of Renewal and a Gem of Renewal."))
 	GiveFlag(__FLAG_ADDON_STORYLINE_PROGRESS, 19)
 
-;} else if( ( msg.Find(INTL( 12266, "QUIVER")) != -1 ) && YesNo == ItemChoice) {;YesNo = 0;
+;} else if( ( msg.find(INTL( 12266, "QUIVER")) != String::npos ) && YesNo == ItemChoice) {;YesNo = 0;
 	Conversation
 	INTL( 12267, "A wise choice. The other two objects will go to other adventurers in need, rest assured. Now, you "
 	"should hurry and go to the Lighthaven temple before anything happens to you and you lose the stone.")

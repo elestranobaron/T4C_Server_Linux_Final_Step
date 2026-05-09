@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "AttrBoost.h"
-#include "../tfc_main.h"
-#include "../t4clog.h"
+#include "../TFC_MAIN.h"
+#include "../T4CLog.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

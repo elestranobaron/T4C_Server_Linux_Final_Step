@@ -20,9 +20,9 @@ public:
     dice( unsigned int nNewDiceCount, unsigned int nNewDiceValue, int nNewPlus = 0 ) :
         nDiceCount( nNewDiceCount ), nDiceValue( nNewDiceValue ), nPlus( nNewPlus ){};
 
-    inline unsigned int Value( void ){ return nDiceValue; };
-    inline unsigned int Count( void ){ return nDiceCount; };
-    inline int Plus ( void ){ return nPlus;      };
+    inline unsigned int Value( void ) const { return nDiceValue; };
+    inline unsigned int Count( void ) const { return nDiceCount; };
+    inline int Plus ( void ) const { return nPlus;      };
 private:
     unsigned int nDiceCount;
     unsigned int nDiceValue;
@@ -40,9 +40,9 @@ class __declspec(dllexport) Random
 
 		signed int operator () ( uhyper NewSeed, int NewMinValue, int NewMaxValue );
 		signed int operator () ( int NewMinValue, int NewMaxValue);
-        signed int operator () ( dice &cDice );
+        signed int operator () ( const dice &cDice );
 
-        inline signed int roll( dice &cDice ){
+        inline signed int roll( const dice &cDice ){
             return (*this)( cDice );
         }
         

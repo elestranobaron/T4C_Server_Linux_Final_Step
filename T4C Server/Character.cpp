@@ -15,9 +15,9 @@
 #include "Broadcast.h"
 #include "BlockingListing.h"
 #include "Unit.h"
-#include "skilllisting.h"
+#include "SkillListing.h"
 #include "_item.h"
-#include "BoostListing.H"
+#include "BoostListing.h"
 #include "SpellListing.h"
 #include "ODBCMage.h"
 #include "TFC Server.h"
@@ -32,10 +32,12 @@
 //#include "GlobalStatistics.h"
 #include "QuestFlagsListing.h"
 #include "WeatherEffect.h"
-#include "PlayerManager.h"//BLBLBL ajoutÈ cet include
+#include "PlayerManager.h"//BLBLBL ajoutù cet include
 
 #include "PVPSentence.h"
 #include <iterator>
+#include <string>
+#include <cstring>
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -294,7 +296,7 @@ Character::Character() :
 
 	boLoaded = FALSE;
 	boSavingOnProgress = FALSE;//BLBLBL ajout d'une variable permettant de savoir si un personnage est en cours de sauvegarde
-	                           //afind d'Èviter de lancer deux requetes SQL en overlapping.
+	                           //afind d'ùviter de lancer deux requetes SQL en overlapping.
 
     bGender = GENDER_MALE;   // Default...
     nKarma  = 0;            // neutral by default
@@ -398,13 +400,13 @@ void Character::InitializeODBC( void )
 	ODBCCharRead.Connect( USERS_DSN, USERS_USER, USERS_PWD );
 	ODBCCharAsyncSave.Connect( USERS_DSN, USERS_USER, USERS_PWD );
 		
-	// BEGIN : Mestoph -> What disable transaction mÈthode ? i have remove the comment
+	// BEGIN : Mestoph -> What disable transaction mùthode ? i have remove the comment
 	ODBCCharRead.Lock();
 
 	// Sets write connections' autocommit off
 	ODBCCharWrite.ConnectOption( SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF );	
 	ODBCCharAsyncSave.ConnectOption( SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF );	
-	// END : Mestoph -> What disable transaction mÈthode ? i have remove the comment
+	// END : Mestoph -> What disable transaction mùthode ? i have remove the comment
 /*	// Fetches all IDs in the characters table.
 	ODBCCharRead.SendRequest( "SELECT UserID, AccountName, CurrentLevel FROM PlayingCharacters" );
 
@@ -495,7 +497,7 @@ void AssignValidID
 
 	// Fetches all IDs in the characters table.
 	ODBCCharRead.SendRequest( "SELECT UserID FROM PlayingCharacters ORDER BY UserID" );
-	//BLBL ‡ tester !
+	//BLBL ù tester !
 	/*CString csQuery;
 	csQuery.Format( "SELECT UserID FROM PlayingCharacters WHERE PlayerName='%s' AND UserAccount='%s'", (LPCTSTR)target->GetName(), (LPCTSTR)target->GetTrueName() );
 	ODBCCharRead.SendRequest( (LPCTSTR)csQuery );*/
@@ -504,7 +506,7 @@ void AssignValidID
     DWORD previousId = 0;
 	// Fetch each rows.
 
-/*	ODBCCharRead.Fetch();//BLBL on lit directement le UserID AttribuÈ au player en question. :
+/*	ODBCCharRead.Fetch();//BLBL on lit directement le UserID Attribuù au player en question. :
 	ODBCCharRead.GetDWORD( 1, &Id );//BLBL*/
 
 
@@ -665,7 +667,7 @@ BOOL Character::roll_stats()
         SetINT( GetINT() > 22 ? 22 : GetINT() );
         SetWIS( GetWIS() > 22 ? 22 : GetWIS() );
 		//SetLCK( GetLCK() > 110 ? 110 : GetLCK() );
-		SetLCK( 100 );//BLBLBL tous les joueurs doivent avoir 100 en Luck dËs le dÈpart.
+		SetLCK( 100 );//BLBLBL tous les joueurs doivent avoir 100 en Luck dùs le dùpart.
 
         SetATTACK( 15 );
         SetDODGE( 15 );
@@ -699,7 +701,7 @@ bool Character::IsNameValid
     name.TrimRight();
 
 	// Only gets wanted characters
-	CString check_name = name.SpanIncluding(_T("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -ÔÎˆÈË‡˘‰"));//BLBLBL
+	CString check_name = name.SpanIncluding(_T("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -ùùùùùùùù"));//BLBLBL
 
 	// If the packet is a valid one
 	if( name.GetLength() > 1 && check_name == name && name.GetLength() <= 19){//BLBLBL
@@ -721,7 +723,6 @@ char Character::load_character(CString new_name, CString new_account, LPBYTE lpb
 	reset_character();
     
     CString full_directory;
-	CFile player_file;
 
     new_name.TrimRight();
     new_name.TrimLeft();
@@ -874,7 +875,12 @@ void Character::DataSaveCallback
 			sending << (RQ_SIZE)RQ_ServerMessage;
 			sending << (short)30;
 			sending << (short)3;
-			sending << (CString &)CString("Server problem. You're being disconnected to avoid corruption of your character. Sorry for the inconvenience.");
+			{
+				CString _msgServerDisconnect(
+				    "Server problem. You're being disconnected to avoid corruption of your "
+				    "character. Sorry for the inconvenience.");
+				sending << (CString &)_msgServerDisconnect;
+			}
 			sending << (long)RGB(255,0,0);
 			selfPlayer->Lock();
 			self->SendPlayerMessage( sending );
@@ -903,14 +909,14 @@ BOOL Character::SaveCharacter( BOOL boCallback )
 			"Save of character %s refused, a save is already on progress.",
 			(LPCTSTR)GetTrueName()
 		LOG_
-		return TRUE;//FALSE; //BLBLBL si une sauvegarde du joueur est dÈj‡ en cours on arrÍte la nouvelle tentative de sauvegarde
+		return TRUE;//FALSE; //BLBLBL si une sauvegarde du joueur est dùjù en cours on arrùte la nouvelle tentative de sauvegarde
 	} else {
 		_LOG_DEBUG
 			LOG_DEBUG_LVL3,
 			"Save of character %s accepted, no other save was on progress, starting now...",
 			(LPCTSTR)GetTrueName()
 		LOG_
-		boSavingOnProgress = TRUE;//autrement on positionne le boolean qui indique qu'on vient de dÈmarrer.
+		boSavingOnProgress = TRUE;//autrement on positionne le boolean qui indique qu'on vient de dùmarrer.
     }  
     if( boCallback )
 	{
@@ -1449,7 +1455,7 @@ BOOL Character::SaveCharacter( BOOL boCallback )
         mentalExhaust,
         attackExhaust,
 		// asteryth guild
-		//(LPCTSTR)csGuildName, // BLBLBL // asteryth modifiÈ pour avoir un get/set
+		//(LPCTSTR)csGuildName, // BLBLBL // asteryth modifiù pour avoir un get/set
 		GetGuildName(),
 		GetGuildID(),
 		GetGuildChestAccess(),
@@ -1466,8 +1472,8 @@ BOOL Character::SaveCharacter( BOOL boCallback )
 
 	ADD_QUERY
 
-	ODBCCharAsyncSave.Lock();//BLBLBL je tente de remettre un lock ICI pour Èviter les cas de double sauvegarde de personnages
-	                         // notamment en cas o˘ un joueur ramasse un objet pendant sa sauvegarde automatique (Áa le fait planter)
+	ODBCCharAsyncSave.Lock();//BLBLBL je tente de remettre un lock ICI pour ùviter les cas de double sauvegarde de personnages
+	                         // notamment en cas où un joueur ramasse un objet pendant sa sauvegarde automatique (ùa le fait planter)
     if( boCallback ){
         _LOG_DEBUG
             LOG_DEBUG_HIGH,
@@ -1497,7 +1503,7 @@ BOOL Character::SaveCharacter( BOOL boCallback )
 	ODBCCharAsyncSave.Unlock();
 
     Unlock();
-	boSavingOnProgress=FALSE;//BLBLBL on indique que la sauvegarde du personnage est terminÈe pour permettre ‡ nouveau de pouvoir sauvegarder.
+	boSavingOnProgress=FALSE;//BLBLBL on indique que la sauvegarde du personnage est terminùe pour permettre ù nouveau de pouvoir sauvegarder.
 	return FALSE;
 }
 
@@ -1880,7 +1886,11 @@ int Character::LoadCharacter
                         Objects *lpuItem = new Objects();
                         
                         // If object could be created
-                        if( lpuItem->Create( U_OBJECT, Unit::GetIDFromName( lpLoadedItem->lpszObjType, U_OBJECT, TRUE ) ) )
+                        if( lpuItem->Create( U_OBJECT, Unit::GetIDFromName(
+                                std::string( reinterpret_cast<const char *>( lpLoadedItem->lpszObjType ),
+                                             strnlen( reinterpret_cast<const char *>( lpLoadedItem->lpszObjType ),
+                                                      sizeof( lpLoadedItem->lpszObjType ) ) ),
+                                U_OBJECT, TRUE ) ) )
 						{
                             
                             // Temporarly replace the unit's ID to load its flags, boosts and effects
@@ -2033,7 +2043,11 @@ int Character::LoadCharacter
                         Objects *lpuItem = new Objects();
                         
                         // If object could be created
-                        if( lpuItem->Create( U_OBJECT, Unit::GetIDFromName( lpLoadedItem->lpszObjType, U_OBJECT, TRUE ) ) ){
+                        if( lpuItem->Create( U_OBJECT, Unit::GetIDFromName(
+                                std::string( reinterpret_cast<const char *>( lpLoadedItem->lpszObjType ),
+                                             strnlen( reinterpret_cast<const char *>( lpLoadedItem->lpszObjType ),
+                                                      sizeof( lpLoadedItem->lpszObjType ) ) ),
+                                U_OBJECT, TRUE ) ) ){
                             
                             // Temporarly replace the unit's ID to load its flags, boosts and effects
                             dwTempID = lpuItem->GetID();
@@ -2097,7 +2111,7 @@ int Character::LoadCharacter
 				
 
 
-				csQuery.Format( "SELECT SkillID, SkillPnts FROM PlayerSkills WHERE OwnerID=%u ORDER BY SkillID", GetID() ); // BLBLL AjoutÈ ORDER BY SkillID pour que les skills soient toujours executÈs dans le meme ordre chez tous les joueurs.
+				csQuery.Format( "SELECT SkillID, SkillPnts FROM PlayerSkills WHERE OwnerID=%u ORDER BY SkillID", GetID() ); // BLBLL Ajoutù ORDER BY SkillID pour que les skills soient toujours executùs dans le meme ordre chez tous les joueurs.
 
                 _LOG_DEBUG
                     LOG_DEBUG_HIGH,
@@ -2348,12 +2362,13 @@ BOOL Character::CreateCharacter(CString csName, LPBYTE lpbAnswers ){
 		chest->ResetContainer();
         
 		// Assigns a valid new ID to this character.
-		AssignValidID( this );//BLBLBL si on met l'autoincrÈment dans la base faudra penser
-							  //‡ dÈplacer cette partie APRES avoir insÈrÈ le personnage, 
-							  //sinon on peut pas connaitre l'ID affectÈ par la BDD
+		AssignValidID( this );//BLBLBL si on met l'autoincrùment dans la base faudra penser
+							  //ù dùplacer cette partie APRES avoir insùrù le personnage, 
+							  //sinon on peut pas connaitre l'ID affectù par la BDD
 
         char szAccount[ 1024 ];
-        Players::QuotedAccount( szAccount, pl->GetAccount() );
+        String accountForQuote = pl->GetAccount();
+        Players::QuotedAccount( szAccount, accountForQuote );
 
 		SetLevel(1);
 
@@ -2550,7 +2565,7 @@ BOOL Character::CreateCharacter(CString csName, LPBYTE lpbAnswers ){
         // Build the INSERT query
 		csQuery.Format(	    
     		"INSERT INTO PlayingCharacters ("
-            "UserID,"//BLBLL A tester : virer ce champs et mettre un autoincrÈment dans la base.
+            "UserID,"//BLBLL A tester : virer ce champs et mettre un autoincrùment dans la base.
 	    	"PlayerName,"
             "AccountName,"
             "Strength,"
@@ -2584,7 +2599,7 @@ BOOL Character::CreateCharacter(CString csName, LPBYTE lpbAnswers ){
             "MentalExhaust,"
             "AttackExhaust"
             ")VALUES("
-            "%u,"   //"UserID"//BLBLL A tester : virer ce champs et mettre un autoincrÈment dans la base.
+            "%u,"   //"UserID"//BLBLL A tester : virer ce champs et mettre un autoincrùment dans la base.
 	    	"'%s'," //"PlayerName,"
             "'%s'," //"AccountName,"
             "%u,"   //"Strength,"
@@ -2617,7 +2632,7 @@ BOOL Character::CreateCharacter(CString csName, LPBYTE lpbAnswers ){
             "0,"    // MoveExhaust
             "0,"    // MentalExhaust
             "0)",   // AttackExhaust
-            GetID(),//BLBLL A tester : virer ce champs et mettre un autoincrÈment dans la base.
+            GetID(),//BLBLL A tester : virer ce champs et mettre un autoincrùment dans la base.
             (LPCTSTR)GetTrueName(),
             (LPCTSTR)szAccount,
 		    GetTrueSTR(),
@@ -2627,7 +2642,7 @@ BOOL Character::CreateCharacter(CString csName, LPBYTE lpbAnswers ){
 		    //GetTrueWIL(),
 		    GetTrueWIS(),
 		    //GetTrueLCK(),			
-			100,//BLBLBL tout le monde doit avoir 100 en chance dËs le dÈpart !!!!
+			100,//BLBLBL tout le monde doit avoir 100 en chance dùs le dùpart !!!!
 		    GetTrueATTACK(),
 		    GetTrueDODGE(),
 		    (double)GetXP(),
@@ -2665,10 +2680,10 @@ BOOL Character::CreateCharacter(CString csName, LPBYTE lpbAnswers ){
 
             TraceExhaust();
 
-            //AssignValidID( this );//BLBLBL si on a rÈussi ‡ mettre l'autoincrÈment en place
-									//il faut dÈplcer ici le AssignValidID dÈplacÈ cette partie 
-									//APRES avoir insÈrÈ le personnage, sinon on peut pas connaitre 
-									//l'ID affectÈ par la BDD
+            //AssignValidID( this );//BLBLBL si on a rùussi ù mettre l'autoincrùment en place
+									//il faut dùplcer ici le AssignValidID dùplacù cette partie 
+									//APRES avoir insùrù le personnage, sinon on peut pas connaitre 
+									//l'ID affectù par la BDD
 
             return TRUE;
 		}
@@ -3152,7 +3167,7 @@ Unit * Character::DropUnit
 		{
             // Find a new valid spot, around the player.
 			
-            WorldPos newPos = wl->FindValidSpot( where, 3, true );//BLBLBL on cherche ‡ poser le plus prËs possible du perso
+            WorldPos newPos = wl->FindValidSpot( where, 3, true );//BLBLBL on cherche ù poser le plus prùs possible du perso
 		
             // If the given spot is valid.
             if( newPos.X != -1 && newPos.Y != -1 )
@@ -4147,7 +4162,10 @@ void Character::PacketSingleEquip
             sending << (long)0;
         }
 
-		sending << (CString &)lpuUnit->GetName( GetLang() );
+		{
+			CString _unitNameForPkt = lpuUnit->GetName( GetLang() );
+			sending << (CString &)_unitNameForPkt;
+		}
 	}
 	else
 	{
@@ -5338,7 +5356,7 @@ void Character::Death
 
 		Unit *lpObject;
 		//unsigned int param[4];
-		//int k = rnd( 0, 7 );//BLBL dÈplacÈ plus bas et initialisÈ ‡ 0
+		//int k = rnd( 0, 7 );//BLBL dùplacù plus bas et initialisù ù 0
 
 		// Transfert the inventory and equipped spill list into a single list for dropping.
 		TemplateList< Unit > tlObjSpillList;
@@ -5386,7 +5404,7 @@ void Character::Death
 				if ( wlWorld->IsValidPosition(wlFoundPos) ) {
 			
 					wlWorld->deposit_unit( wlFoundPos, lpObject );
-					//lpObject->BroadcastPopup( wlFoundPos,1 );//BLBL ici y a un ,1 pour lancer un broadcast REEL ‡ tous les gens autour.
+					//lpObject->BroadcastPopup( wlFoundPos,1 );//BLBL ici y a un ,1 pour lancer un broadcast REEL ù tous les gens autour.
 					lpObject->BroadcastPopup( wlFoundPos );//visiblement le 1 marche pas bien mieux, je le vire
 						
 					// Log spilled item.
@@ -5404,7 +5422,7 @@ void Character::Death
 						wlFoundPos.world
 					LOG_
     							
-					//lpObject->BroadcastPopup( wlPlayerPos );//BLBL je vire pour voir //BLBL OK alors ici, y a pas le ,1 (donc on informe juste le joueur qui a droppÈ)
+					//lpObject->BroadcastPopup( wlPlayerPos );//BLBL je vire pour voir //BLBL OK alors ici, y a pas le ,1 (donc on informe juste le joueur qui a droppù)
 				}else{
 					// Log spilled item.
 					_LOG_ITEMS
@@ -5487,7 +5505,7 @@ void Character::Death
     
 		Broadcast::BCSpellEffect( wlPlayerPos, _DEFAULT_RANGE, DEATH_EFFECT_ID, GetID(), 0, wlPlayerPos,wlNull,GetNextGlobalEffectID(),0);//BLBL 20=>_DEFAULT_RANGE
 
-		//BL note : systeme qui lance un sort ‡ la mort du joueur, mais Áa ne marche pas bien :
+		//BL note : systeme qui lance un sort ù la mort du joueur, mais ùa ne marche pas bien :
 /*		if(theApp.dwDeadSpellID == 0x00)
 		{
 		   Broadcast::BCSpellEffect( wlPlayerPos, 20, DEATH_EFFECT_ID, GetID(), 0, wlPlayerPos,wlNull,GetNextGlobalEffectID(),0);
@@ -5575,7 +5593,7 @@ void Character::Death
 				SetFlag( __FLAG_DEATH_NUMBER, dwDeathValue );
 				WhoHit->SetFlag( __FLAG_KILL_NUMBER, dwKillValue );			
 			}
-		} */ // asteryth dÈsactivation
+		} */ // asteryth dùsactivation
 
 
 		// Avoid a crash when vaporizing the unit lol
@@ -5583,11 +5601,11 @@ void Character::Death
 		{		
 			// Increase the death flags if a player killed me
 			// and if the player isn't in my guild 
-			if( WhoHit->GetType() == U_PC) // && (WhoHit->GetGuildID() != -1 || WhoHit->GetGuildID() != this->GetGuildID())) CommentÈ tant que y a pas de guilde.
+			if( WhoHit->GetType() == U_PC) // && (WhoHit->GetGuildID() != -1 || WhoHit->GetGuildID() != this->GetGuildID())) Commentù tant que y a pas de guilde.
 			{
 				// asteryth pvp ranking
 				// victim stats
-				// asteryth DEBUG pour test ‡ commenter par la suite
+				// asteryth DEBUG pour test ù commenter par la suite
 				
 				//_LOG_DEBUG LOG_ALWAYS, "-----" LOG_
 				//_LOG_DEBUG LOG_ALWAYS, "PVP Ranking START" LOG_	
@@ -5596,7 +5614,7 @@ void Character::Death
 				int victimCurrentDeathNumber = this->GetCurrentDeathNumber();
 				int victimBestSerieMurder = this->GetBestSerieMurder();
 				int victimCurrentSerieMurder = this->GetCurrentSerieMurder();
-				// asteryth DEBUG pour test ‡ commenter par la suite
+				// asteryth DEBUG pour test ù commenter par la suite
 				// _LOG_DEBUG LOG_ALWAYS, "victimTotalDeathNumber: %i, victimCurrentDeathNumber: %i, victimBestSerieMurder: %i, victimCurrentSerieMurder: %i", victimTotalDeathNumber, victimCurrentDeathNumber, victimBestSerieMurder, victimCurrentSerieMurder LOG_
 				// killer stats
 				int killerTotalKillNumber = WhoHit->GetTotalKillNumber();
@@ -5605,7 +5623,7 @@ void Character::Death
 				int killerCurrentSerieMurder = WhoHit->GetCurrentSerieMurder();
 				int killerCurrentPvpPoint = WhoHit->GetCurrentPvpPoint();
 				
-				// asteryth DEBUG pour test ‡ commenter par la suite
+				// asteryth DEBUG pour test ù commenter par la suite
 				// _LOG_DEBUG 
 				// LOG_ALWAYS, 
 				// "killerTotalKillNumber: %i, killerCurrentKillNumber: %i, killerBestSerieMurder: %i, killerCurrentSerieMurder: %i, killerCurrentPvpPoint: %i",
@@ -5672,7 +5690,7 @@ void Character::Death
 				}
 				
 				
-				// asteryth DEBUG pour test ‡ commenter par la suite
+				// asteryth DEBUG pour test ù commenter par la suite
 				// _LOG_DEBUG LOG_ALWAYS, "victimTotalDeathNumber: %i, victimCurrentDeathNumber: %i, victimBestSerieMurder: %i, victimCurrentSerieMurder: %i , killerTotalKillNumber: %i, killerCurrentKillNumber: %i, killerBestSerieMurder: %i, killerCurrentSerieMurder: %i, killerCurrentPvpPoint: %i",
 				// this->GetTotalDeathNumber(), 
 				// this->GetCurrentDeathNumber(), 
@@ -5692,7 +5710,7 @@ void Character::Death
 		}
 
 		// Teleport user to its death location.
-		Teleport( wlTeleportPos, 1 );		//BLBL ai tentÈ de mettre le tÈlÈport AVANT le send global effect
+		Teleport( wlTeleportPos, 1 );		//BLBL ai tentù de mettre le tùlùport AVANT le send global effect
 
 		/////////////
 		// Activate the trigger
@@ -5728,7 +5746,7 @@ int Character::hit(LPATTACK_STRUCTURE blow, Unit *WhoHit)
 
 	Lock();
 
-	this->Disturbed();//BLBLBL on disturb en cas o˘ on est hit
+	this->Disturbed();//BLBLBL on disturb en cas où on est hit
 
 	// Then process all hit-intrinsic skills
 	tlusSkills[Hook_OnHit].ToHead();
@@ -6098,7 +6116,7 @@ WORD Character::GetMana(){
 // This functions returns the max HP of a player
 void Character::SetMana(WORD newMana, BOOL boEcho ){	    
     
-	if (Mana != newMana) { //BLBLBL on ne modifie que si Áa a changÈ !
+	if (Mana != newMana) { //BLBLBL on ne modifie que si ùa a changù !
 	
 	Mana = newMana;
 
@@ -6136,7 +6154,7 @@ void Character::SetGold(int newGold, BOOL boEcho ){
 	{
         char buf[ 1024 ];
         sprintf( buf, _STR( 7508, GetLang() ), gold - dwOldGold );
-        //SendSystemMessage( buf ); // steph dÈsactivation
+        //SendSystemMessage( buf ); // steph dùsactivation
     }
 	TFCPacket sending;
 	sending << (RQ_SIZE)RQ_GoldChange;
@@ -6239,15 +6257,15 @@ void Character::SetExhaust(EXHAUST dfd){
 	lTime = time(NULL);
 	this->lLastEventTime=lTime;
 	
-	//sur havoc on desactive Áa
+	//sur havoc on desactive ùa
 	 	
 	if (dfd.move > exhaust.move) {
-		if (this->boClientExitCountDown) {//BLBLBL : si on sait que le client est justement en train de dÈcompter ‡ ce moment
-			TFCPacket sending; //on lui envoie un paquet lui demandant d'arrÍter de compte, puisque le perso a ÈtÈ disturbed/exhaust (ie : entangle)
-			sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client qu'on a du annuler la dÈco
+		if (this->boClientExitCountDown) {//BLBLBL : si on sait que le client est justement en train de dùcompter ù ce moment
+			TFCPacket sending; //on lui envoie un paquet lui demandant d'arrùter de compte, puisque le perso a ùtù disturbed/exhaust (ie : entangle)
+			sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client qu'on a du annuler la dùco
 			sending << (char)0;	// 0 = Il faut annuler le compteur
 			SendPlayerMessage( sending );
-			this->boClientExitCountDown=false;//on met ‡ false, pour Èviter de flooder le client de paquets indiquant qu'il doit stopper le compteur
+			this->boClientExitCountDown=false;//on met ù false, pour ùviter de flooder le client de paquets indiquant qu'il doit stopper le compteur
 		}
 	}
 	exhaust = dfd;
@@ -7147,16 +7165,24 @@ void Character::PacketSkills
 	sending << (short)GetATTACK();
     sending << (short)GetTrueATTACK();
 	//csText = "Attack";
-	sending << (CString &)CString( _STR( 449, GetLang() ) ) ;
-    sending << (CString &)CString( _STR( 7889, GetLang() ) ) ;
+	{
+		CString _atkTitle = CString( _STR( 449, GetLang() ) );
+		CString _atkDesc = CString( _STR( 7889, GetLang() ) );
+		sending << (CString &)_atkTitle;
+		sending << (CString &)_atkDesc;
+	}
 	
 	sending << (short)__SKILL_DODGE;
 	sending << (char)0;
 	sending << (short)GetDODGE();
     sending << (short)GetTrueDODGE();
 	//csText = "Dodge";
-	sending << (CString &)CString( _STR( 450, GetLang() ) );
-    sending << (CString &)CString( _STR( 7890, GetLang() ) );
+	{
+		CString _dodgeTitle = CString( _STR( 450, GetLang() ) );
+		CString _dodgeDesc = CString( _STR( 7890, GetLang() ) );
+		sending << (CString &)_dodgeTitle;
+		sending << (CString &)_dodgeDesc;
+	}
 
 	tlSentSkills.ToHead();
 	while( tlSentSkills.QueryNext() )
@@ -7191,8 +7217,12 @@ void Character::PacketSkills
 
 		sending << (short)lpUserSkill->GetSkillPnts( this );
         sending << (short)lpUserSkill->GetTrueSkillPnts();
-		sending << (CString &)(CString)lpSkill->GetName( GetLang() );
-        sending << (CString &)(CString)lpSkill->GetDesc( GetLang() );
+		{
+			CString _skillNm = lpSkill->GetName( GetLang() );
+			CString _skillDc = lpSkill->GetDesc( GetLang() );
+			sending << (CString &)_skillNm;
+			sending << (CString &)_skillDc;
+		}
 	}
 }
 
@@ -7578,7 +7608,10 @@ void Character::SendPrivateMessage
 		else dwNameColor = U_PC_COLOR;
     }
     sending << (CString &)csMessage;
-    sending << (CString &)lpuTarget->GetName( GetLang() );
+    {
+		CString _shoutTargetName = lpuTarget->GetName( GetLang() );
+		sending << (CString &)_shoutTargetName;
+	}
 	sending << (long)dwNameColor;
 
     SendPlayerMessage( sending ); 
@@ -7700,14 +7733,14 @@ void Character::Disturbed( WORD pTriggers )
 	lTime = time(NULL);
 	this->lLastEventTime=lTime;
 	
-	//sur havoc on desactive Áa
+	//sur havoc on desactive ùa
 	 
-	if (this->boClientExitCountDown) {//BLBLBL : si on sait que le client est justement en train de dÈcompter ‡ ce moment
-		TFCPacket sending; //on lui envoie un paquet lui demandant d'arrÍter de compte, puisque le perso a ÈtÈ disturbed
-		sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client qu'on a du annuler la dÈco
+	if (this->boClientExitCountDown) {//BLBLBL : si on sait que le client est justement en train de dùcompter ù ce moment
+		TFCPacket sending; //on lui envoie un paquet lui demandant d'arrùter de compte, puisque le perso a ùtù disturbed
+		sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client qu'on a du annuler la dùco
 		sending << (char)0;	// 0 = Il faut annuler le compteur
 		SendPlayerMessage( sending );
-		this->boClientExitCountDown=false;//on met ‡ false, pour Èviter de flooder le client de paquets indiquant qu'il doit stopper le compteur
+		this->boClientExitCountDown=false;//on met ù false, pour ùviter de flooder le client de paquets indiquant qu'il doit stopper le compteur
 	}
 
 
@@ -8201,7 +8234,10 @@ void Character::PacketRobBackpack
 			sending << (long) lpuObject->GetID();
             sending << (short)lpuObject->GetStaticReference();
             sending << (long) lpuObject->GetQty();
-            sending << (CString &)lpuObject->GetName( robber->GetLang() );
+            {
+				CString _robObjName = lpuObject->GetName( robber->GetLang() );
+				sending << (CString &)_robObjName;
+			}
 		}
 		lptluBackpack->Unlock();
 	}
@@ -8692,7 +8728,7 @@ void BroadcastArrow
 
     // Add the distance between the mid pos and the farest unit
     // to the default broadcasting range.
-	// BLBL en clair : on broadcast ‡ partir du centre de la trajectoire de la flËche pour informer tous les gens
+	// BLBL en clair : on broadcast ù partir du centre de la trajectoire de la flùche pour informer tous les gens
 	// se trouvant sur le trajet de celle ci.
     int range;
     if( xDiff > yDiff ){
@@ -9927,7 +9963,7 @@ void Character::SendBackpackContentPacket()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-unsigned __int64 Character::GetGodFlags( void )
+unsigned long long Character::GetGodFlags( void )
 //////////////////////////////////////////////////////////////////////////////////////////
 {
 	Players *user = (Players *)ThisPlayer;
@@ -9963,7 +9999,7 @@ void Character::CheckSpeedHack( WorldPos newPos )
 		int x = abs( initPos.X - newPos.X );
 		int y = abs( initPos.Y - newPos.Y );
 
-		if( (x > 5 || y > 5) || (x >= 5 && y >= 5) )  //BLBLBLBL modif de 6 ‡ 5 (test)
+		if( (x > 5 || y > 5) || (x >= 5 && y >= 5) )  //BLBLBLBL modif de 6 ù 5 (test)
 		{
 			/*_LOG_PC
 				LOG_WARNING,

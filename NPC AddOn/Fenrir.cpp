@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Fenrir.H"
+#include "Fenrir.h"
 
 Fenrir::Fenrir()
 {}

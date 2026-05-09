@@ -1,6 +1,7 @@
 #pragma hdrstop
 
-#include <NPC.H>
+#include <NPC.h>
+#include "NPC.H"
 
 #include "AnnithaeTeardrop.h"
 #include "BeltiganWhitesword.h"

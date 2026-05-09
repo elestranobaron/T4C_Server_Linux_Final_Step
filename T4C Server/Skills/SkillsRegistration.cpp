@@ -1,6 +1,7 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "Skills.h"
-#include "..\SkillListing.h"
+#include "../SkillListing.h"
 
 #include "StunBlow.h"
 #include "PowerfullBlow.h"

@@ -8,6 +8,7 @@
 #include <string>
 #include <deque>
 #include "Lock.h"
+#include "Portability.h"
 
 #ifdef _WIN32
 #pragma warning( disable : 4786 )
@@ -34,7 +35,7 @@ private:
     // Singleton
     DebugLogger();
 
-    std::deque< CString > qStrings;
+    std::deque< String > qStrings;
 };
   
 #endif

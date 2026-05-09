@@ -1,5 +1,6 @@
 #pragma hdrstop
-#include <NPC.H>
+#include <NPC.h>
+#include "NPC.H"
 
 #include "ArganorIargh.h"
 #include "AssystAnter.h"

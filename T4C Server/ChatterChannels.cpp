@@ -800,10 +800,11 @@ void ChatterChannels::SendChannelUsers
         for( i = vUsers.begin(); i != vUsers.end(); i++ ){
             // Get their names
             CString csName = (*i).player->self->GetTrueName();
-            // Packet their names
+            CString csTitle = (*i).player->self->GetTitle( getAccountNames );
+            CString csGuild = (*i).player->self->GetGuild( getAccountNames );
             sending << (CString &)csName;
-            sending << (CString &)(*i).player->self->GetTitle( getAccountNames );
-			sending << (CString &)(*i).player->self->GetGuild(getAccountNames); // steph ajout
+            sending << (CString &)csTitle;
+            sending << (CString &)csGuild;
 
             sending << (char)( (*i).listening ? 1 : 0 );
         }                

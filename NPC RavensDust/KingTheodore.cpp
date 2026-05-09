@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "KingTheodore.H"
+#include "KingTheodore.h"
 
 KingTheodore::KingTheodore()
 {}

@@ -1,13 +1,19 @@
 #include "stdafx.h"
+#ifdef _WIN32
 #include <conio.h>
+#else
+#include "LinuxConio.h"
+#endif
 //#include <smrtheap.h>
 #include "TFC Server.h"
 #include "TFCInit.h"
 #include "TFC_MAIN.h"
-#include "C_Servic.h"
+#ifdef _WIN32
+#include "C_SERVIC.H"
+#endif
 #include "RegKeyHandler.h"
 #include "TFCServerGP.h"
-#include "expfltr.h"
+#include "EXPFLTR.H"
 #include "T4CLog.h"
 #include "IntlText.h"
 #include "AsyncFuncQueue.h"
@@ -17,7 +23,7 @@
 #include "TFCMessagesHandler.h"
 #include "DeadlockDetector.h"
 #include "AutoConfig.h"
-#include "Game_Rules.h"
+#include "GAME_RULES.h"
 //#include "../T4C Monitor/T4C MonitorMap.h"
 #include "Scheduler.h"
 #include "Format.h"
@@ -28,14 +34,26 @@
 #include "MainConsole.h"
 #include "SysopCmd.h"
 #include <signal.h>
+#ifdef _WIN32
 #include <process.h>
+#endif
 #include "ODBCTrace.h"
-#include "version.h"
+#include "Version.h"
 #include "ThreadMonitor.h"
 #include "System.h"
 #include "ExitCode.h"
 //#include "ScriptFile.h"
 #include "random.h"
+#ifndef _WIN32
+#include <arpa/inet.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <filesystem>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
 
 #include "TextFilter.h" //16/06/2009 special censoring filter for bad words
 
@@ -69,7 +87,7 @@ typedef struct _GPEpTn{
 
 //To choose between MYSQL and MSSQL for ODBC : (in order to optimize requests)
 //#define MSSQLSERVER 0//BLBLBL 10/01/2011 (set to 1 if server is MSSQL, use TOP instead of LIMIT in SQL statments)
-// ^^ dÈfini dans les options de compilation ^^
+// ^^ dùfini dans les options de compilation ^^
 
 #define VERSION_STRING  "v%u"
 
@@ -84,14 +102,17 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 void ReportLastError(){
+#ifdef _WIN32
 	TCHAR *lpMsgBuf;
 	FormatMessage(     FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 					NULL,    GetLastError(),
 					MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 					(LPTSTR) &lpMsgBuf,    0,    NULL );// Display the string.
 	MessageBox( NULL, lpMsgBuf, _T("GetLastError"), MB_OK|MB_ICONINFORMATION );
-	// Free the buffer.
 	LocalFree( lpMsgBuf );
+#else
+	std::fprintf(stderr, "GetLastError (errno): %s\n", std::strerror(static_cast<int>(errno)));
+#endif
 }
 
 void __cdecl EntryFunction(void *);
@@ -131,19 +152,26 @@ void FindIPAddress
 	DWORD dwIPAddr=0;
 
 	CHAR hostName[256];
+#ifdef _WIN32
 	HOSTENT *pHostEnt;
 
 	if (gethostname(hostName,sizeof(hostName)) == SOCKET_ERROR 
 				|| (pHostEnt=gethostbyname(hostName)) == NULL) 
+#else
+	struct hostent *pHostEnt;
+
+	if (gethostname(hostName,sizeof(hostName)) != 0 
+				|| (pHostEnt=gethostbyname(hostName)) == NULL) 
+#endif
 	{
 		ipaddr[0] = 0;
 		return;
 	}
 	short i = 0;
-	for (i=0 ; pHostEnt->h_addr_list[i] != '\0'; i++)
+	for (i=0 ; pHostEnt->h_addr_list[i] != nullptr; i++)
 	{
 		struct in_addr *ptr = (struct in_addr *)pHostEnt->h_addr_list[i];
-		SOCKADDR_IN sa;
+		struct sockaddr_in sa{};
 		sa.sin_addr = *ptr;
 		if (i < nArrayLen)	ipaddr[i] = sa.sin_addr.s_addr;
 	}
@@ -154,7 +182,7 @@ void FindIPAddress
 	}
 
 	struct in_addr *ptr = (struct in_addr *)pHostEnt->h_addr;
-	SOCKADDR_IN sa;
+	struct sockaddr_in sa{};
 	sa.sin_addr = *ptr;
 	// overwrite position 0 address.. in case its different.. 
 	ipaddr[0] = sa.sin_addr.s_addr;// leave it in network order..
@@ -567,7 +595,7 @@ int main(int argc,char **argv)
 		// Find next backslash
 		do{
 			loop--;
-		}while( path[ loop ] != '\\' && loop >= 0 );
+		}while( path[ loop ] != '\\' && path[ loop ] != '/' && loop >= 0 );
 		// End string after backslash.
 		path[ loop + 1 ] = 0;
 
@@ -773,14 +801,14 @@ int main(int argc,char **argv)
 		theApp.csDBPwd       = regKey.GetProfileString( "DB_PWD",  "" );
 		theApp.dwDeadSpellID = regKey.GetProfileInt   ( "DeadSpellID",  0x00 ); //DEATH_EFFECT_ID
 		if ( theApp.dwCustomStartupPositionOnOff = regKey.GetProfileInt( "StartupPosOnOff", FALSE ) ) {
-			theApp.dwCustomStartupPositionX = regKey.GetProfileInt( "StartupPosX", NULL );
-			theApp.dwCustomStartupPositionY = regKey.GetProfileInt( "StartupPosY", NULL );
-			theApp.dwCustomStartupPositionW = regKey.GetProfileInt( "StartupPosW", NULL );
+			theApp.dwCustomStartupPositionX = regKey.GetProfileInt( "StartupPosX", 0 );
+			theApp.dwCustomStartupPositionY = regKey.GetProfileInt( "StartupPosY", 0 );
+			theApp.dwCustomStartupPositionW = regKey.GetProfileInt( "StartupPosW", 0 );
 		} 
 		if ( theApp.dwCustomStartupSanctuaryOnOff = regKey.GetProfileInt( "StartupSanctuaryOnOff", FALSE ) ) {
-			theApp.dwCustomStartupSanctuaryX = regKey.GetProfileInt( "StartupSanctuaryX", NULL );
-			theApp.dwCustomStartupSanctuaryY = regKey.GetProfileInt( "StartupSanctuaryY", NULL );
-			theApp.dwCustomStartupSanctuaryW = regKey.GetProfileInt( "StartupSanctuaryW", NULL );
+			theApp.dwCustomStartupSanctuaryX = regKey.GetProfileInt( "StartupSanctuaryX", 0 );
+			theApp.dwCustomStartupSanctuaryY = regKey.GetProfileInt( "StartupSanctuaryY", 0 );
+			theApp.dwCustomStartupSanctuaryW = regKey.GetProfileInt( "StartupSanctuaryW", 0 );
 		}
 		theApp.dwChestEncumbranceUpdatedLive = regKey.GetProfileInt( "ChestEncumbranceUpdatedLive", 0);
 		theApp.csChestEncumbranceBoostFormula = regKey.GetProfileString( "ChestEncumbranceBoostFormula", 0 );
@@ -1253,8 +1281,15 @@ int main(int argc,char **argv)
 		CString messagepath = ServerPath + "T4C Messages.dll";
 			
 		// If the directory specified by "ServerPath" is invalid, inform the user and use normal path
+#ifdef _WIN32
 		CFileFind check;
-		if(!check.FindFile(ServerPath + ".")){
+		const bool serverPathExists = check.FindFile(ServerPath + ".") != FALSE;
+#else
+		std::error_code ec;
+		const bool serverPathExists = std::filesystem::exists(
+			std::filesystem::path(static_cast<const char *>((LPCTSTR)ServerPath)), ec);
+#endif
+		if (!serverPathExists) {
 			LPCTSTR param[2] = {(LPCTSTR)ServerPath, path};
 			
 			TRACE(_T("%s--"), param[0]);
@@ -1269,6 +1304,7 @@ int main(int argc,char **argv)
 		}
 		
 		
+#ifdef _WIN32
 		{		
 			RegKeyHandler EventLog;
 			if(!EventLog.Open(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\T4C Server"))
@@ -1280,6 +1316,7 @@ int main(int argc,char **argv)
 				EventLog.WriteProfileInt(_T("TypesSupported"),  EVENTLOG_ERROR_TYPE | EVENTLOG_WARNING_TYPE | EVENTLOG_INFORMATION_TYPE);
 			}
 		}
+#endif
 
 		theApp.dwPVPDropDisabled = 0;
 
@@ -1315,6 +1352,7 @@ int main(int argc,char **argv)
 
 		GlobalFree( argv );		
 */
+#ifdef _WIN32
 		//init the service with the SCM, if the program is to be started as
 		//a service
 		if(startAsService){	
@@ -1332,6 +1370,10 @@ int main(int argc,char **argv)
 				EntryFunction(NULL);
 				return NORMAL_SERVER_EXIT;
 		}
+#else
+		EntryFunction(NULL);
+		return NORMAL_SERVER_EXIT;
+#endif
 
 	}catch( ... ){
 #ifdef _DEBUG
@@ -1343,8 +1385,12 @@ int main(int argc,char **argv)
 		if( fDbg ){
 			time_t current_time;
 			time(&current_time);
-			CString version;			
+#ifdef _WIN32
+			CString version;
 			version.LoadString(IDS_SERVER_VERSION);
+#else
+			CString version(Version::sBuildStamp.c_str());
+#endif
 			fprintf( fDbg, "\r\n-----");
 			fprintf( fDbg, "\r\nT4C Server v%s - Build l - Main. General Protection fault report, %s\r\n\r\n", (LPCTSTR)version, ctime(&current_time) );
 			fprintf( fDbg, "Server crashed during InitInstance initialisation.                              " );

@@ -1,14 +1,16 @@
 #include "stdafx.h"
+#include <cstdint>
 #include "TFC Server.h"
 #include "Players.h"
-#include "TFC_MAIN.H"
+#include "TFC_MAIN.h"
 #include "ODBCMage.h"
 #include "TFCMessagesHandler.h"
 #include "AutoConfig.h"
 #include "random.h"
 #include "PlayerManager.h"
 #include "AsyncFuncQueue.h"
-#include "format.h"
+#include "Format.h"
+#include "TimeUtils.h"
 
 //#include "VopCom.h"
 //raw_interfaces_only, raw_native_types, no_namespace, named_guids
@@ -45,15 +47,15 @@ namespace{
     } cAutoLoad;
 };
 
-DWORD Players::dwAutoSaveFrequency = 240; //BLBLBL mis à 240 au lieu de 120, pour limiter usage SQL
+DWORD Players::dwAutoSaveFrequency = 240; //BLBLBL mis ï¿½ 240 au lieu de 120, pour limiter usage SQL
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 Players::Players()
 {	
-//	InitializeCriticalSection( &csPacketLock );
-//	InitializeCriticalSection( &csUsageLock );
+//	Initialize packet lock.
+//	Initialize usage lock.
 	
     loadingCount = 0;
 	//	IP_addr = "";
@@ -85,9 +87,9 @@ Players::Players()
 	boWhoInvisible = FALSE;
 	boCanTalk = TRUE;
 	boCanShout = TRUE;
-	lCutExpireDate = 0;//BLBLBL on initialise l'expiration date à 0
+	lCutExpireDate = 0;//BLBLBL on initialise l'expiration date ï¿½ 0
 	boLockedOut = FALSE;
-	lLockExpireDate = 0;//BLBLBL on initialise l'expiration date à 0
+	lLockExpireDate = 0;//BLBLBL on initialise l'expiration date ï¿½ 0
     boCanPage = TRUE;
     cCreditDeduction = 0;
 
@@ -121,7 +123,7 @@ Players::Players()
     pages = true;
 
 	pPCs = new TemplateList <CStringAndRace>;
-	m_timeout = GetTickCount() + 15000;
+	m_timeout = GetMonotonicTickCountMs() + 15000;
 }
 
 Players::~Players()
@@ -134,7 +136,7 @@ Players::~Players()
 	delete pPCs;
 }
 
-inline char *Players::QuotedAccount( char szBuffer[], CString &csAccount ){
+inline char *Players::QuotedAccount( char szBuffer[], const CString &csAccount ){
     
     int nLength = csAccount.GetLength();
     int i, j = 0;
@@ -225,11 +227,11 @@ void Players::SetInGame(BOOL status){
 }
 
 
-void Players::SetGodFlags( unsigned __int64 i64Flags ){
+void Players::SetGodFlags( uint64_t i64Flags ){
 	i64GodFlags = i64Flags;
 }
 
-unsigned __int64 Players::GetGodFlags( void ){
+uint64_t Players::GetGodFlags( void ){
 return i64GodFlags;
 }
 
@@ -273,7 +275,7 @@ BOOL Players::SaveAccount
 	CString csTemp;
 	
 	BOOL boInsert = FALSE;
-	unsigned __int64 i;
+	uint64_t i;
 
 	TemplateList< SQL_REQUEST > *lptlSQLRequests = new TemplateList< SQL_REQUEST >;
 
@@ -294,7 +296,7 @@ BOOL Players::SaveAccount
 		{
 			TRACE( "%u,", i );
 			// If player has bit
-			if( GetGodFlags() & (unsigned __int64)( (unsigned __int64)(1) << i ) )
+			if( GetGodFlags() & (static_cast<uint64_t>(1) << i) )
 			{
 				// Add it
 				csQuery.Format( "INSERT INTO UserFlags(AccountName, FlagBitPosition) VALUES ('%s', %u)", 
@@ -310,11 +312,11 @@ BOOL Players::SaveAccount
 		ADD_QUERY;
 	}
 	if( !boCanShout ){
-		csQuery.Format( "INSERT INTO UserFlags(AccountName, FlagBitPosition, ExpireDate) VALUES('%s', 10002, %d)", szAccount, lCutExpireDate );//BLBLBL ajouté expire date
+		csQuery.Format( "INSERT INTO UserFlags(AccountName, FlagBitPosition, ExpireDate) VALUES('%s', 10002, %d)", szAccount, lCutExpireDate );//BLBLBL ajoutï¿½ expire date
 		ADD_QUERY;
 	}
 	if( boLockedOut ){
-		csQuery.Format( "INSERT INTO UserFlags(AccountName, FlagBitPosition, ExpireDate) VALUES('%s', 10000, %d)", szAccount, lLockExpireDate );//BLBLBL ajouté expire date
+		csQuery.Format( "INSERT INTO UserFlags(AccountName, FlagBitPosition, ExpireDate) VALUES('%s', 10000, %d)", szAccount, lLockExpireDate );//BLBLBL ajoutï¿½ expire date
 		ADD_QUERY;
 	}
     if( boWhoInvisible ){
@@ -571,7 +573,7 @@ BOOL Players::LoadAccount
     pPCs = new TemplateList <CStringAndRace>;
 
     SetGodFlags( 0 );
-    if( stricmp( (LPCTSTR)name, CAutoConfig::GetStringValue( "Software\\Vircom\\The 4th Coming Server\\GeneralConfig", "SuperUser", HKEY_LOCAL_MACHINE ).c_str() ) == 0 ){
+    if( _stricmp( (LPCTSTR)name, CAutoConfig::GetStringValue( "Software\\Vircom\\The 4th Coming Server\\GeneralConfig", "SuperUser", HKEY_LOCAL_MACHINE ).c_str() ) == 0 ){
         // SuperUser has the ability of giving god flags.
         SetGodFlags( GOD_CAN_GIVE_GOD_FLAGS );
         SetGodMode( TRUE );
@@ -642,9 +644,9 @@ BOOL Players::LoadAccount
 	}
 
 	WORD wWord;
-	unsigned long lSavedExpireDate;//BLBLBL systeme expiration des flags
+	DWORD lSavedExpireDate;//BLBLBL systeme expiration des flags
 
-	__int64 n64Flag;
+	std::int64_t n64Flag;
 	ODBCUsers.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
 
 	csQuery.Format( "SELECT FlagBitPosition, ExpireDate FROM UserFlags WHERE AccountName='%s'", szAccount );//BLBL ajout ExpireDate
@@ -662,7 +664,7 @@ BOOL Players::LoadAccount
 		wWord = 0;
 		// Get the flag.
 		ODBCUsers.GetWORD( 1, &wWord );		
-		ODBCUsers.GetDWORD( 2, &lSavedExpireDate );//au chargement on reprend la valeur expire stockée dans les flags
+		ODBCUsers.GetDWORD( 2, &lSavedExpireDate );//au chargement on reprend la valeur expire stockï¿½e dans les flags
 
 		// If its a god flag
 		if( wWord < 64 ){			
@@ -678,15 +680,15 @@ BOOL Players::LoadAccount
 				SetGodFlags( GetGodFlags() | GOD_CAN_VIEW_USER );
 			}
 		}else{
-   			time_t lTimeNow;//BLBL on récupère la date/heure courante pour vérifier les punitions expirées
+   			time_t lTimeNow;//BLBL on rï¿½cupï¿½re la date/heure courante pour vï¿½rifier les punitions expirï¿½es
 			time(&lTimeNow);
 			
 			// Otherwise check for special case
 			switch( wWord ){
 			case LockedOut:
 				
-				lLockExpireDate = lSavedExpireDate;//BLBLBL on garde la valeur stockée dans les flags
-				if (lLockExpireDate>0 && lLockExpireDate<lTimeNow) {//BLBL on ne vérifie que si une date d'expiration est définie.
+				lLockExpireDate = lSavedExpireDate;//BLBLBL on garde la valeur stockï¿½e dans les flags
+				if (lLockExpireDate>0 && lLockExpireDate<lTimeNow) {//BLBL on ne vï¿½rifie que si une date d'expiration est dï¿½finie.
 					boLockedOut= FALSE;
 					lLockExpireDate=0;
 				}else{
@@ -699,8 +701,8 @@ BOOL Players::LoadAccount
 				boCanTalk = FALSE;
 			break;
 			case NoShouts:
-				lCutExpireDate = lSavedExpireDate;//BLBLBL on garde la valeur stockée dans les flags
-				if (lCutExpireDate>0 && lCutExpireDate<lTimeNow) {//BLBL on ne vérifie que si une date d'expiration est définie.
+				lCutExpireDate = lSavedExpireDate;//BLBLBL on garde la valeur stockï¿½e dans les flags
+				if (lCutExpireDate>0 && lCutExpireDate<lTimeNow) {//BLBL on ne vï¿½rifie que si une date d'expiration est dï¿½finie.
 					boCanShout= TRUE;
 					lCutExpireDate=0;
 				}else{
@@ -730,7 +732,7 @@ BOOL Players::LoadAccount
     LOG_
 
     // If this is the super user!
-    if( stricmp( 
+    if( _stricmp( 
         (LPCTSTR)GetFullAccountName(), 
         CAutoConfig::GetStringValue( "Software\\Vircom\\The 4th Coming Server\\GeneralConfig", "SuperUser", HKEY_LOCAL_MACHINE ).c_str() 
     ) == 0 ){
@@ -832,7 +834,7 @@ void Players::RemovePlayer(CString name){
 	pPCs->ToHead();
 	while( pPCs->QueryNext() ){
 		PC = pPCs->Object();
-		if( stricmp( (LPCTSTR)PC->name, (LPCTSTR)name ) == 0 ){
+		if( _stricmp( (LPCTSTR)PC->name, (LPCTSTR)name ) == 0 ){
 			pPCs->DeleteAbsolute();
 		}
 	}
@@ -1169,7 +1171,7 @@ void Players::SetNextSave( void )
 // 
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-    dwNextSave = 4 MINUTES + ( rnd( 0, 2 ) MINUTES ) TDELAY;//BLBLBL modifié de 7 minutes +0,3 à 5+0,2 // steph 4 au lieu de 5
+    dwNextSave = 4 MINUTES + ( rnd( 0, 2 ) MINUTES ) TDELAY;//BLBLBL modifiï¿½ de 7 minutes +0,3 ï¿½ 5+0,2 // steph 4 au lieu de 5
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1187,15 +1189,15 @@ void Players::ResetIdle( void )
 */
     //BLBL antiplug : in case of the player being under sanctuary spell effect the flush time must be 120 seconds
 	if (this->self!=NULL && this->self->GetAC()>=5000) {
-		IdleTime    = TFCMAIN::GetRound() + ( 75000 * 20 ) / 1000;//BL Note : 1 round dure 50ms, 20 rounds = 1 seconde, donc 75 secondes doit être converti en nombre de rounds
+		IdleTime    = TFCMAIN::GetRound() + ( 75000 * 20 ) / 1000;//BL Note : 1 round dure 50ms, 20 rounds = 1 seconde, donc 75 secondes doit ï¿½tre converti en nombre de rounds
 //		boSanctuPlug = true;
 	}else{
 		IdleTime    = TFCMAIN::GetRound() + TFCServer->flush_time;
 //		boSanctuPlug = false;
 	}
     IdleChances = 0;
-	boIdle=false;//BLBLBL 11/12/2010 si on reset son statut, autant reset le booléan qui l'indique.
-	m_timeout = GetTickCount() + 15000;
+	boIdle=false;//BLBLBL 11/12/2010 si on reset son statut, autant reset le boolï¿½an qui l'indique.
+	m_timeout = GetMonotonicTickCountMs() + 15000;
 
 
 }
@@ -1213,12 +1215,12 @@ BOOL Players::IsIdle( void )
     }
     
 
-	/*if(this->m_timeout < GetTickCount()){
+	/*if(this->m_timeout < GetMonotonicTickCountMs()){
 	
 		//boIdle = true;
 		//return true;
 	}
-	else if(GetTickCount() -  (this->m_timeout - 15000) > 2000){
+	else if(GetMonotonicTickCountMs() -  (this->m_timeout - 15000) > 2000){
 		TFCPacket sending;
 		sending << (RQ_SIZE)RQ_Ack;
 		TRACE( "\r\nSending Keep-Alive" );
@@ -1277,20 +1279,20 @@ BOOL Players::IsIdle( void )
 
     if( IdleTime <= TFCMAIN::GetRound()){
         
-		//12/12/2010 BLBLB .. en fait.. c'est débile de changer l'idle time dans le isIdle(), il faut changer cela
+		//12/12/2010 BLBLB .. en fait.. c'est dï¿½bile de changer l'idle time dans le isIdle(), il faut changer cela
 		//quand on recoit un RQ_Ack..
 
 		if (this->self!=NULL && this->self->GetAC()>=5000) {
-			//BLBLBL 11/12/2010 : hmm, pourquoi changer cette valeur ici.. ça me parait bidon :
-			IdleTime    = TFCMAIN::GetRound() + (75000 * 20) / 1000;//BL Note : 1 round dure 50ms, 20 rounds = 1 seconde, donc 75 secondes doit être converti en nombre de rounds
+			//BLBLBL 11/12/2010 : hmm, pourquoi changer cette valeur ici.. ï¿½a me parait bidon :
+			IdleTime    = TFCMAIN::GetRound() + (75000 * 20) / 1000;//BL Note : 1 round dure 50ms, 20 rounds = 1 seconde, donc 75 secondes doit ï¿½tre converti en nombre de rounds
 			boSanctuPlug = true;
 		}else{
-			//11/12/2010 :: apparement en commentat cette ligne, on a des prises rouges toutes les 10 sec : à VOIR !!!!!
+			//11/12/2010 :: apparement en commentat cette ligne, on a des prises rouges toutes les 10 sec : ï¿½ VOIR !!!!!
 			IdleTime = TFCMAIN::GetRound() + TFCServer->flush_time;
 			boSanctuPlug = false;
 		}
         
-        IdleChances++; //BLBLBLL 12/12/2010 je vire carrément cette histoire de chances, ça chie les 3/4 du temps.
+        IdleChances++; //BLBLBLL 12/12/2010 je vire carrï¿½ment cette histoire de chances, ï¿½a chie les 3/4 du temps.
 		    	/*_LOG_WORLD
                     LOG_MISC_1,
 					"IdleChances increased %u.",
@@ -1705,7 +1707,7 @@ bool Players::AccountLogged
 
 	
     ODBCUsers.Lock();
-	//BLBL : check si le joueur est déjà connecté pour pas générer d'erreur SQL :
+	//BLBL : check si le joueur est dï¿½jï¿½ connectï¿½ pour pas gï¿½nï¿½rer d'erreur SQL :
 	CString csQuery;
 #ifdef MSSQLSERVER
 	csQuery.Format( "SELECT TOP 1 AccountName FROM OnlineUsers WHERE AccountName='%s'", (LPCTSTR)csAccountName ); //BLBBL 05/01/2011

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Mirandul.H"
+#include "Mirandul.h"
 
 Mirandul::Mirandul()
 {}

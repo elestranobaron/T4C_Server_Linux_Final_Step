@@ -367,104 +367,104 @@ public:
 	virtual void SetLastTeleport( WorldPos wlPOS );
 	virtual WorldPos GetLastTeleport( void );
 
-	inline WorldPos OriginalWorldPos( void );
+	WorldPos OriginalWorldPos( void );
 
-	inline void AddEffect( LPUNIT_EFFECT lpSpellEffect );	
-	inline void RemoveEffect( DWORD dwEffect );
-    inline void DispellEffectWithFlag( DWORD flagId );
-	inline LPUNIT_EFFECT GetEffect( DWORD dwEffect );
-	inline TemplateList<UNIT_EFFECT>* GetAllEffects( void );
-	inline void DestroyEffects( void );
-	inline void QueryEffects( BYTE bMsgType, LPVOID lpMsgData, Unit *medium, Unit *target );
-    inline void SendGlobalEffectMessage( BYTE bMsgType, LPVOID lpMsgData, Unit *medium, Unit *target );
+	void AddEffect( LPUNIT_EFFECT lpSpellEffect );	
+	void RemoveEffect( DWORD dwEffect );
+    void DispellEffectWithFlag( DWORD flagId );
+	LPUNIT_EFFECT GetEffect( DWORD dwEffect );
+	TemplateList<UNIT_EFFECT>* GetAllEffects( void );
+	void DestroyEffects( void );
+	void QueryEffects( BYTE bMsgType, LPVOID lpMsgData, Unit *medium, Unit *target );
+    void SendGlobalEffectMessage( BYTE bMsgType, LPVOID lpMsgData, Unit *medium, Unit *target );
 
-	inline void VerifyTimers( void );
+	void VerifyTimers( void );
 
-	inline signed char GetRadiance( void );
-	inline void SetRadiance( signed char cNewRadiance );
+	signed char GetRadiance( void );
+	void SetRadiance( signed char cNewRadiance );
 
-	inline DIR::MOVE QueryDirection( WorldPos wlTargetPos );
+	DIR::MOVE QueryDirection( WorldPos wlTargetPos );
 
 	virtual BOOL UseSpellEnergy( WORD wMana );
 
-	inline void SetMark( BYTE bMark );
-	inline BYTE GetMark( void );
+	void SetMark( BYTE bMark );
+	BYTE GetMark( void );
 
 	void SetUndead( WORD wUndead );
 	WORD GetUndead( void );
 
-	inline void AddBoost( LPBOOST lpBoost );
-	inline void AddBoost( DWORD dwBoostID, WORD wStat, const char *lpszFormula );
-    inline void AddBoost( DWORD dwBoostID, WORD wStat, int nBoost );
-    inline void RemoveBoostFromStat( WORD wStat );
-	inline void RemoveBoost( DWORD dwBoostID );
-	inline LPBOOST GetBoost( DWORD dwBoostID );
-	inline void SetBoost( DWORD dwBoostID, WORD wStat, BoostFormula bfBoost );
-    inline void SetBoost( DWORD dwBoostID, WORD wStat, int nBoost );
+	void AddBoost( LPBOOST lpBoost );
+	void AddBoost( DWORD dwBoostID, WORD wStat, const char *lpszFormula );
+    void AddBoost( DWORD dwBoostID, WORD wStat, int nBoost );
+    void RemoveBoostFromStat( WORD wStat );
+	void RemoveBoost( DWORD dwBoostID );
+	LPBOOST GetBoost( DWORD dwBoostID );
+	void SetBoost( DWORD dwBoostID, WORD wStat, BoostFormula bfBoost );
+    void SetBoost( DWORD dwBoostID, WORD wStat, int nBoost );
 	int QueryBoost( WORD wStat );
 	
-	inline WORD GetINT( void );
-	inline WORD GetEND( void );
-	inline WORD GetSTR( void );
-	inline WORD GetAGI( void );
-	inline WORD GetWIS( void );
-	inline WORD GetATTACK( void );
-	inline WORD GetDODGE( void );
-	inline WORD GetLCK( void );
+	WORD GetINT( void );
+	WORD GetEND( void );
+	WORD GetSTR( void );
+	WORD GetAGI( void );
+	WORD GetWIS( void );
+	WORD GetATTACK( void );
+	WORD GetDODGE( void );
+	WORD GetLCK( void );
 
-	inline WORD GetTrueINT( void );
-	inline WORD GetTrueEND( void );
-	inline WORD GetTrueSTR( void );
-	inline WORD GetTrueAGI( void );
-	inline WORD GetTrueWIS( void );
-	inline WORD GetTrueATTACK( void );
-	inline WORD GetTrueDODGE( void );
-	inline WORD GetTrueLCK( void );
+	WORD GetTrueINT( void );
+	WORD GetTrueEND( void );
+	WORD GetTrueSTR( void );
+	WORD GetTrueAGI( void );
+	WORD GetTrueWIS( void );
+	WORD GetTrueATTACK( void );
+	WORD GetTrueDODGE( void );
+	WORD GetTrueLCK( void );
 	
-	inline void SetINT( WORD bStat );
-	inline void SetEND( WORD bStat );
-	inline void SetSTR( WORD bStat );
-	inline void SetAGI( WORD bStat );
-	inline void SetWIS( WORD bStat );
-	inline void SetATTACK( WORD bStat );
-	inline void SetDODGE( WORD bStat );
-	inline void SetLCK( WORD bStat );
+	void SetINT( WORD bStat );
+	void SetEND( WORD bStat );
+	void SetSTR( WORD bStat );
+	void SetAGI( WORD bStat );
+	void SetWIS( WORD bStat );
+	void SetATTACK( WORD bStat );
+	void SetDODGE( WORD bStat );
+	void SetLCK( WORD bStat );
 
 	// asteryth pvp ranking
-	inline int GetTotalDeathNumber( void );
-	inline int GetTotalKillNumber( void );
-	inline int GetCurrentDeathNumber( void );
-	inline int GetCurrentKillNumber( void );
-	inline int GetBestSerieMurder( void );
-	inline int GetCurrentSerieMurder( void );
-	inline int GetCurrentPvpPoint( void );
+	int GetTotalDeathNumber( void );
+	int GetTotalKillNumber( void );
+	int GetCurrentDeathNumber( void );
+	int GetCurrentKillNumber( void );
+	int GetBestSerieMurder( void );
+	int GetCurrentSerieMurder( void );
+	int GetCurrentPvpPoint( void );
 	
-	inline void SetTotalDeathNumber( int bStat );
-	inline void SetTotalKillNumber( int bStat );
-	inline void SetCurrentDeathNumber( int bStat );
-	inline void SetCurrentKillNumber( int bStat );
-	inline void SetBestSerieMurder( int bStat );
-	inline void SetCurrentSerieMurder( int bStat );
-	inline void SetCurrentPvpPoint( int bStat );
+	void SetTotalDeathNumber( int bStat );
+	void SetTotalKillNumber( int bStat );
+	void SetCurrentDeathNumber( int bStat );
+	void SetCurrentKillNumber( int bStat );
+	void SetBestSerieMurder( int bStat );
+	void SetCurrentSerieMurder( int bStat );
+	void SetCurrentPvpPoint( int bStat );
 	
 	// asteryth guild
-	inline int GetGuildID( void );
-	inline void SetGuildID( int bStat );
+	int GetGuildID( void );
+	void SetGuildID( int bStat );
 	
 	virtual BOOL CanAttack();
 	virtual void SetAttack( BOOL boCanAttack );
 
 	// Unit database storage functions. 
-	inline BOOL SaveBoosts( TemplateList< SQL_REQUEST > *lptlRequests, DWORD dwBaseOwnerID );
-	inline void LoadBoosts( cODBCMage &ODBCConnection, DWORD dwBaseOwnerID );
+	BOOL SaveBoosts( TemplateList< SQL_REQUEST > *lptlRequests, DWORD dwBaseOwnerID );
+	void LoadBoosts( cODBCMage &ODBCConnection, DWORD dwBaseOwnerID );
 
-	inline BOOL SaveEffects( TemplateList< SQL_REQUEST > *lptlRequests, DWORD dwBaseOwnerID );
-	inline void LoadEffects( cODBCMage &ODBCConnection, DWORD dwBaseOwnerID );
+	BOOL SaveEffects( TemplateList< SQL_REQUEST > *lptlRequests, DWORD dwBaseOwnerID );
+	void LoadEffects( cODBCMage &ODBCConnection, DWORD dwBaseOwnerID );
     // Starts the effects loaded in LoadEffects.
     void DeferredLoadEffects( void );
 
-	inline BOOL SaveFlags( TemplateList< SQL_REQUEST > *lptlRequests, DWORD dwBaseOwnerID );
-	inline void LoadFlags( cODBCMage &ODBCConnection, DWORD dwBaseOwnerID );
+	BOOL SaveFlags( TemplateList< SQL_REQUEST > *lptlRequests, DWORD dwBaseOwnerID );
+	void LoadFlags( cODBCMage &ODBCConnection, DWORD dwBaseOwnerID );
 
 	void SetBlock( BYTE bBlock );
 	BYTE GetBlock( void );

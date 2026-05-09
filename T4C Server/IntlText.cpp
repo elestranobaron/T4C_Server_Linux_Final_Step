@@ -3,7 +3,7 @@
 #include "IntlText.h"
 #include "T4CLog.h"
 #include "RegKeyHandler.h"
-#include "tfc_main.h"
+#include "TFC_MAIN.h"
 #include "Random.h"
 
 #ifdef _DEBUG

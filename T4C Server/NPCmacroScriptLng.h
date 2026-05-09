@@ -10,6 +10,10 @@
 #include "Format.h"
 #include "Portability.h"
 
+#ifndef TRACE
+#define TRACE(...) ((void)0)
+#endif
+
 #ifdef  EXPORT
 #define EXPORT_COPY EXPORT
 #undef  EXPORT
@@ -146,7 +150,7 @@ void EXPORT BreakFunc( Unit *npc, Unit *target );
                             }
 
 
-#define NPCFUNC_PROTOTYPE CString &output, Unit *self, Unit *target, Character *lpChar, int &YesNo
+#define NPCFUNC_PROTOTYPE String &output, Unit *self, Unit *target, Character *lpChar, int &YesNo
 #define NPCFUNC_PARAM     output, self, target, lpChar, YesNo
 
 #define MAKE_FUNC( FuncName )  static void NPC##FuncName ( NPCFUNC_PROTOTYPE, bool &xSendBackpackUpdate ){
@@ -219,7 +223,7 @@ BOOL EXPORT _ORDER ( String Message, LPCTSTR cmd1, LPCTSTR cmd2, LPCTSTR cmd3 = 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 void EXPORT TeleportFunc( int x, int y, int world, Unit *target );
-#define TELEPORT( x, y, wl ) TeleportFunc( x, y, wl, target );
+#define TELEPORT( x, y, wl ) ;do { TeleportFunc( x, y, wl, target ); } while(0);
 
 								
 
@@ -241,24 +245,35 @@ void EXPORT TeleportFunc( int x, int y, int world, Unit *target );
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Makes the NPC fight the player.
-#define FIGHT   self->SetTarget( target );\
-                 self->Do( fighting );
+#define FIGHT   ;do { self->SetTarget( target ); self->Do( fighting ); } while(0);
 
 /////////////////////////////////////////////////////////////////////////////////////
 // standard 'if'
-#define IF(state)				if(state){
+#ifdef IF
+#undef IF
+#endif
+#define IF(state)				;if(state){
 
 /////////////////////////////////////////////////////////////////////////////////////
 // standard 'else'
-#define ELSE					}else{
+#ifdef ELSE
+#undef ELSE
+#endif
+#define ELSE					;}else{
 
 /////////////////////////////////////////////////////////////////////////////////////
 // standard 'else if'
-#define ELSEIF(state)			}else if(state){
+#ifdef ELSEIF
+#undef ELSEIF
+#endif
+#define ELSEIF(state)			;}else if(state){
 
 /////////////////////////////////////////////////////////////////////////////////////
 // closing if (obligatory)
-#define ENDIF					}
+#ifdef ENDIF
+#undef ENDIF
+#endif
+#define ENDIF					;}
 
 /////////////////////////////////////////////////////////////////////////////////////
 // Simplifies the syntax..
@@ -267,7 +282,7 @@ void EXPORT TeleportFunc( int x, int y, int world, Unit *target );
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // A simple 'FOR'
-#define FOR( from, to )			{ int nCount; for( nCount = from; nCount < to; nCount++ ){
+#define FOR( from, to )			;{ int nCount; for( nCount = from; nCount < to; nCount++ ){
 
 #define ENDFOR					}}
 					
@@ -277,27 +292,27 @@ void EXPORT TeleportFunc( int x, int y, int world, Unit *target );
 
 /////////////////////////////////////////////////////////////////////////////////////
 // script implementation of AddFlag
-#define GiveFlag(flag, value)			target->SetFlag(flag, value);
+#define GiveFlag(flag, value)			;do { target->SetFlag(flag, value); } while(0);
 
 /////////////////////////////////////////////////////////////////////////////////////
 // script implementation of RemoveFlag
-#define RemFlag(flag)					target->RemoveFlag(flag);
+#define RemFlag(flag)					;do { target->RemoveFlag(flag); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Gives and check global server flags.
 #define CheckGlobalFlag( flag )         dfGlobalFlags.ViewFlag( flag )
 
-#define GiveGlobalFlag( flag, value )   dfGlobalFlags.SetFlag( flag, value );
+#define GiveGlobalFlag( flag, value )   ;do { dfGlobalFlags.SetFlag( flag, value ); } while(0);
 
-#define RemGlobalFlag( flag )           dfGlobalFlags.RemoveFlag( flag );
+#define RemGlobalFlag( flag )           ;do { dfGlobalFlags.RemoveFlag( flag ); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Gives flags on given units.
 #define CheckUnitFlag( __unit, flag )       ( __unit != NULL ? __unit->ViewFlag( flag ) : 0 )
 
-#define GiveUnitFlag( __unit, flag, value ) if( __unit != NULL ) __unit->SetFlag( flag, value );
+#define GiveUnitFlag( __unit, flag, value ) ;do { if( __unit != NULL ) __unit->SetFlag( flag, value ); } while(0);
 
-#define RemUnitFlag( __unit, flag )       if( __unit != NULL ) __unit->RemoveFlag( flag );
+#define RemUnitFlag( __unit, flag )       ;do { if( __unit != NULL ) __unit->RemoveFlag( flag ); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Gets the name of a static unit.
@@ -335,14 +350,14 @@ void EXPORT TeleportFunc( int x, int y, int world, Unit *target );
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Give npc flag.
-#define GiveNPCFlag( flag, value )		self->SetFlag( flag, value );
+#define GiveNPCFlag( flag, value )		;do { self->SetFlag( flag, value ); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Remove npc flag.
-#define RemNPCFlag( flag )				self->RemoveFlag( flag );
+#define RemNPCFlag( flag )				;do { self->RemoveFlag( flag ); } while(0);
 
 // Destroy the NPC
-#define SELF_DESTRUCT   self->VaporizeUnit();
+#define SELF_DESTRUCT   ;do { self->VaporizeUnit(); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Returns the current round
@@ -399,9 +414,9 @@ void EXPORT TeleportFunc( int x, int y, int world, Unit *target );
 
 
 void EXPORT __CastSpell( DWORD dwSpellID, Unit *caster, Unit *target );
-#define CastSpellSelf( SPELLID )   __CastSpell( SPELLID, self, self );
-#define CastSpellTarget( SPELLID ) __CastSpell( SPELLID, self, target );
-#define CastSpellAny( SPELLID, theTarget ) __CastSpell( SPELLID, self, theTarget );
+#define CastSpellSelf( SPELLID )   ;do { __CastSpell( SPELLID, self, self ); } while(0);
+#define CastSpellTarget( SPELLID ) ;do { __CastSpell( SPELLID, self, target ); } while(0);
+#define CastSpellAny( SPELLID, theTarget ) ;do { __CastSpell( SPELLID, self, theTarget ); } while(0);
 
 #define INIT_HANDLER   {;bool xSendBackpackUpdate = false;
 
@@ -410,15 +425,15 @@ void EXPORT __CastSpell( DWORD dwSpellID, Unit *caster, Unit *target );
 /////////////////////////////////////////////////////////////////////////////////////
 // Gives the item 'item' to the player talking to the NPC
 BOOL EXPORT __GiveItem( Unit *self, Unit *target, WORD wItemID, BOOL boEcho = TRUE, bool boGiveAbsolute = true, bool boBackpackUpdate = true );
-#define GiveItem(item)		 __GiveItem( self, target, item, false, true, false );xSendBackpackUpdate = true;
+#define GiveItem(item)		 ;do { __GiveItem( self, target, item, false, true, false ); xSendBackpackUpdate = true; } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
-#define GiveItemNoEcho( item ) (xSendBackpackUpdate=true, __GiveItem( self, target, item, false, true, false ));
+#define GiveItemNoEcho( item ) (xSendBackpackUpdate=true, __GiveItem( self, target, item, false, true, false ))
 
 //#define GiveItemNoEchoNotAbsolute( item ) __GiveItem( self, target, item, false, false, true )
 
 // Give item with no update, not absolute
-#define GiveItemNoUpdateNotAbsolute( item ) (xSendBackpackUpdate=true,__GiveItem( self, target, item, false, false, false ));
+#define GiveItemNoUpdateNotAbsolute( item ) (xSendBackpackUpdate=true,__GiveItem( self, target, item, false, false, false ))
 
 
 
@@ -430,12 +445,12 @@ int EXPORT __CheckItem(Unit *target, WORD item);
 ////////////////////////////////////////////////////////////////////////////////////
 // removes the item from a player's backpack
 void EXPORT TakeItemFunc( UINT itemID, Unit *target );
-#define TakeItem(item)	TakeItemFunc( item, target ); xSendBackpackUpdate = true;
+#define TakeItem(item)	;do { TakeItemFunc( item, target ); xSendBackpackUpdate = true; } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Remove an item using its handle.
 void EXPORT TakeItemHandleFunc( Unit *&handle, Unit *target );
-#define TakeItemHandle( __handle ) TakeItemHandleFunc( __handle, target ); xSendBackpackUpdate = true;
+#define TakeItemHandle( __handle ) ;do { TakeItemHandleFunc( __handle, target ); xSendBackpackUpdate = true; } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Returns an handle to the item of static reference __item.
@@ -447,34 +462,34 @@ LPVOID EXPORT __GetItemHandle( Unit *target, int nItem );
 ///////////////////////////////////////////////////////////////////////////////////////
 // Gives gold to the unit
 void EXPORT GiveGoldFunc( int amount, Unit *target, bool echo );
-#define GiveGold(amount)        GiveGoldFunc( amount, target, true ); xSendBackpackUpdate = true;
-#define GiveGoldNoEcho(amount ) GiveGoldFunc( amount, target, false ); xSendBackpackUpdate = true;
+#define GiveGold(amount)        ;do { GiveGoldFunc( amount, target, true ); xSendBackpackUpdate = true; } while(0);
+#define GiveGoldNoEcho(amount ) ;do { GiveGoldFunc( amount, target, false ); xSendBackpackUpdate = true; } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Removes gold from the unit
 void EXPORT TakeGoldFunc( int amount, Unit *target, bool echo );
-#define TakeGold(amount)       TakeGoldFunc( amount, target, true ); xSendBackpackUpdate = true;
-#define TakeGoldNoEcho(amount) TakeGoldFunc( amount, target, false ); xSendBackpackUpdate = true;
+#define TakeGold(amount)       ;do { TakeGoldFunc( amount, target, true ); xSendBackpackUpdate = true; } while(0);
+#define TakeGoldNoEcho(amount) ;do { TakeGoldFunc( amount, target, false ); xSendBackpackUpdate = true; } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Gives xp to the player.
 void EXPORT GiveXPFunc( int amount, Unit *npc, Unit *target );
-#define GiveXP( amount ) GiveXPFunc( amount, self, target );
+#define GiveXP( amount ) ;do { GiveXPFunc( amount, self, target ); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 #define XP_TO_LEVEL       target->XPtoLevel()
 
-#define GiveKarma( amount ) target->SetKarma( target->GetKarma() + amount );
+#define GiveKarma( amount ) ;do { target->SetKarma( target->GetKarma() + amount ); } while(0);
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Summons a monster
 void EXPORT SummonFunc( LPCTSTR mobID, int absx, int absy, int world, Unit *npc, Unit *target );
-#define SUMMON( __mob, absx, absy )  SummonFunc( __mob, absx, absy, self->GetWL().world, self, target );
-#define SUMMON2( __mob, absx, absy, wl )  SummonFunc( __mob, absx, absy, wl, self, target );
+#define SUMMON( __mob, absx, absy )  ;do { SummonFunc( __mob, absx, absy, self->GetWL().world, self, target ); } while(0);
+#define SUMMON2( __mob, absx, absy, wl )  ;do { SummonFunc( __mob, absx, absy, wl, self, target ); } while(0);
 
-#define FROM_NPC( ___pos, __c_axis ) (self->GetWL().##__c_axis + ___pos)
-#define FROM_USER( ___pos, __c_axis ) (target->GetWL().##__c_axis + ___pos)
+#define FROM_NPC( ___pos, __c_axis ) (self->GetWL().__c_axis + ___pos)
+#define FROM_USER( ___pos, __c_axis ) (target->GetWL().__c_axis + ___pos)
 
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -498,7 +513,7 @@ void EXPORT LogGoldDepositFunc( int currentGold, int goldDeposited, LPCTSTR bank
 ////////////////////////////////////////////////////////////////////////////////////////
 // Heal players of hitpnts
 void EXPORT HealPlayerFunc( int hitPnts, Unit *target );
-#define HealPlayer(hitpnts)	HealPlayerFunc( hitpnts, target );
+#define HealPlayer(hitpnts)	;do { HealPlayerFunc( hitpnts, target ); } while(0);
 
 //////////////////////////////////////////////////////////////////////////////////////////
 // Cures a players of desease, TODO
@@ -537,9 +552,9 @@ void EXPORT NewChatterShoutFunc( string Channel, LPCTSTR msg, Unit *npc, Unit *t
 #define NEW_CHATTER_SHOUT(Channel, msg) NewChatterShoutFunc(Channel, msg, self, target);
 
 void EXPORT SysMsgFunc( LPCTSTR msg, Unit *npc, Unit *target, bool privateMsg );
-#define GLOBAL_SYSTEM_MESSAGE( msg ) SysMsgFunc( msg, self, target, false );
+#define GLOBAL_SYSTEM_MESSAGE( msg ) ;do { SysMsgFunc( msg, self, target, false ); } while(0);
 
-#define PRIVATE_SYSTEM_MESSAGE( msg ) SysMsgFunc( msg, self, target, true );
+#define PRIVATE_SYSTEM_MESSAGE( msg ) ;do { SysMsgFunc( msg, self, target, true ); } while(0);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -821,7 +836,7 @@ bool EXPORT NPC_BUYFunc( Unit *npc, Unit *target, WORD ItemType, DWORD LowPriceR
                                                 if( !GiveItemNoUpdateNotAbsolute(item) ){\
                                                     MoneyData = 4;\
                                                 }else{\
-                                                    TakeGoldNoEcho(price)  \
+                                                    TakeGoldNoEcho(price);\
                                                 }\
 											}\
 											TRACE("*");\

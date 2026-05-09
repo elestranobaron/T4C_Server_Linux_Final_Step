@@ -1,6 +1,10 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "Parry.h"
-#include "..\TFC Server.h"
+#include "../TFC Server.h"
+#include "../Broadcast.h"
+#include "../SpellMessageHandler.h"
+#include "../Players.h"
 
 extern CTFCServerApp theApp;
 
@@ -92,9 +96,9 @@ int Parry::Func
 			nSuccess = 0;
 		}
 		// If > 50%, set to 50%
-		else if( nSuccess > 19 )//BLBLBL on cap ‡ 19 au lieu de 25
+		else if( nSuccess > 19 )//BLBLBL on cap ù 19 au lieu de 25
 		{
-			nSuccess = 19;//BLBLBL on cap ‡ 19 au lieu de 25
+			nSuccess = 19;//BLBLBL on cap ù 19 au lieu de 25
 		}
 
 		// Roll the dice! And... Should we parry?

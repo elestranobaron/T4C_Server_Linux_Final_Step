@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Balork.H"
+#include "Balork.h"
 
 _Balork::_Balork()
 {}

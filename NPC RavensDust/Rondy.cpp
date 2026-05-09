@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Rondy.H"
+#include "Rondy.h"
 
 Rondy::Rondy()
 {}

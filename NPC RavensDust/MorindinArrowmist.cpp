@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "MorindinArrowmist.H"
+#include "MorindinArrowmist.h"
 
 MorindinArrowmist::MorindinArrowmist()
 {}

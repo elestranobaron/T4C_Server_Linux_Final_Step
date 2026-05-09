@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "KahpLethGuard1.H"
+#include "KahpLethGuard1.h"
 
 KahpLethGuard1::KahpLethGuard1()
 {}

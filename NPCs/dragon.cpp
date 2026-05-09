@@ -50,7 +50,7 @@ void Dragon::OnTalk( UNIT_FUNC_PROTOTYPE )
 
 {
 CONSTANT GOLD = 1;
-CString sUserName = USER_NAME;
+String sUserName = USER_NAME;
 sUserName.MakeUpper();
 
 InitTalk

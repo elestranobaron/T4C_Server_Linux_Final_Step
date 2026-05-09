@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <stdexcept>
 #include "Trade.h"
 #include "T4CLog.h"
 #include "Objects.h"

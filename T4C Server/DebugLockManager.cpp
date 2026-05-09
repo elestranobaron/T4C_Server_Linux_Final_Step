@@ -1,6 +1,10 @@
+#ifdef _WIN32
 #include "stdafx.h"
+#endif
 #include "Lock.h"
 #include "RegKeyHandler.h"
+#include "Timer.h"
+#include <mutex>
 
 #ifdef _WIN32
 #pragma warning(disable:4786 )
@@ -22,7 +26,6 @@ namespace{
             LOCK_TABLE_SIZE = regKey.GetProfileInt( "DeadlockJournalSize", 10000 );
 
 
-            InitializeCriticalSection( &critSection );
             curPos = 0;
             totalLockCount = 0;
             lockTable = new LockData[ LOCK_TABLE_SIZE ];
@@ -31,14 +34,13 @@ namespace{
             maxConcurrentLocks = 0;            
         }
         ~CDebugLockManagerTracer(){
-            DeleteCriticalSection( &critSection );
             delete lockTable;
         }
         void Lock(){
-            EnterCriticalSection( &critSection );
+            critSection.lock();
         }
         void Unlock(){
-            LeaveCriticalSection( &critSection );
+            critSection.unlock();
         }
 
         class LockData{
@@ -214,14 +216,14 @@ namespace{
 
             fclose( f );
             
-            LeaveCriticalSection( &critSection );
+            critSection.unlock();
 
             // File logging never fails.
             return true;
         }
     private:
         // Internal lock.
-        CRITICAL_SECTION critSection;
+        std::mutex critSection;
         
         // Buffer variables.
         DWORD curPos;

@@ -22,7 +22,7 @@ NPCstructure::NPC ShopKeeper;
 NPCstructure::NPC DunikusNPC; 
 NPCstructure::NPC LantalirNPC; 
 
-void CreateNPC( void );
+void T4C_CREATE_NPC_FUNC_NAME( void );
 
 INIT_MONSTER_STAT_SETUP							   
 
@@ -929,10 +929,10 @@ MOB_DRESS_LEGS ( LEATHER_PANTS )
 MOB_DRESS_WEAPON(  SHORT_SWORD ) 
 
 
-	CreateNPC();
+	T4C_CALL_CREATE_NPC();
 CLOSE_MONSTER_STAT_SETUP
 		
-void MonsterStatDestroy(){
+void MonsterStatDestroy_Arakas(){
 }
 
 

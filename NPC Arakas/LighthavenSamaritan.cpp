@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "LighthavenSamaritan.H"
+#include "LighthavenSamaritan.h"
 
 LighthavenSamaritan::LighthavenSamaritan()
 {}

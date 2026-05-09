@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Doppelganger.H"
+#include "Doppelganger.h"
 
 Doppelganger::Doppelganger()
 {}

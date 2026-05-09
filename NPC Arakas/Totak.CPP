@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Totak.H"
+#include "Totak.h"
 
 Totak::Totak()
 {}

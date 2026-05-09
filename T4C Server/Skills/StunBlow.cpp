@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "StunBlow.h"
+#include <cstdint>
 
 StunBlow::StunBlow(){
 	s_saAttrib.Class = WARRIOR;
@@ -77,7 +79,7 @@ int StunBlow::Func
             // If strength vs endurance roll succeeds.
             if( rnd.roll( dice( 1, self->GetSTR() ) ) > rnd.roll( dice( 1, target->GetEND() ) ) ){
                 TRACE("\r\n\r\nStunned!\r\n\r\n");
-				target->SetFlag(__FLAG_STUN, (UINT)StunBlow::TimerStunRemovallCallback);
+				target->SetFlag(__FLAG_STUN, (UINT)(uintptr_t)(void (*)())StunBlow::TimerStunRemovallCallback);
 				target->RemoveEffect( EFFECT_STUN_BLOW );
 				
                 DWORD timer = rnd.roll( dice( 1, 1000, 1000 ) );

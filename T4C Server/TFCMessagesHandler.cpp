@@ -1,12 +1,17 @@
 #include "stdafx.h"
+#include <cstdio>
 #include "TFC Server.h"
+#ifdef _WIN32
 #include "TFC ServerDlg.h"
+#endif
 #include "TFCMessagesHandler.h"
 #include "TFC_MAIN.h"
 //#include "Player Messages Threads.h"
 #include "Broadcast.h"
 #include "TFCServerGP.h"
+#ifdef _WIN32
 #include <eh.h>
+#endif
 #include "Random.h"
 #include "TFCMessagesHandler.h"
 #include "SkillListing.h"
@@ -46,13 +51,13 @@ static char THIS_FILE[]=__FILE__;
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Externs..
 extern TFC_MAIN *TFCServer;
+#ifdef _WIN32
 extern CTFCServerDlg *MainDlg;
+#endif
 extern CTFCServerApp theApp;
 //extern TemplateList <Players> UsersList;
 extern Random rnd;
 
-extern TFC_MAIN *TFCServer;
-extern CTFCServerDlg *MainDlg;
 //////////////////////////////////////////////////////////////////////////////////////////
 
 //LPPACKET_FUNC   TFCMessagesHandler::FuncTable[ RQ_QUANTITY ];
@@ -72,7 +77,7 @@ namespace{
 #define RQ_FOOTER( __rq )   }catch( ... ){\
                                 _LOG_DEBUG\
                                     LOG_CRIT_ERRORS,\
-                                    "Detected crash in RQ_"__rq\
+                                    "Detected crash in RQ_" __rq\
                                 LOG_\
                                 _LOG_DEBUG\
                                     LOG_CRIT_ERRORS,\
@@ -85,7 +90,7 @@ namespace{
 #define RQ_FOOTER_EX_START( __rq ) }catch( ... ){\
                                 _LOG_DEBUG\
                                     LOG_CRIT_ERRORS,\
-                                    "Detected crash in RQ_"__rq\
+                                    "Detected crash in RQ_" __rq\
                                 LOG_\
                                 _LOG_DEBUG\
                                     LOG_CRIT_ERRORS,\
@@ -796,7 +801,7 @@ void TFCMessagesHandler::RQFUNC_PlayerMove
 {
     RQ_HEADER;
 
-    const INT MoveExhaust = 0;//BLBLBL 200=>400=>200 remis ‡ 200 sinon on a un accoup au dÈmarrage d'une sÈquence de marche // steph ajout de INT // steph 0 au lieu de 200 MILLISECONDS
+    const INT MoveExhaust = 0;//BLBLBL 200=>400=>200 remis ù 200 sinon on a un accoup au dùmarrage d'une sùquence de marche // steph ajout de INT // steph 0 au lieu de 200 MILLISECONDS
 
     TFCPacket sending;
 
@@ -828,7 +833,7 @@ void TFCMessagesHandler::RQFUNC_PlayerMove
 					// If user isn't move exhaust
 					// Or if user sends an advanced move exhaust.
 					//if( newExhaust.move <= TFCMAIN::GetRound() || ( newExhaust.boWalking && newExhaust.move - TFCMAIN::GetRound() <= MoveExhaust ) ){
-					if( newExhaust.move <= TFCMAIN::GetRound() /*|| ( newExhaust.boWalking && newExhaust.move - TFCMAIN::GetRound() <= MoveExhaust )*/ ){//BLBL ‡ mon avis c'est ptet cette condition qui laisse passer trop de paquets de mouvements.
+					if( newExhaust.move <= TFCMAIN::GetRound() /*|| ( newExhaust.boWalking && newExhaust.move - TFCMAIN::GetRound() <= MoveExhaust )*/ ){//BLBL ù mon avis c'est ptet cette condition qui laisse passer trop de paquets de mouvements.
                 
 						switch( rqRequestID )
 						{
@@ -883,14 +888,14 @@ void TFCMessagesHandler::RQFUNC_PlayerMove
 							// Send a system message telling the player that he's exhaust.
 							// This might flood a player with these messages if he keeps his finger on the move button.
 							user->self->SendSystemMessage( _STR( 2776, user->self->GetLang() ) );
-							user->MoveList.clear();//si le joueur est exhaustÈ on vide sa liste de mouvements
+							user->MoveList.clear();//si le joueur est exhaustù on vide sa liste de mouvements
 
 						}   
 						
-						//on ne mÈmorise les dÈplacements qui arrivent que si le joueur n'est pas exhaustÈ :
-						if (user->MoveList.size()<3 &&  newExhaust.move < TFCMAIN::GetRound() /* + 200 MILLISECONDS // steph dÈsactivation */) {
+						//on ne mùmorise les dùplacements qui arrivent que si le joueur n'est pas exhaustù :
+						if (user->MoveList.size()<3 &&  newExhaust.move < TFCMAIN::GetRound() /* + 200 MILLISECONDS // steph dùsactivation */) {
 							//user->Lock();apparement cause un pb de RST (flag qui s'attribue plus bien)
-							user->MoveList.push_back(rqRequestID);//BLBL on stocke la direction qui a foirÈ
+							user->MoveList.push_back(rqRequestID);//BLBL on stocke la direction qui a foirù
 							//user->Unlock();apparement cause un pb de RST (flag qui s'attribue plus bien)
 						}							
 						
@@ -1274,13 +1279,13 @@ void AsyncRQFUNC_PutPlayerInGame
 
 				int read;
 				sending.Destroy();
-                read = world->packet_inview_units( player_pos, sending, 40, user->self );//BLBLBL _DEFAULT_RANGE est trop petit pour certains endroits ‡ l'oracle o˘ les portes disparaissent sinon., j'essaye 40
+                read = world->packet_inview_units( player_pos, sending, 40, user->self );//BLBLBL _DEFAULT_RANGE est trop petit pour certains endroits ù l'oracle où les portes disparaissent sinon., j'essaye 40
                 if( read != 0 )
 				{
                     user->self->SendPlayerMessage( sending );
                 }
 
-                user->SetNextSave(); //BLBLB d'aprËs la fonction, la premiËre sauvegarde du joueur interviens vers 7 ‡ 10 minutes, puis ce sera toutes les 30 secondes apparement ?
+                user->SetNextSave(); //BLBLB d'aprùs la fonction, la premiùre sauvegarde du joueur interviens vers 7 ù 10 minutes, puis ce sera toutes les 30 secondes apparement ?
 
 				// Sends list of objects			   
 				//TRACE("\r\n-- %u --\r\n", user->self->get_appearance());						
@@ -1339,7 +1344,7 @@ void AsyncRQFUNC_PutPlayerInGame
 			sending << (RQ_SIZE)RQ_ServerMessage;
 			sending << (short)30;
 			sending << (short)3;
-			sending << (CString &)csWelcome;
+			sending << csWelcome;
 			sending << (long)0x000A64E0/*RGB( 0, 100, 255 )*/;
 			
 			user->Lock();
@@ -1509,7 +1514,7 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
 			 		
 	  char result = user->self->PutPlayerInGame( );//return 0 if okay
 
-	  //CPlayerManager::GetChatter().AddToSystemChannels( user );//BLBLBL DÈplacÈ dans le bloc conditionnel
+	  //CPlayerManager::GetChatter().AddToSystemChannels( user );//BLBLBL Dùplacù dans le bloc conditionnel
 
 	  if( !result ){ //if no problem (0 = OK, 1 = Error happened)
 
@@ -1518,7 +1523,7 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
 	  	    user->in_game = TRUE;
 			user->boPreInGame = FALSE;
             user->self->ResetDeath();// If unit teleported, it cannot be dead.
-//			user->lFirstRound=TFCMAIN::GetRound();//BLBLBL quand le joueur entre en jeu on enregistre son round d'entrÈe, pour pouvoir calculer son ratio temps de jeu, nombre de paquets de mouvements lMoveCount;
+//			user->lFirstRound=TFCMAIN::GetRound();//BLBLBL quand le joueur entre en jeu on enregistre son round d'entrùe, pour pouvoir calculer son ratio temps de jeu, nombre de paquets de mouvements lMoveCount;
 
             TRACE( "\r\nPlayer's radiance = %u.", user->self->GetRadiance() );
 
@@ -1559,7 +1564,7 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
                 Broadcast::BCast( user->self->GetWL(), _DEFAULT_RANGE, sending, user->self->GetInvisibleQuery() );//BLBLBL 30=>_DEFAULT_RANGE
                 //}
             }            
-	  }else{//BLBL : sinon, si on a pas rÈussi ‡ remettre en jeu le joueur on logue :
+	  }else{//BLBL : sinon, si on a pas rùussi ù remettre en jeu le joueur on logue :
 		  if (user->self->boLoaded){
 			_LOG_DEBUG
 				LOG_DEBUG_LVL1,
@@ -1705,7 +1710,7 @@ void TFCMessagesHandler::RQFUNC_CreatePlayer
 				lpbName[ dummy ] = 0;
 				
 				// Setup the structure
-				lpStruct->csName = lpbName;
+				lpStruct->csName = reinterpret_cast<const char *>(lpbName);
 
                 // Format the player name to make it legal.
                 FormatPlayerName::Format( &lpStruct->csName );
@@ -1798,12 +1803,12 @@ DWORD TFCMessagesHandler::GetUserMax
 
         // If the IP & netmask match
         TRACE( "\r\nIP %u vs %u, netmasked %u vs %u.", 
-            sockAddr.sin_addr.S_un.S_addr,
+            sockAddr.sin_addr.s_addr,
             lpLocal->dwIP,
-            sockAddr.sin_addr.S_un.S_addr & lpLocal->dwNetmask,
+            sockAddr.sin_addr.s_addr & lpLocal->dwNetmask,
             lpLocal->dwIP & lpLocal->dwNetmask
         );
-        if( ( sockAddr.sin_addr.S_un.S_addr & lpLocal->dwNetmask ) == ( lpLocal->dwIP & lpLocal->dwNetmask ) ){
+        if( ( sockAddr.sin_addr.s_addr & lpLocal->dwNetmask ) == ( lpLocal->dwIP & lpLocal->dwNetmask ) ){
             boLocal = TRUE;
         }
     }
@@ -1843,7 +1848,7 @@ bool TFCMessagesHandler::IsLocalIP
     while( tlLocalUsers.QueryNext() && !boLocal ){
         LPLOCAL_USER lpLocal = tlLocalUsers.Object();
 
-        if( ( sockAddr.sin_addr.S_un.S_addr & lpLocal->dwNetmask ) == ( lpLocal->dwIP & lpLocal->dwNetmask ) ){
+        if( ( sockAddr.sin_addr.s_addr & lpLocal->dwNetmask ) == ( lpLocal->dwIP & lpLocal->dwNetmask ) ){
             boLocal = true;
         }
     }
@@ -2305,7 +2310,7 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountVOP
         }//if not user cap.
 
     if( boSendPacket ){
-        sending << (CString &)csErrorMsg;
+        sending << csErrorMsg;
         WorldPos wlPos = { -1, -1, -1 };
         CPacketManager::SendPacket( sending, lpStruct->sockAddr, -1, wlPos, FALSE );
     }
@@ -2500,7 +2505,7 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
     }
 
 
-    sending << (CString &)csErrorMsg;
+    sending << csErrorMsg;
     WorldPos wlPos = { -1, -1, -1 };
     CPacketManager::SendPacket( sending, lpStruct->sockAddr, -1, wlPos, FALSE );
 
@@ -2590,7 +2595,7 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
         }
     }
 
-    sending << (CString &)csErrorMsg;
+    sending << csErrorMsg;
     WorldPos wlPos = { -1, -1, -1 };
     CPacketManager::SendPacket( sending, lpStruct->sockAddr, -1, wlPos, FALSE );
 
@@ -2757,7 +2762,7 @@ void TFCMessagesHandler::RQFUNC_RegisterAccount
 			CString csVersionError = "Wrong server version. Run T4C.exe to autopatch to new version.";
             
             sending << (char)1;	
-            sending << (CString &)csVersionError;
+            sending << csVersionError;
             WorldPos wlPos = { -1, -1, -1 };
             CPacketManager::SendPacket( sending, sockAddr, -1, wlPos, FALSE );
 		}			
@@ -2827,7 +2832,7 @@ void TFCMessagesHandler::RQFUNC_DeletePlayer
 	if( user->UsePicklock(__FILE__, __LINE__) ){
 		/**********************************************************************************************/
 		// Delete player	
-		if(user->registred && !user->in_game && !user->boPreInGame) // deletes only if you are registred//FIX de PM pour Èviter crash serveur si le mec delete un perso en cours de dÈco
+		if(user->registred && !user->in_game && !user->boPreInGame) // deletes only if you are registred//FIX de PM pour ùviter crash serveur si le mec delete un perso en cours de dùco
 		{
 			//CString name;
 			unsigned char temp_length;
@@ -2856,7 +2861,7 @@ void TFCMessagesHandler::RQFUNC_DeletePlayer
 				// Prepare async deletion
 				LPRQSTRUCT_DELETE_PLAYER lpStruct = new RQSTRUCT_DELETE_PLAYER;			
 				FILL_ASYNC_PARAMS( lpStruct->sParams );
-				lpStruct->csName = lpbName;
+				lpStruct->csName = reinterpret_cast<const char *>(lpbName);
 				delete lpbName;
 
 				AsyncFuncQueue::GetMainQueue()->Call( AsyncRQFUNC_DeletePlayer, lpStruct );
@@ -2994,8 +2999,8 @@ void TFCMessagesHandler::RQFUNC_ExitGame
 	lNow = time(NULL);
 	lLastPlayerEvent=user->self->lLastEventTime;
 		 
-        //special havoc (ajouter : "true ||" ‡ la condition :)
-	if ( lNow-lLastPlayerEvent>=13 || user->self->GetUnderBlock()==__SAFE_HAVEN || user->self->GetUnderBlock()==__INDOOR_SAFE_HAVEN ){//BLBLBL antiplug : 15 secondes d'inactivitÈ avant de dÈconnecter un perso OU en zone PVP off
+        //special havoc (ajouter : "true ||" ù la condition :)
+	if ( lNow-lLastPlayerEvent>=13 || user->self->GetUnderBlock()==__SAFE_HAVEN || user->self->GetUnderBlock()==__INDOOR_SAFE_HAVEN ){//BLBLBL antiplug : 15 secondes d'inactivitù avant de dùconnecter un perso OU en zone PVP off
 											//il faut mettre 2 secondes de moins ici, pour laisser le temps au pak d'arriver au client avant qu'il se ferme tout seul au bout de 15 sec^^
    	
 	    /*_LOG_DEBUG
@@ -3007,7 +3012,7 @@ void TFCMessagesHandler::RQFUNC_ExitGame
 
 	    TFCPacket sending;
         sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client
-		sending << (char)1;	// 1 = C'est ok le joueur a ÈtÈ supprimÈ du serveur, le client peut se fermer direct
+		sending << (char)1;	// 1 = C'est ok le joueur a ùtù supprimù du serveur, le client peut se fermer direct
 		user->self->SendPlayerMessage( sending );
 		
 		user->DeletePlayer();
@@ -3195,7 +3200,7 @@ void TFCMessagesHandler::RQFUNC_Attack
 	//BLBLBL antispeedhack, si on lance un attaque on vide le buffer de mouvement :
 	user->Lock();
 	user->MoveList.clear();
-/*	user->lFirstRound = TFCMAIN::GetRound();//BL dËs qu'un joueur est stoppÈ on reset son compteur ratio mouvement.
+/*	user->lFirstRound = TFCMAIN::GetRound();//BL dùs qu'un joueur est stoppù on reset son compteur ratio mouvement.
 	user->lMoveCounter = 0;*/
 	user->Unlock();
 
@@ -3251,7 +3256,7 @@ void TFCMessagesHandler::RQFUNC_Attack
 			                sending << (RQ_SIZE)RQ_ServerMessage;
 			                sending << (short)30;
 			                sending << (short)3;
-			                sending << (CString &)csText;
+			                sending << csText;
 							sending << (long)0x000A64E0/*RGB( 0, 100, 255 )*/;
                             user->self->SendPlayerMessage( sending );
 
@@ -3397,7 +3402,7 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
 
             Character *lpCharacter = static_cast< Character * >( user->self );
             // If the pre-translation function allows message to continue.
-            if( lpCharacter->PreTranslateInGameMessage( lpbText ) )
+            if( lpCharacter->PreTranslateInGameMessage( CString(reinterpret_cast<const char *>(lpbText)) ) )
 			{
 				//scan la liste des mot pour trouver
                 //si le mot est un mot clee et si le joueur peu executer ce mot clef...
@@ -3419,7 +3424,7 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
                     }
 
 			        // If this wasn't a sysop command
-			        if( SysopCmd::VerifySysopCommand( user, lpbSysopMessage ) == FALSE ){
+			        if( SysopCmd::VerifySysopCommand( user, CString(reinterpret_cast<const char *>(lpbSysopMessage)) ) == FALSE ){
 				        // Send normal message
 				        if( user->boCanTalk && boSendTalk ){
                             _LOG_TEXT
@@ -3430,7 +3435,8 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
                             LOG_
 
                             if(user->in_game){
-								CString m( lpbText );
+								CString m(reinterpret_cast<const char *>(lpbText));
+                                CString nm(user->self->GetName(user->self->GetLang()));
                                 // Create a new packet
                                 TFCPacket sending;
                                 sending << (RQ_SIZE)RQ_IndirectTalk;
@@ -3438,8 +3444,8 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
                                 sending << (char)bDirection;
                                 sending << (long)dwTextColor;
                                 sending << (char)0; // not an NPC.
-                                sending << (CString &)m;
-                                sending << (CString &)user->self->GetName( user->self->GetLang() );
+                                sending << m;
+                                sending << nm;
 								sending << (long)dwNameColor;
 
                                 Broadcast::BCast( user->self->GetWL(), _DEFAULT_RANGE, sending );
@@ -3454,7 +3460,7 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
 								sending << (RQ_SIZE)RQ_ServerMessage;
 								sending << (short)30;
 								sending << (short)3;
-								sending << (CString &)csText;
+								sending << csText;
 								sending << (long)RGB( 255, 0, 0 );
 								user->Lock();
 								user->self->SendPlayerMessage( sending );
@@ -3490,7 +3496,8 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
                             
 							TextFilter.FilterMessage((char*)lpbText);//16/06/2009 filter for bad words Before broadcast to other players.
 
-                            CString m( lpbText );
+                            CString m(reinterpret_cast<const char *>(lpbText));
+                            CString nm(user->self->GetName(user->self->GetLang()));
                             
 							// Create a new packet
                             TFCPacket sending;
@@ -3499,8 +3506,8 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
                             sending << (char)bDirection;
                             sending << (long)dwTextColor;
                             sending << (char)0; // not an NPC.
-                            sending << (CString &)m;
-                            sending << (CString &)user->self->GetName( user->self->GetLang() );
+                            sending << m;
+                            sending << nm;
 							sending << (long)dwNameColor;
 
                             Broadcast::BCast( user->self->GetWL(), _DEFAULT_RANGE, sending );
@@ -3519,7 +3526,7 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
 						sending << (long)dwNameColor;
 			            user->self->SendPlayerMessage( sending );*/
 						
-						//BLBLBL autant l'informer ‡ la place qu'il ne peut pas parler :
+						//BLBLBL autant l'informer ù la place qu'il ne peut pas parler :
 						if(user->in_game){
 							user->self->SendSystemMessage( "You cannot speak anymore.", RGB( 255, 0, 0 ) );
 						}
@@ -3554,7 +3561,7 @@ void TFCMessagesHandler::RQFUNC_Shout
 	
 	// BEGIN : Mestoph -> Correction for shouts bugs if player not in game...	
 		// Befor : if( user->boCanShout && user->boCanPage ){ 
-    if( user->boCanShout && user->in_game){//BLBLBL le "&& user->boCanPage" n'a rien ‡ faire la :)
+    if( user->boCanShout && user->in_game){//BLBLBL le "&& user->boCanPage" n'a rien ù faire la :)
 	// END : Mestoph -> Correction for shouts bugs if player not in game...	
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -3564,8 +3571,8 @@ void TFCMessagesHandler::RQFUNC_Shout
         DWORD  dwColor = 0;
 
         try{            
-            if( user->CanShout() ){//on vÈrifie que le player peut shout vis ‡ vis de son dÈlai.
-				//user->ToggleShout(); // steph dÈsactivation
+            if( user->CanShout() ){//on vùrifie que le player peut shout vis ù vis de son dùlai.
+				//user->ToggleShout(); // steph dùsactivation
                 // Get data to log.
                 GET_STRING( lpSender );
                 GET_LONG  ( dwColor );
@@ -3614,7 +3621,7 @@ void TFCMessagesHandler::RQFUNC_Shout
             }
         }
 	}else{
-        if (user->in_game) {//BLBLBL ajout un test voir si le joueur est ingame avant de tester tout Áa sinon dÈco instantanÈe !
+        if (user->in_game) {//BLBLBL ajout un test voir si le joueur est ingame avant de tester tout ùa sinon dùco instantanùe !
 			// Send a shouts revoked message.
 			time_t tTestExpiration;
 			time(&tTestExpiration);
@@ -3684,8 +3691,8 @@ void TFCMessagesHandler::RQFUNC_Page
 					TextFilter.FilterMessage((char*)message);//16/06/2009 filter bad words
 				}
 
-		        csMessage = message;
-                CString csPlayer = name;
+		        csMessage = reinterpret_cast<const char *>(message);
+                CString csPlayer(reinterpret_cast<const char *>(name));
                 csPlayer.TrimRight();
                 csPlayer.TrimLeft();
                 bool boError = true;
@@ -3704,8 +3711,8 @@ void TFCMessagesHandler::RQFUNC_Page
 						csPlayer += ": " + csMessage; // Makes it display the text you sent on the Page_ack msg 
 		    	        csMessage = "";
 			            sending << (RQ_SIZE)RQ_Page;
-    			        sending << (CString &)csMessage;
-	    		        sending << (CString &)csPlayer;
+    		        sending << csMessage;
+	    		        sending << csPlayer;
                         
 			            user->self->SendPlayerMessage( sending );
 
@@ -3716,8 +3723,8 @@ void TFCMessagesHandler::RQFUNC_Page
 			        csMessage = "";
 			        TFCPacket sending;
 			        sending << (RQ_SIZE)RQ_Page;
-			        sending << (CString &)csMessage;
-			        sending << (CString &)csMessage;
+			        sending << csMessage;
+			        sending << csMessage;
 			        
 			        user->self->SendPlayerMessage( sending );
 		        }
@@ -3759,7 +3766,7 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 
 		WorldPos where = {0,0,0};
 		unsigned short nb_chars = 0;		
-		TFCPacket otherPacket,censoredPacket;//BLBLBL nouveau packet dispo : un texte censurÈ
+		TFCPacket otherPacket,censoredPacket;//BLBLBL nouveau packet dispo : un texte censurù
 		unsigned char thisChar = 0;
 		unsigned int i;
 		auto_ptr< BYTE > message;
@@ -3816,7 +3823,7 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 						otherPacket << (short)nb_chars;			
 						censoredPacket << (short)nb_chars;			
 
-					// Mestoph : V»rification de la taille des strings avant de lire le contenu du data
+					// Mestoph : Vùrification de la taille des strings avant de lire le contenu du data
 						/*
 						TRACE(_T("\r\nNBchars = %u\r\n"), nb_chars);
 						if(nb_chars){
@@ -3873,8 +3880,8 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 						}
 
 						// End Mestoph
-						otherPacket << (CString &)( user->self->GetName( user->self->GetLang() ) );
-						censoredPacket << (CString &)( user->self->GetName( user->self->GetLang() ) );
+						otherPacket << ( user->self->GetName( user->self->GetLang() ) );
+						censoredPacket << ( user->self->GetName( user->self->GetLang() ) );
 	   		            
 						
 					/*}else{
@@ -3888,12 +3895,12 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 					otherPacket << (long)dwNameColor;
 					censoredPacket << (long)dwNameColor;
 
-					CONST BYTE *lpMessageSent = message.get() == NULL ? reinterpret_cast< CONST BYTE * >( "" ) : message.get();
+					const BYTE *lpMessageSent = message.get() == NULL ? reinterpret_cast<const BYTE *>( "") : message.get();
 
 
 					Character *lpCharacter = static_cast< Character * >( user->self );
 					// If the pre-translation function allows message to continue.
-					if( lpCharacter->PreTranslateInGameMessage( lpMessageSent ) ){
+					if( lpCharacter->PreTranslateInGameMessage( CString(reinterpret_cast<const char *>(lpMessageSent)) ) ){
 					    // If user is god.
 						if( user->IsGod() ){
 	                        const BYTE *lpSysopMessage = lpMessageSent;
@@ -3904,7 +3911,7 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 							}                        
 	
 							// Process sysop commands.
-							boProcess = !SysopCmd::VerifySysopCommand( user, lpSysopMessage );
+							boProcess = !SysopCmd::VerifySysopCommand( user, CString(reinterpret_cast<const char *>(lpSysopMessage)) );
 							if( !user->boCanTalk || !boTalk ){
 							    boProcess = FALSE;
 							}                        
@@ -4030,7 +4037,7 @@ void TFCMessagesHandler::RQFUNC_CastSpell
 	//BLBLBL antispeedhack, si on lance un sort on vide le buffer de mouvement :
 	user->Lock();
 	user->MoveList.clear();
-/*	user->lFirstRound = TFCMAIN::GetRound();//BL dËs qu'un joueur est stoppÈ on reset son compteur ratio mouvement.
+/*	user->lFirstRound = TFCMAIN::GetRound();//BL dùs qu'un joueur est stoppù on reset son compteur ratio mouvement.
 	user->lMoveCounter = 0;*/
 	user->Unlock();
 
@@ -4189,15 +4196,15 @@ void TFCMessagesHandler::RQFUNC_GetUnitName
 					if (lpChar->GetPlayer()->IsGod()) color = U_GOD_COLOR
 					else color = U_PC_COLOR;
 										
-					csPacketGuildName = lpChar->GetGuildName();//RÈcupÈration du nom de guilde pour le paquet
+					csPacketGuildName = lpChar->GetGuildName();//Rùcupùration du nom de guilde pour le paquet
 
 
 				}
 
 
-				sending << (CString &)csName;
+				sending << csName;
 				sending << (long)color;
-				sending << (CString &)csPacketGuildName;//BLBLBL on envoie le nom de guilde
+				sending << csPacketGuildName;//BLBLBL on envoie le nom de guilde
 				sending << (long)0x00FFFF00;
 		
 		/*_LOG_DEBUG
@@ -4217,7 +4224,7 @@ void TFCMessagesHandler::RQFUNC_GetUnitName
 		}else{
 		_LOG_DEBUG
             LOG_CRIT_ERRORS,
-            "Attempted to ask unit details for an invalid World position."//BLBLBL ajoutÈ du log.
+            "Attempted to ask unit details for an invalid World position."//BLBLBL ajoutù du log.
         LOG_
 		}
 	}catch(TFCPacketException *e){
@@ -4545,7 +4552,7 @@ void TFCMessagesHandler::RQFUNC_SendPeriphericObjects
 				// If player asks for a valid position
 				if( wl->IsValidPosition( where ) ){
 					if(direction < 9 ){						
-						boSend = //BLBLBL 03/12/2010 on regarde si y a qq chose ‡ envoyer ou pas
+						boSend = //BLBLBL 03/12/2010 on regarde si y a qq chose ù envoyer ou pas
 						wl->packet_peripheral_units( 
                             where, 
                             _DEFAULT_RANGE,
@@ -4554,7 +4561,7 @@ void TFCMessagesHandler::RQFUNC_SendPeriphericObjects
                             user->self
                         );
 
-                        if (boSend) user->self->SendPlayerMessage( sending ); //BLBL ajoutÈ un if (boSend)
+                        if (boSend) user->self->SendPlayerMessage( sending ); //BLBL ajoutù un if (boSend)
 
                     }	
 				}
@@ -4605,7 +4612,7 @@ void TFCMessagesHandler::RQFUNC_EnterChatterChannel
             // Send a RQ_EnterChatterChannel (this is an error).
             TFCPacket sending;
             sending << (RQ_SIZE)RQ_EnterChatterChannel;
-            sending << (CString &)cstrChannel;
+            sending << cstrChannel;
             user->self->SendPlayerMessage( sending );
         }else{
             // Send only the registered list of channels.
@@ -5561,7 +5568,7 @@ void TFCMessagesHandler::RQFUNC_QueryServerVersion
         }else{
             sending << static_cast< short >( (*i).wPort );
         }
-        sending << (CString &)(*i).csIP;
+        sending << (*i).csIP;
     }
 
     vPatchServers.Unlock();
@@ -5596,8 +5603,7 @@ void TFCMessagesHandler::RQFUNC_MessageOfDay
 
     // If a motd was specified.
     if( csMotD != "\\INVALID\\" ){
-         
-
+#ifdef _WIN32
         HANDLE hFile = CreateFile(
             (LPCTSTR)csMotD,
             GENERIC_READ,
@@ -5620,9 +5626,24 @@ void TFCMessagesHandler::RQFUNC_MessageOfDay
             TRACE( "\r\nMOTD = %s.", csText );
             CloseHandle( hFile );
         }
+#else
+        FILE *fp = std::fopen(static_cast<const char *>(csMotD), "rb");
+        if (fp != nullptr) {
+            if (std::fseek(fp, 0, SEEK_END) == 0) {
+                const long sz = std::ftell(fp);
+                if (sz > 1 && std::fseek(fp, 0, SEEK_SET) == 0) {
+                    char *buf = csText.GetBuffer(static_cast<int>(sz - 1));
+                    const size_t rd = std::fread(buf, 1, static_cast<size_t>(sz - 1), fp);
+                    csText.ReleaseBuffer(static_cast<int>(rd));
+                }
+            }
+            std::fclose(fp);
+            TRACE("\r\nMOTD = %s.", csText.c_str());
+        }
+#endif
     }
 
-    sending << (CString &)csText;
+    sending << csText;
 
     WorldPos wlPos = { -1, -1, -1 };
     CPacketManager::SendPacket( sending, sockAddr, -1, wlPos, FALSE );
@@ -6209,10 +6230,10 @@ void TFCMessagesHandler::RQFUNC_QueryPatchServerInfo
     
     webPatchServer.Lock();
         
-    sending << (CString &)webPatchServer.csIP;        
-    sending << (CString &)webPatchServer.csImagePath;
-    sending << (CString &)webPatchServer.csUserName;
-    sending << (CString &)webPatchServer.csPassword;
+    sending << webPatchServer.csIP;        
+    sending << webPatchServer.csImagePath;
+    sending << webPatchServer.csUserName;
+    sending << webPatchServer.csPassword;
     sending << (short)IntlText::GetDefaultLng();
     
     webPatchServer.Unlock();
@@ -6681,9 +6702,9 @@ void TFCMessagesHandler::RQFUNC_SafePlug //BLBLBL new functino for antiplug
 		if (status == 0){
 			user->self->boClientExitCountDown=true;
 
-			//havoc mettre toujours ‡ true (pour dÈsactiver l'antiplug):
+			//havoc mettre toujours ù true (pour dùsactiver l'antiplug):
 			if ( user->self->GetUnderBlock()==__SAFE_HAVEN || user->self->GetUnderBlock()==__INDOOR_SAFE_HAVEN ){
-				//BLBLBL antiplug : 15 secondes d'inactivitÈ avant de dÈconnecter un perso OU en zone PVP off
+				//BLBLBL antiplug : 15 secondes d'inactivitù avant de dùconnecter un perso OU en zone PVP off
    	
 				TFCPacket sending;
 				sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client

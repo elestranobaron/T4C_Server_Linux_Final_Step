@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "HarvesterOfLife.H"
+#include "HarvesterOfLife.h"
 
 HarvesterOfLife::HarvesterOfLife()
 {}

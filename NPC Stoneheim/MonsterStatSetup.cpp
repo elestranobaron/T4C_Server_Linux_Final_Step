@@ -154,7 +154,7 @@ NPCstructure::NPC LordStonecrestNPC;
 NPCstructure::NPC RemortNPC;
 NPCstructure::NPC MOBHunterNPC;
 
-void CreateNPC( void );
+void T4C_CREATE_NPC_FUNC_NAME( void );
 
 INIT_MONSTER_STAT_SETUP 
 
@@ -5114,10 +5114,10 @@ MOB_ITEM( __OBJ_FINELY_CUT_LIMESTONE, 0.05 )
 MOB_ITEM( __OBJ_SCROLL_OF_RECALL, 1) 
 MOB_ITEM( __OBJ_SCREAMING_HELM_OF_OGRIMAR, 0.2 )
 
-	CreateNPC();
+	T4C_CALL_CREATE_NPC();
 CLOSE_MONSTER_STAT_SETUP
 
-void MonsterStatDestroy(){
+void MonsterStatDestroy_Stoneheim(){
 }
  
 

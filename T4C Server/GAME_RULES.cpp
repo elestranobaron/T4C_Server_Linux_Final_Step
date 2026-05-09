@@ -4,8 +4,8 @@
 #include "AutoConfig.h"
 #include "Random.h"
 #include "ObjectListing.h"
-#include "blockinglisting.h"
-#include "QUestFlagsListing.h"
+#include "BlockingListing.h"
+#include "QuestFlagsListing.h"
 #include "NPCmacroScriptLng.h"
 
 #ifdef _DEBUG

@@ -10,7 +10,7 @@ namespace NPC_Editor
 class Condition	: public ControlFlow
 {
 public:
-	Condition::Condition( std::string name, std::string helpText, InstructionIds id ) :
+	Condition( std::string name, std::string helpText, InstructionIds id ) :
         ControlFlow( name, helpText, id ){}
 
     virtual std::string GetCondition() const { return condition; }
@@ -21,10 +21,10 @@ public:
         ControlFlow::Copy( theCopy );
     }
 
-    void SaveImp( WDAFile &file ) = 0{
+    void SaveImp( WDAFile &file ) override {
         file.Write( condition );
     }
-    void LoadImp( WDAFile &file ) = 0{
+    void LoadImp( WDAFile &file ) override {
         file.Read( condition );
     }
 

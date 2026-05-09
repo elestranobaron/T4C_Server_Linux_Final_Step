@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "MakrshPtanghSpawner.H"
+#include "MakrshPtanghSpawner.h"
 
 MakrshPtanghSpawner::MakrshPtanghSpawner()
 {}

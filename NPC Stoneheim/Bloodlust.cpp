@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Bloodlust.H"
+#include "Bloodlust.h"
 
 Bloodlust::Bloodlust()
 {}

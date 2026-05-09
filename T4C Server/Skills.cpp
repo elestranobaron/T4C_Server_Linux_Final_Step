@@ -3,7 +3,7 @@
 #include "TFC_MAIN.h"
 #include "Skills.h"
 #include "IntlText.h"
-#include "format.h"
+#include "Format.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -11,7 +11,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-CPtrArray Skills::c_aSkills;
+std::vector<LPSKILL> Skills::c_aSkills;
 
 LPCTSTR __declspec(dllexport) _SKILL::GetName( WORD wLanguage ){
     return IntlText::ParseString( lpszSkillName, wLanguage );
@@ -39,7 +39,13 @@ void Skills::Register(LPCTSTR lpszName, DWORD descId, int nID, LPSKILL_CALLBACK 
 
 	TRACE( "\r\nRegistering skill ID %u.", lpSkill->nSkillID );
 
-	c_aSkills.SetAtGrow(nID, lpSkill);
+	if (nID >= 0) {
+		const size_t need = static_cast<size_t>(nID) + 1;
+		if (c_aSkills.size() < need) {
+			c_aSkills.resize(need, nullptr);
+		}
+		c_aSkills[static_cast<size_t>(nID)] = lpSkill;
+	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Executes a skill
@@ -52,8 +58,8 @@ int Skills::ExecuteSkill(int nID, int nHook, Unit *self, Unit *medium,
 	LPSKILL lpSkill;	
 	int nReturn = SKILL_FAILED;
 
-	if(nID < c_aSkills.GetSize()){
-		lpSkill = (LPSKILL)c_aSkills.GetAt(nID);
+	if(nID >= 0 && static_cast<size_t>(nID) < c_aSkills.size()){
+		lpSkill = c_aSkills[static_cast<size_t>(nID)];
 		if(lpSkill){
 			nReturn = lpSkill->lpFunc(nHook, self, medium, target, valueIN, valueOUT, lpusUserSkill);
 			
@@ -87,9 +93,9 @@ int Skills::ExecuteSkill(int nID, int nHook, Unit *self, Unit *medium,
 //	nID:		The skill to query
 //  lpnHook:	Pointer to an int which will receive on what is the skill hooked, NULL otherwise
 // return:	TRUE, nID is a skill
-BOOL Skills::IsSkill(int nID, LPINT lpnHook){	
-	if(nID < c_aSkills.GetSize()){
-		LPSKILL lpSkill = (LPSKILL)c_aSkills.GetAt(nID);
+BOOL Skills::IsSkill(int nID, int *lpnHook){	
+	if(nID >= 0 && static_cast<size_t>(nID) < c_aSkills.size()){
+		LPSKILL lpSkill = c_aSkills[static_cast<size_t>(nID)];
 		if(lpSkill){
 			if(lpnHook){
 				*lpnHook = lpSkill->nHook;
@@ -106,8 +112,8 @@ BOOL Skills::IsSkill(int nID, LPINT lpnHook){
 // return: TRUE, skill is learnable
 BOOL Skills::IsSkillLearnable(int nID, Unit *uLearner, CString &reqText){
 	
-	if(nID < c_aSkills.GetSize()){
-		LPSKILL lpSkill = (LPSKILL)c_aSkills.GetAt(nID);
+	if(nID >= 0 && static_cast<size_t>(nID) < c_aSkills.size()){
+		LPSKILL lpSkill = c_aSkills[static_cast<size_t>(nID)];
 		// Then check for 'nID'
 		if(lpSkill){
 			LPSKILL_ATTRIBUTES lpAttrib = lpSkill->lpsaAttrib;
@@ -291,8 +297,8 @@ BOOL Skills::IsSkillLearnable(int nID, Unit *uLearner, CString &reqText){
 //	nID:	ID of the skill to get.
 // return:	A pointer to the skill queried.
 LPSKILL Skills::GetSkill(int nID){
-	if(nID < c_aSkills.GetSize()){
-		return (LPSKILL)(c_aSkills.GetAt(nID));
+	if(nID >= 0 && static_cast<size_t>(nID) < c_aSkills.size()){
+		return c_aSkills[static_cast<size_t>(nID)];
 	}
 	return NULL;
 }
@@ -310,8 +316,8 @@ LPSKILL Skills::GetSkillByName
 //////////////////////////////////////////////////////////////////////////////////////////
 {
     int i;
-    for( i = 0; i < c_aSkills.GetSize(); i++ ){
-        LPSKILL lpSkill = reinterpret_cast< LPSKILL >( c_aSkills.GetAt( i ) );
+    for( i = 0; static_cast<size_t>(i) < c_aSkills.size(); i++ ){
+        LPSKILL lpSkill = c_aSkills[static_cast<size_t>( i )];
         if( lpSkill != NULL && 
             stricmp( lpSkill->GetName( wLang ), skillName.c_str() ) == 0 ){
             return lpSkill;
@@ -379,8 +385,8 @@ void Skills::Destroy( void )
 	LPSKILL lpSkill;
 	int i;
 	
-	for(i = 0; i < c_aSkills.GetSize(); i++){
-		 lpSkill = (LPSKILL)c_aSkills.GetAt(i);
+	for(i = 0; static_cast<size_t>(i) < c_aSkills.size(); i++){
+		 lpSkill = c_aSkills[static_cast<size_t>(i)];
 		 if(lpSkill){
 			lpSkill->Delete();
 		}

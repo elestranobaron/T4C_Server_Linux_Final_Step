@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "DorkenRotsmell.H"
+#include "DorkenRotsmell.h"
 
 DorkenRotsmell::DorkenRotsmell()
 {}

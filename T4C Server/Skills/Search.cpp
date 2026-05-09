@@ -1,6 +1,7 @@
 #pragma hdrstop
 
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "Search.h"
 #include "../TFC_MAIN.h"
 

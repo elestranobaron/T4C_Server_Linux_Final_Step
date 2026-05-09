@@ -2,10 +2,10 @@
 
 #include "DispellEffect.h"
 #include "../WorldMap.h"
-#include "../tfc_main.h"
+#include "../TFC_MAIN.h"
 #include "../Broadcast.h"
-#include "../Game_Rules.h"
-#include "../format.h"
+#include "../GAME_RULES.h"
+#include "../Format.h"
 #include "../Character.h"
 #include "../T4CLog.h"
 #include <math.h>

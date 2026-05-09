@@ -4,13 +4,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
+#include "StandardTypes.h"
 // Define Windows types for Linux
-typedef unsigned short WORD;
-typedef unsigned char BYTE;
 typedef unsigned int UINT;
-typedef unsigned int DWORD;
-typedef long LONG;
-typedef unsigned long ULONG;
 typedef void* LPVOID;
 typedef short SHORT;
 typedef int BOOL;
@@ -28,7 +24,6 @@ typedef short RETCODE;
 #include <sqlext.h>
 #include <string>
 
-// Pointer types
 typedef DWORD* LPDWORD;
 typedef WORD* LPWORD;
 typedef BYTE* LPBYTE;

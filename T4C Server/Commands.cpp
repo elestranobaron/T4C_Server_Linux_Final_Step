@@ -218,7 +218,11 @@ void ScriptItem::DisplayHelp
 )
 //////////////////////////////////////////////////////////////////////////////////////////
 {
+#ifdef _WIN32
     targetWindow->SetWindowText( help.c_str() );
+#else
+    (void)targetWindow;
+#endif
 }
 
 

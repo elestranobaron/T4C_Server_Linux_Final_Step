@@ -1,7 +1,8 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "PickLock.h"
-#include "..\ObjectListing.h"
-#include "..\_item.h"
+#include "../ObjectListing.h"
+#include "../_item.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

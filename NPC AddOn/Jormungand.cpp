@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Jormungand.H"
+#include "Jormungand.h"
 
 Jormungand::Jormungand()
 {}

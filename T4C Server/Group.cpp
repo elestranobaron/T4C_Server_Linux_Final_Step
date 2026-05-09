@@ -296,10 +296,11 @@ bool Group::Invite
 
         // Send invitation notice!
         TFCPacket sending;
-        
+        CString leaderName = lpGroupLeader->GetName( _DEFAULT_LNG );
+
         sending << (RQ_SIZE)RQ_GroupInvite;
         sending << (long)lpGroupLeader->GetID();
-        sending << (CString &)lpGroupLeader->GetName( _DEFAULT_LNG );
+        sending << leaderName;
         
         lpCharacter->SendPlayerMessage( sending );
 
@@ -704,8 +705,9 @@ void Group::SendGroupMembers
             sending << (short)( (*i)->GetHP() * 100 / (*i)->GetMaxHP() ); // Send the HP percentage.
         }
        
-        sending << (char)( (*i) == lpGroupLeader );          // If the player is the leader.                
-        sending << (CString &)(*i)->GetName( _DEFAULT_LNG ); // Send the player's name.
+        sending << (char)( (*i) == lpGroupLeader );          // If the player is the leader.
+        CString memberName = (*i)->GetName( _DEFAULT_LNG );
+        sending << memberName; // Send the player's name.
     }
 
     target->SendPlayerMessage( sending );

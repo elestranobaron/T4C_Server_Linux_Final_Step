@@ -84,7 +84,7 @@ class TemplateList : public CLock{
 		int nb_objects;
 		ListStatus SavedQuery;
 		ListStatus Querying;
-		//CRITICAL_SECTION csThreadLock;
+		// legacy thread lock
 
 	protected:
 		void CreateNext(ObjectType *source);
@@ -286,13 +286,13 @@ ObjectType *TemplateList <ObjectType>::Object()
 template <class ObjectType>
 void TemplateList <ObjectType>::Lock()
 {
-	EnterCriticalSection(&csThreadLock);
+	csThreadLock.lock();
 }
 
 template <class ObjectType>
 void TemplateList <ObjectType>::Unlock()
 {
-	LeaveCriticalSection(&csThreadLock);
+	csThreadLock.unlock();
 }
 */
 

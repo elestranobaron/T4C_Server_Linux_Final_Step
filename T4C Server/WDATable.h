@@ -6,7 +6,7 @@
 #endif // _MSC_VER >= 1000
 
 #include "WDAFile.h"
-#include "Logger.h"
+#include "logger.h"
 
 #ifndef NO_DAO_SUPPORT
     #include <afxdao.h>

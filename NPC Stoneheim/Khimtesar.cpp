@@ -113,7 +113,7 @@ Command3(INTL( 489, "WORK"),INTL( 3696, "WHAT DO YOU DO"),INTL( 487, "OCCUPATION
 INTL( 8993, "I am a scholar of the arcane art. I spend most of the time I have reading "
 "large tomes of magic.")
 
-Command4(INTL( 695, "FUCK"),INTL( 696, "SUCK"),INTL( 697, "ASSHOLE"),INTL( 698, " ASS "),)
+Command4(INTL( 695, "FUCK"),INTL( 696, "SUCK"),INTL( 697, "ASSHOLE"),INTL( 698, " ASS "))
 INTL( 8994, "I will not tolerate this kind of abusive language. I am taking half of your gold as punishment!")
 TakeGold(Gold/2)
 

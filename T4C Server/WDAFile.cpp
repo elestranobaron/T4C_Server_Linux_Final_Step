@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include <algorithm>
+#include <memory>
 #include "WDAFile.h"
 #include "Format.h"
 #include "Random.h"

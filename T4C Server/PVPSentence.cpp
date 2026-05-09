@@ -1,4 +1,4 @@
-#include "Stdafx.h"
+#include "StdAfx.h"
 #include "PVPSentence.h"
 #include "PlayerManager.h"
 #include "ChatterChannels.h"

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "ElysanaBlackrose.H"
+#include "ElysanaBlackrose.h"
 
 ElysanaBlackrose::ElysanaBlackrose()
 {}

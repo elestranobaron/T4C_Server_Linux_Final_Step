@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "PMTheisser.H"
+#include "PMTheisser.h"
 
 PMTheisser::PMTheisser()
 {}

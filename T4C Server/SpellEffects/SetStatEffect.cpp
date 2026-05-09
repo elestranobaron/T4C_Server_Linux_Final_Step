@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "SetStatEffect.h"
-#include "..\Broadcast.h"
+#include "../Broadcast.h"
 
 #define ISEQUAL( a ) csParam.CompareNoCase( a ) == 0
 #define GETSETVAL cSetVal.GetBoost( self, target, 0, 0, range )

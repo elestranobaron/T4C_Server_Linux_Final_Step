@@ -1,0 +1,11 @@
+"Nous migrons T4C de Windows vers Linux.
+
+Cible : Arch Linux, GCC/Clang.
+
+Remplacer winsock2.h par les sockets POSIX.
+
+Remplacer les threads Windows par std::thread.
+
+Utiliser std::filesystem pour la gestion des chemins.
+
+Créer des fichiers CMakeLists.txt pour chaque dossier."

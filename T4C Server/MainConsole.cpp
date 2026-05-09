@@ -16,11 +16,16 @@
 #include "DeadlockDetector.h"
 #include "TFCMessagesHandler.h"
 #include "Shutdown.h"
-#include "NPC thread.h"
+#include "NPC Thread.h"
 #include <stdio.h>
+#ifdef _WIN32
 #include <conio.h>
+#else
+#include "LinuxConio.h"
+#endif
 #include <string>
 #include <stdlib.h>
+#include <cstdlib>
 //#include "ScriptFile.h"
 #include "WeatherEffect.h"
 
@@ -40,6 +45,8 @@ extern CTFCServerApp theApp;
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
+
+#ifdef _WIN32
 
 class AsyncNamedPipeServer{
 public:
@@ -248,8 +255,33 @@ string AsyncNamedPipeServer::GetMessage( void )
     return lpBuffer;
 }
 
+#else /* !_WIN32 ù named pipes not implemented */
 
+class AsyncNamedPipeServer {
+public:
+	explicit AsyncNamedPipeServer(string bsThePipeName) { (void)bsThePipeName; }
+	~AsyncNamedPipeServer() {}
 
+	enum PipeStatus {
+		StatusRead,
+		StatusWrite,
+		StatusConnect,
+		StatusIoPending
+	};
+
+	bool Create(void) { return false; }
+	void Destroy(void) {}
+	void Reset(void) {}
+	PipeStatus GetPendingIo(void) { return StatusIoPending; }
+	bool Read(void) { return false; }
+	void Write(void) {}
+	void Connect(void) {}
+	void Disconnect(void) {}
+	void SetMessage(string bsMessage) { (void)bsMessage; }
+	string GetMessage(void) { return string(); }
+};
+
+#endif /* _WIN32 */
 
 MainConsole::MainConsole()
 {
@@ -288,8 +320,8 @@ void MainConsole::TakeControl( void )
 
 		printf( "\n-----                                                     " 
                 "\nServer started on %s                                      "
-			    "\nPress F5  to switch on rain.                              " // steph dÈsactivation +fog
-			    "\nPress F6  to switch off rain.                             " // steph dÈsactivation +fog
+			    "\nPress F5  to switch on rain.                              " // steph dùsactivation +fog
+			    "\nPress F6  to switch off rain.                             " // steph dùsactivation +fog
                 "\nPress F10 to shutdown server.                             "
                 "\n-----                                                     "
                 "\n                                                          ",asctime(tmTime)
@@ -396,9 +428,9 @@ wsprintf(lpvMessage, "Un message du serveur" );
                     }
                     break;
                 case 63:
-                    printf( "\r\nPress F5 again twice to switch on Rain." ); // steph dÈsactivation +Fog
+                    printf( "\r\nPress F5 again twice to switch on Rain." ); // steph dùsactivation +Fog
                     if( getch() == 0 && getch() == 63 && getch() == 0 && getch() == 63 ){
-                        printf( " Rain switched on.\n" ); // steph dÈsactivation +Fog
+                        printf( " Rain switched on.\n" ); // steph dùsactivation +Fog
 						WorldPos wlPos = { 0, 0, 0 }; // BLBLBL
 						Broadcast::BCWeatherMsg( wlPos, 0, WEATHER_RAIN, true ); // BLBLBL
 						Broadcast::BCWeatherMsg( wlPos, 0, WEATHER_FOG, false ); // BLBLBL // steph false au lieu de true
@@ -408,9 +440,9 @@ wsprintf(lpvMessage, "Un message du serveur" );
                     }
                     break;
                 case 64:
-                    printf( "\r\nPress F6 again twice to switch off Rain." ); // steph dÈsactivation +Fog
+                    printf( "\r\nPress F6 again twice to switch off Rain." ); // steph dùsactivation +Fog
                     if( getch() == 0 && getch() == 64 && getch() == 0 && getch() == 64 ){
-                        printf( " Rain switched off.\n" ); // steph dÈsactivation +Fog
+                        printf( " Rain switched off.\n" ); // steph dùsactivation +Fog
 						WorldPos wlPos = { 0, 0, 0 }; // BLBLBL
 						Broadcast::BCWeatherMsg( wlPos, 0, WEATHER_RAIN, false ); // BLBLBL
 						Broadcast::BCWeatherMsg( wlPos, 0, WEATHER_FOG, false ); // BLBLBL
@@ -522,9 +554,7 @@ void MainConsole::Terminate( void )
 		Unit::SendGlobalUnitMessage( MSG_OnServerTermination, NULL, NULL, NULL );
 		
 		BYTE bTerminationData = '@';
-				
-		SYSTEM_INFO s_siSystem;
-		GetSystemInfo(&s_siSystem);
+		(void)bTerminationData;
 
 		// Delete dynamically loaded items
 		DynObjManager::Destroy();
@@ -532,7 +562,11 @@ void MainConsole::Terminate( void )
 		// Unregister the units
 		Unit::UnRegisterUnits( );
 
+#ifdef _WIN32
         OleUninitialize();
+#else
+        CoUninitialize();
+#endif
 
 		TFCTimerManager::DestroyTimers();
         
@@ -566,7 +600,11 @@ void MainConsole::Terminate( void )
 	try{
         exit( NORMAL_SERVER_EXIT );
     }catch(...){
+#ifdef _WIN32
         TerminateProcess( GetCurrentProcess(), TERMINATE_FAIL_EXIT );
+#else
+        std::_Exit( TERMINATE_FAIL_EXIT );
+#endif
     }
 
 

@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "TFC Server.h"
 #include "SimpleNPC.h"
-#include "NPCMacroScriptLng.h"
+#include "NPCmacroScriptLng.h"
 
 #undef Command
 

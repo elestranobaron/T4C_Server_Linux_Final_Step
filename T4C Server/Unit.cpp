@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "TFC Server.h"
 #include "Unit.h"
-#include "TFC_MAIN.H"
+#include "TFC_MAIN.h"
 #include "WorldMap.h"
 #include "CreatureListing.h"
 #include "MonsterStructure.h"
@@ -144,7 +144,7 @@ BOOL Unit::GetNameFromID
 		if( lpUnitType->bUnitType == bUnitType || bUnitType == 0 ){
 			// If name matches the unit name ( case sensitive )
 			if( lpUnitType->wBaseReferenceID == wID ){
-				strcpy( lpszName, (LPCTSTR)lpUnitType->csName );
+				strcpy( lpszName, lpUnitType->csName.c_str() );
 				tlUnitTypes.Unlock();
 				return TRUE;	// name found
 			}
@@ -218,7 +218,7 @@ WORD Unit::GetIDFromName
 // This fonction finds the base reference ID of a registered NPC using its textual name.
 // 
 (
- CString csName,			// The name of the NPC.
+ std::string csName,			// The name of the NPC.
  BYTE bUnitType,			// Unit type to search for.
  BOOL boInsensitiveSearch	// TRUE if unit name search is case insensitive.
 )
@@ -242,7 +242,7 @@ WORD Unit::GetIDFromName
 					return lpUnitType->wBaseReferenceID;
 				}
 			}else{
-				if( stricmp( (LPCTSTR)lpUnitType->csName, (LPCTSTR)csName ) == 0 ){
+				if( stricmp( lpUnitType->csName.c_str(), csName.c_str() ) == 0 ){
 					tlUnitTypes.Unlock();
 					return lpUnitType->wBaseReferenceID;
 				}
@@ -711,11 +711,6 @@ BOOL Unit::SendUnitMessage
 	return TRUE;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Returns U_OBJECT, U_PC or U_NPC
-char Unit::GetType(){
-	return UnitType;
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // Returns the position of the unit
 WorldPos Unit::GetWL(){
 	return WL;
@@ -728,11 +723,6 @@ void Unit::SetWL(WorldPos pos){
 		wlOriginalPos = pos;
 	}
 	WL = pos;
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// Returns the DWORD global ID of the unit
-UINT Unit::GetID(){
-	return GlobalID;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Sets the ID of the unit
@@ -838,7 +828,7 @@ CString Unit::GetName
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This function is implemented only for virtual purposes
-void Unit::SetName(CString newname){
+void Unit::SetName(std::string newname){
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // ID of the icon showed on the server
@@ -1472,8 +1462,11 @@ void Unit::Talk
 		if ( TargetPlayer->IsGod() ) dwNameColor = U_GOD_COLOR
 		else dwNameColor = U_PC_COLOR;
     }
-    sending << (CString &)msg;
-    sending << (CString &)GetName( GetLang() );
+    sending << msg;
+    {
+        CString shoutName = GetName( GetLang() );
+        sending << shoutName;
+    }
 	sending << (long)dwNameColor;
 	
 	TRACE( "\r\nSent color %u and direction %u\r\n", dwColor, bDirection );
@@ -2704,7 +2697,7 @@ void Unit::DeferredLoadEffects( void )
         lpEffect->bindedSpellID = (*i).bindedSpellId;
         lpEffect->bindedFlag = (*i).bindedFlagId;
 
-	    DWORD dwStrLen = (*i).effectData.GetLength();
+	    DWORD dwStrLen = static_cast<DWORD>((*i).effectData.size());
 
 	    // Query the spell effect manager to get the binded effect function.
 	    lpEffect->lpFunc = UnitEffectManager::GetEffectProc( lpEffect->dwEffect );
@@ -2713,7 +2706,7 @@ void Unit::DeferredLoadEffects( void )
             TRACE( "\r\nString len %u", dwStrLen );
             BYTE lpszData[ 512 ];
 
-            strcpy( (char *)lpszData, (*i).effectData );
+            strcpy( (char *)lpszData, (*i).effectData.c_str() );
             
             DATA_SAVE sSaveData;
             ZeroMemory( &sSaveData, sizeof( DATA_SAVE ) );
@@ -3180,7 +3173,7 @@ BOOL Unit::IsPrivateTalk( void ){
     return FALSE;
 }
 
-void Unit::SendPrivateMessage( CString &csMessage, Unit *lpuUnit, DWORD dwColor ){};
+void Unit::SendPrivateMessage( const String &csMessage, Unit *lpuUnit, DWORD dwColor ){ (void)csMessage; (void)lpuUnit; (void)dwColor; };
 
 
 //////////////////////////////////////////////////////////////////////////////////////////

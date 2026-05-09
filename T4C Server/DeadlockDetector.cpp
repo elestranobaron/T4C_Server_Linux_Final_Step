@@ -2,8 +2,12 @@
 #include "TFC Server.h"
 #include "DeadlockDetector.h"
 #include "TFCServerGP.h"
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
-#include "format.h"
+#endif
+#endif
+#include "Format.h"
 #include <list>
 #include "ThreadMonitor.h"
 
@@ -170,7 +174,7 @@ void CDeadlockDetector::DeadlockCheckThread
                 exit( DEADLOCK_CRASH );
 				//BLBLBL 6 avril 2009 on ne ferme plus le serveur en cas de deadlock
 				//BLBLBL 13 avril 2009 : ne pas fermer le serveur empeche les nouveaux joueurs de se co
-				//et laisse certains jouer, mais au prochain reboot, un gÈant TW apparait.
+				//et laisse certains jouer, mais au prochain reboot, un gùant TW apparait.
             }
         }
     }

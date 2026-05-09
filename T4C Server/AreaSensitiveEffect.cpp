@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "AreaSensitiveEffect.h"
 #include "TFCTimers.h"
-#include "TFC_MAIN.H"
+#include "TFC_MAIN.h"
 #include "SpellListing.h"
 
 #ifdef _DEBUG

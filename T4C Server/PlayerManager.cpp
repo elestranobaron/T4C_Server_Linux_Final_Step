@@ -8,7 +8,11 @@
 #include "DeadlockDetector.h"
 //#include "../T4C Monitor/T4C MonitorMap.h"
 //#include "GlobalStatistics.h"
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
+#endif
+#endif
 //#include "ODBCMage.h"
 #include "RegKeyHandler.h"
 #include "ThreadMonitor.h"
@@ -24,8 +28,8 @@ static char THIS_FILE[]=__FILE__;
 #define GROW_BY             10
 
 // Utility macro.
-#define SAME_IP( sock1, sock2 ) (sock1).sin_addr.S_un.S_addr == (sock2).sin_addr.S_un.S_addr &&\
-                                (sock1).sin_port             == (sock2).sin_port
+#define SAME_IP( sock1, sock2 ) (sock1).sin_addr.s_addr == (sock2).sin_addr.s_addr &&\
+                                (sock1).sin_port         == (sock2).sin_port
 
 // externs
 extern TFC_MAIN *TFCServer;
@@ -303,7 +307,7 @@ void CPlayerManager::DeletePlayer
     
 
     // If logoffs have not been stopped.
-    PostQueuedCompletionStatus( hDeletionIo, 0, reinterpret_cast< DWORD >( lpPlayer ), NULL );    
+    PostQueuedCompletionStatus( hDeletionIo, 0, reinterpret_cast<std::uintptr_t>( lpPlayer ), NULL );    
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -351,7 +355,7 @@ void CPlayerManager::AsyncDeletePlayer
 
             lpPlayer->Logoff();
     
-            if( lpPlayer->IsIdle() ){ //BLBLBL cet appel est effectuÈ plusieurs dizaines de fois par seconde, ce qui incrÈmente trop vite le nombre de IdleChances !
+            if( lpPlayer->IsIdle() ){ //BLBLBL cet appel est effectuù plusieurs dizaines de fois par seconde, ce qui incrùmente trop vite le nombre de IdleChances !
                 _LOG_WORLD
                     LOG_MISC_1,
                     "User %s got kicked-out due to timeout.",
@@ -372,7 +376,7 @@ void CPlayerManager::AsyncDeletePlayer
                         lpPlayer->self->GetWL().world
                     );
                     csText += csOther;
-                }else{//BLBL on affiche les dÈtails mÍme si le personnage Ètait pas en ligne.
+                }else{//BLBL on affiche les dùtails mùme si le personnage ùtait pas en ligne.
                     csOther.Format( "  Character %s was NOT in_game ?? and exited from position ( %u, %u, %u ).",
                         lpPlayer->self->GetTrueName(),
                         lpPlayer->self->GetWL().X,
@@ -645,7 +649,7 @@ void CPlayerManager::GetLocalBroadcastAddress
 
                     // If within range.
                     if( abs( wlPlayerPos.X - wlPos.X ) <= nRange && 
-                        abs( wlPlayerPos.Y - wlPos.Y ) <= nRange*2 ){ //BLBL : le range Y multiplÈ par 2 car il y a 1.5 fois plus de cases en Y qu'en X au format 1024x768. _DEFAULT_RANGE
+                        abs( wlPlayerPos.Y - wlPos.Y ) <= nRange*2 ){ //BLBL : le range Y multiplù par 2 car il y a 1.5 fois plus de cases en Y qu'en X au format 1024x768. _DEFAULT_RANGE
                         
                         bool addIP = true;
                         if( packetVisitor != NULL ){
@@ -812,11 +816,11 @@ void CPlayerManager::PlayerMaintenance
 			    		    // Verify the unit's messages
 		    			    lpPlayer->self->VerifyTimers();
 
-							//BLBL 08/09/2009 : antispeedhack system, on vÈrifie si il y a encore des packets de mouvements stockÈs ‡ envoyer :
+							//BLBL 08/09/2009 : antispeedhack system, on vùrifie si il y a encore des packets de mouvements stockùs ù envoyer :
 														
 							if (lpPlayer->MoveList.size()>0){
 
-								const INT MoveExhaust = 0;//BLBLBL 200=>400=>200 pour cette boucle l‡, ‡ 100 on peut encore speedhacker !! // steph ajout de INT // steph 0 au lieu de 200 MILLISECONDS
+								const INT MoveExhaust = 0;//BLBLBL 200=>400=>200 pour cette boucle lù, ù 100 on peut encore speedhacker !! // steph ajout de INT // steph 0 au lieu de 200 MILLISECONDS
 								TFCPacket sending;
 								WorldPos tmp;
 								char searchway;
@@ -826,10 +830,10 @@ void CPlayerManager::PlayerMaintenance
 								if( newExhaust.move <= TFCMAIN::GetRound() ) {
 								
 
-									//BL Ce systËme implÈmente une "liste de mouvements ‡ faire"
-									//Cela permet d'Èviter le speedhack.
-									//Ces appels ‡ MoveUnit doivent Ítre les mÍmes que ceux dans TFCMessageHandler.cpp
-									//puisque cette liste de mouvements ‡ effectuer utilise les mÍmes appels ‡ MoveUnit.
+									//BL Ce systùme implùmente une "liste de mouvements ù faire"
+									//Cela permet d'ùviter le speedhack.
+									//Ces appels ù MoveUnit doivent ùtre les mùmes que ceux dans TFCMessageHandler.cpp
+									//puisque cette liste de mouvements ù effectuer utilise les mùmes appels ù MoveUnit.
 									switch( lpPlayer->MoveList.front() )
 									{
 										case RQ_MoveNorth:               // NORTH
@@ -1312,25 +1316,28 @@ void CPlayerManager::PacketUserList
 			csName = lpPlayer->GetFullAccountName();
 			csName += "(invisible)";	// append
 
-			sending << (CString &)csName;
+			sending << csName;
 			if( lpPlayer->in_game ){
-				sending << (CString &)lpPlayer->self->GetTrueName();
+				CString csTrue = lpPlayer->self->GetTrueName();
+				sending << csTrue;
 			}else{
-				sending << (CString &)csVoid;
+				sending << csVoid;
 			}
 		}
 		// otherwise display normally
 		else{
 
             if( lpUser->GetGodFlags() & GOD_CAN_SEE_ACCOUNTS ){
-                sending << (CString &)lpPlayer->GetFullAccountName();
+				CString csAcc = lpPlayer->GetFullAccountName();
+                sending << csAcc;
             }else{
-                sending << (CString &)csVoid;
+                sending << csVoid;
             }
 			if( lpPlayer->in_game ){
-				sending << (CString &)lpPlayer->self->GetTrueName();
+				CString csTrue = lpPlayer->self->GetTrueName();
+				sending << csTrue;
 			}else{
-				sending << (CString &)csVoid;
+				sending << csVoid;
 			}
 		}
 	}

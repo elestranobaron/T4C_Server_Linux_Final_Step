@@ -1,8 +1,9 @@
 #pragma hdrstop
-#include <NPC.H>
+#include <NPC.h>
+#include "NPC.H"
 
 #include "Annabelle.h"
-#include "Asarr.H"
+#include "Asarr.h"
 #include "DorkenRotsmell.h"
 #include "Dunikus.h"
 #include "Jarko.h"
@@ -10,15 +11,15 @@
 #include "LanceSilversmith.h"
 #include "Lantalir.h"
 #include "LighthavenSamaritan.h"
-#include "Lyria.H"
+#include "Lyria.h"
 #include "Mhorgwloth.h"
-#include "Mirandul.H"
+#include "Mirandul.h"
 #include "NPCGoblinScout.h"
 #include "NPCGoblinWarrior.h"
 #include "OldHermit.h"
 #include "RenegadeOrcLeader.h"
 #include "SebanForgelot.h"
-#include "Totak.H"
+#include "Totak.h"
 #include "WindhowlSamaritan.h"
 #include "Yrian.h"
 

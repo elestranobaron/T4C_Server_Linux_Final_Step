@@ -16,7 +16,7 @@ uhyper Random::Seed = time(NULL);
 int Random::LastValue = 0;  // This value is not thread safe,
                             // but this is irrelevant for a randomizer.
 
-hyper Random::Randomize( int nMin, int nMax, BOOL boSameTwice ) {
+__int64 Random::Randomize( int nMin, int nMax, BOOL boSameTwice ) {
 // Generate a Random Number
 	Seed = Seed * 725472321UL + 1UL;
 
@@ -71,7 +71,7 @@ void Random::SetSeed( uhyper NewSeed ){
     Seed = NewSeed;
 }
 
-signed int Random::operator () ( dice &cDice ){
+signed int Random::operator () ( const dice &cDice ){
     signed int nReturn = cDice.Plus();
 
     UINT i;

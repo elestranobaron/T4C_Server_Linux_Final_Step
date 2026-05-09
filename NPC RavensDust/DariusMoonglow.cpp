@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "DariusMoonglow.H"
+#include "DariusMoonglow.h"
 
 DariusMoonglow::DariusMoonglow()
 {}

@@ -5,6 +5,11 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#ifndef _WIN32
+#include "StandardTypes.h"
+#include "Win32Compat.h"
+#endif
+
 //#include "TFCServerContext.h"
 
 #define _TFC_THREAD_DEADLOCK 0xA0000001

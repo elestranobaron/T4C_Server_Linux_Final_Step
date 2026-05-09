@@ -1,6 +1,8 @@
 #ifndef STACKHLP_H_12052000
 #define STACKHLP_H_12052000
 
+#include "StandardTypes.h"
+
 #ifdef _M_IX86
 
 #define GET_CALLER_ADDR( callerAddr ){\

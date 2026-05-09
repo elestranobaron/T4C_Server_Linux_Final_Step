@@ -64,17 +64,17 @@ INTL( 7384, "Ahhh, so you wish to try your skills in the arena eh? There are cur
 ;} else if( msg.Find( cmd ) != -1 && !YesNo) { output += 
 */
 
-;} else if( ( msg.Find( INTL( 2379, "CHURCH") ) != -1 ) && YesNo == 1) { ;YesNo = 0;
+;} else if( ( msg.find( INTL( 2379, "CHURCH") ) != String::npos ) && YesNo == 1) { ;YesNo = 0;
 Conversation
 INTL( 7385, "The church eh? Very well then. Just tell me when you are \"ready\" and you will be transported there to await "
 "your opponent.")
 
-;} else if( ( msg.Find( INTL( 7386, "BASEMENT") ) != -1 ) && YesNo == 1) {;
+;} else if( ( msg.find( INTL( 7386, "BASEMENT") ) != String::npos ) && YesNo == 1) {;
 Conversation
 INTL( 7387, "I'm terribly sorry, but it seems the basement has not yet been completed. I'm afraid you'll have to choose "
 "another arena for your battle. In which arena will you fight?")
 
-;} else if( ( msg.Find( INTL( 755, "ISLAND") ) != -1 ) && YesNo == 1) { ;YesNo = 0;
+;} else if( ( msg.find( INTL( 755, "ISLAND") ) != String::npos ) && YesNo == 1) { ;YesNo = 0;
 Conversation
 INTL( 7388, "It seems that the island you wish to use as your private battleground no longer exists. I'll be sure to tell "
 "the technician about it. In the mean time, you'll have to fight somewhere else. Where will you fight your battle?")

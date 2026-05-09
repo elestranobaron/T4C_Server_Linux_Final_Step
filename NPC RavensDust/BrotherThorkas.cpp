@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "BrotherThorkas.H"
+#include "BrotherThorkas.h"
 
 BrotherThorkas::BrotherThorkas()
 {}

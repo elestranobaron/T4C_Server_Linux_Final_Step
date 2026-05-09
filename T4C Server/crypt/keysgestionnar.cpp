@@ -15,22 +15,22 @@ Key::Key()
 
 }
 
-Key::Key(unsigned __int64 new_key, unsigned __int64 new_keymod)
+Key::Key(std::uint64_t new_key, std::uint64_t new_keymod)
 {
-	key = key;
+	key = new_key;
 	keymod = new_keymod;
 }
 
 //precision en bits d'une cle
 int Key::getprecision()
 {
-	unsigned __int64 value;
+	std::uint64_t value;
 	if (key > keymod)
 		value = key;
 	else
 		value = keymod;
 		
-	unsigned __int64 precision = 0;
+	std::uint64_t precision = 0;
 	do
 		precision++;
 	while (value > int64stuff::MyPow(2,precision));

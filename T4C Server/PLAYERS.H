@@ -18,8 +18,12 @@
 #include <unistd.h> // for close
 #include <errno.h> // for errno
 typedef int SOCKET;
+#ifndef INVALID_SOCKET
 #define INVALID_SOCKET -1
+#endif
+#ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
+#endif
 #define closesocket close
 #define WSAGetLastError() errno
 #define WSACleanup() // No-op on Linux
@@ -117,7 +121,7 @@ public:
 	void            RemovePlayer(String name);
 	void            AddToHistory(unsigned long historyDate, String historyText);//BLBLBL pour enregistrer l'historique des punitions modo.
 
-    static char *   QuotedAccount( char szBuffer[], String &csAccount );
+    static char *   QuotedAccount( char szBuffer[], const String &csAccount );
 	void            SetAccount(String name);
 	String         GetAccount() const;
     String         GetFullAccountName() const; // Account + realm

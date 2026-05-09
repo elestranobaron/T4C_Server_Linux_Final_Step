@@ -5,7 +5,12 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include "StandardTypes.h"
+#include "Win32Compat.h"
+#endif
 #include "Lock.h"
 /*
  * The CSetup class handles and maintains the configuration of the serveur.

@@ -2,11 +2,16 @@
 #include "TFC Server.h"
 #include "ODBCMage.h"
 #include "TFCServerGP.h"
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
+#endif
+#endif
 #include "DeadlockDetector.h"
 #include "RegKeyHandler.h"
 #include "DebugLogger.h"
-#include "format.h"
+#include "Format.h"
+#include <cstdint>
 
 //#include "EasyMail.h"
 
@@ -28,7 +33,7 @@ extern ODBCTrace *ODBCHarness;
 void cODBCMage::CheckDisconnectError( void ){
     BYTE  lpbSQLState[ 6 ] = {0};
     BYTE lpbErrorMsg[ 200 ];
-    long  dwNativeError;
+    SQLINTEGER dwNativeError;
     short wDummy = 0;
 
     SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );        
@@ -212,14 +217,14 @@ void cODBCMage::Create()
 {
 	SQLAllocEnv(&henv);
 	SQLAllocConnect(henv, &hdbc);
-	//InitializeCriticalSection( &csThreadLock );
+	//Initialize thread lock.
 }
 
 void cODBCMage::Destroy()
 {
 	SQLFreeConnect(hdbc);
 	SQLFreeEnv(henv);
-	//DeleteCriticalSection( &csThreadLock );
+	//Destroy thread lock.
 }
 
 void cODBCMage::Connect(LPCSTR szDataSource, LPCSTR szUsername, LPCSTR szPassword)
@@ -261,7 +266,7 @@ void cODBCMage::Connect(LPCSTR szDataSource, LPCSTR szUsername, LPCSTR szPasswor
 
 		BYTE lpbSQLState[ 200 ];		
 		BYTE lpbErrorMsg[ 200 ];
-		long  dwNativeError;
+		SQLINTEGER dwNativeError;
 		short wDummy;
 
 		SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
@@ -420,7 +425,7 @@ BOOL cODBCMage::Fetch( void )
 	else{
 		BYTE lpbSQLState[ 200 ];		
 		BYTE lpbErrorMsg[ 200 ];
-		long  dwNativeError;
+		SQLINTEGER dwNativeError;
 		short wDummy;
 
 		SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
@@ -485,7 +490,7 @@ BOOL cODBCMage::SendRequest
 		// but we should take some notes to logs, so that we know SQL Server is complaining at us.
 		BYTE  lpbSQLState[ 6 ] = {0};
 		BYTE lpbErrorMsg[ 200 ];
-		long  dwNativeError;
+		SQLINTEGER dwNativeError;
 		short wDummy = 0;
 
 		SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
@@ -544,7 +549,7 @@ BOOL cODBCMage::SendRequest
         }else{
             BYTE  lpbSQLState[ 6 ] = {0};
             BYTE lpbErrorMsg[ 200 ];
-            long  dwNativeError;
+            SQLINTEGER dwNativeError;
             short wDummy = 0;
 
             SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
@@ -602,7 +607,7 @@ RETCODE cODBCMage::GetDWORD
     if( rc != SQL_SUCCESS ){
 			BYTE lpbSQLState[ 200 ];		
 			BYTE lpbErrorMsg[ 200 ];
-			long  dwNativeError;
+			SQLINTEGER dwNativeError;
 			short wDummy;
 
 			SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
@@ -633,7 +638,7 @@ RETCODE cODBCMage::GetSDWORD
     if( rc != SQL_SUCCESS ){
 			BYTE lpbSQLState[ 200 ];		
 			BYTE lpbErrorMsg[ 200 ];
-			long  dwNativeError;
+			SQLINTEGER dwNativeError;
 			short wDummy;
 
 			SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
@@ -691,7 +696,6 @@ RETCODE cODBCMage::GetBYTE
 // Return: RETCODE, the SQL return code if the query
 //////////////////////////////////////////////////////////////////////////////////////////
 {	
-	SDWORD sdwMaxSize = 0;	
 	WORD wWord = 0;
 	
 	rc = SQLGetData( hstmt, uwCol, SQL_C_USHORT, &wWord, 0, NULL );
@@ -718,8 +722,8 @@ RETCODE cODBCMage::GetBLOB
 //////////////////////////////////////////////////////////////////////////////////////////
 {		
 	LPBYTE lpResult = (LPBYTE)( *lppData );
-	SDWORD sdwBufferSize = 0;
-	SDWORD sdwNewSize = 0;
+	SQLLEN sdwBufferSize = 0;
+	SQLLEN sdwNewSize = 0;
 	int nDummy;	// dummy buffer, to avoid some possible problems with a null data buffer.
 	
 	// Make a first query asking for 0 bytes, this should return the complete buffer size.
@@ -753,7 +757,7 @@ RETCODE cODBCMage::GetString
 // Return: RETCODE, the SQL return code of the query
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-	SDWORD sdwNewMaxSize = 0;
+	SQLLEN sdwNewMaxSize = 0;
 
 	rc = SQLGetData( hstmt, uwCol, SQL_C_CHAR, lpszText, nMaxSize, &sdwNewMaxSize );
 
@@ -788,7 +792,7 @@ RETCODE cODBCMage::GetDate
 // Return: RETCODE, the SQL return code for the query.
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-    SDWORD nSize = 0;    
+    SQLLEN nSize = 0;    
     return SQLGetData( hstmt, uwCol, SQL_C_TYPE_DATE, &lpSqlDate, sizeof( SQL_DATE_STRUCT ), &nSize );
 }
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -831,7 +835,7 @@ void cODBCMage::SendBatchRequest
 	    lpBatch->lpData = lpData;
 		lpBatch->lpszText = lpszText;
 
-	    PostQueuedCompletionStatus( hIoCompletionPort, 0, (DWORD)lpBatch, NULL );
+	    PostQueuedCompletionStatus( hIoCompletionPort, 0, reinterpret_cast<std::uintptr_t>( static_cast<void *>( lpBatch ) ), NULL );
     //}
 }
 
@@ -869,10 +873,10 @@ void cODBCMage::ODBCWriteThread
         GetCurrentThreadId()
     LOG_
     
-    cODBCMage *lpODBC = (cODBCMage *)lpODBCObject;
+	cODBCMage *lpODBC = (cODBCMage *)lpODBCObject;
 	DWORD dwStopMessage = 0;	
 	LPOVERLAPPED s_oDummy;
-	DWORD dwlpBatch;
+	std::uintptr_t dwlpBatch = 0;
 	SQL_REQUEST *lpRequest;
 	BATCH_REQUEST *lpBatch;
 	TemplateList <SQL_REQUEST> *lptlRequests;
@@ -896,7 +900,7 @@ void cODBCMage::ODBCWriteThread
 			// If this isn't a thread termination message
 			if( dwStopMessage == 0 ){
 				// Process the batch query
-				lpBatch = (BATCH_REQUEST *)dwlpBatch;				
+				lpBatch = reinterpret_cast<BATCH_REQUEST *>( dwlpBatch );				
 				lptlRequests = lpBatch->lptlRequests;
 				
 				boEndBatch = FALSE;
@@ -929,7 +933,7 @@ void cODBCMage::ODBCWriteThread
 						csRequest
 					LOG_
 
-					if( !lpODBC->SendRequest( (LPCTSTR)lpRequest->csQuery ) ){
+					if( !lpODBC->SendRequest( lpRequest->csQuery.c_str() ) ){
 							boEndBatch = TRUE;
 						}
 						KEEP_ALIVE

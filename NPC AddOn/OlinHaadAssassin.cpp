@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "OlinHaadAssassin.H"
+#include "OlinHaadAssassin.h"
 
 OlinHaadAssassin::OlinHaadAssassin()
 {}

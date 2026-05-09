@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "HealthEffect.h"
-#include "../blockinglisting.h"
-#include "../tfc_main.h"
+#include "../BlockingListing.h"
+#include "../TFC_MAIN.h"
 #include "../Broadcast.h"
-#include "../Game_Rules.h"
+#include "../GAME_RULES.h"
 #include <math.h>
-#include "../format.h"
+#include "../Format.h"
 #include "../Character.h"
 #include "../T4CLog.h"
 

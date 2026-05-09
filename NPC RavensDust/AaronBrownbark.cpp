@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "AaronBrownbark.H"
+#include "AaronBrownbark.h"
 
 AaronBrownbark::AaronBrownbark()
 {}

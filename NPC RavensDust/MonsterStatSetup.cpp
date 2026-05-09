@@ -77,7 +77,7 @@ NPCstructure::NPC GiamasNPC;
 NPCstructure::NPC BrotherThorkasNPC; 
 NPCstructure::NPC FleshGolemNPC; 
 
-void CreateNPC( void );
+void T4C_CREATE_NPC_FUNC_NAME( void );
 
 INIT_MONSTER_STAT_SETUP
 
@@ -3390,10 +3390,10 @@ MOB_DRESS_BODY ( BODY_CLOTH1 )
 MOB_DRESS_LEGS ( LEG_CLOTH1 )
 MOB_DRESS_FEET ( LEATHER_BOOTS )
 
-	CreateNPC();
+	T4C_CALL_CREATE_NPC();
 CLOSE_MONSTER_STAT_SETUP
 		
-void MonsterStatDestroy(){
+void MonsterStatDestroy_RavensDust(){
 }
 
 

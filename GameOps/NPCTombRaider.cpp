@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "NPCTombRaider.H"
+#include "NPCTombRaider.h"
 
 NPCTombRaider::NPCTombRaider()
 {}

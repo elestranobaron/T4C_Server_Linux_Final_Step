@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "TextFilter.h"
+#include <cctype>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -176,7 +177,7 @@ void TTextFilter::FilterMessage(char* Message)
 		Temp[WordSize]=0;
 
 		for(unsigned int i=0;i<WordSize;i++)
-			Temp[i]=tolower(Temp[i]);
+			Temp[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(Temp[i])));
 
 		if (GetItem(ComputeHash(Temp))!=0) //we got a hit
 		{

@@ -106,7 +106,7 @@ NPCstructure::NPC ArenaMobXP500NPC;     // Level 500
 NPCstructure::NPC ColosseumClerkXPNPC;  //DC Addition
 
 
-void CreateNPC( void );
+void T4C_CREATE_NPC_FUNC_NAME( void );
 
 INIT_MONSTER_STAT_SETUP 
 
@@ -4175,10 +4175,10 @@ MOB_ATTACK_PERCENTAGE ( 55 )
 // MINdam: 676  MAXdam: 1533  Average: 1104.5 
 
 
-	CreateNPC();
+	T4C_CALL_CREATE_NPC();
 CLOSE_MONSTER_STAT_SETUP
 
-void MonsterStatDestroy(){
+void MonsterStatDestroy_Remort(){
 }
  
 

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "UrikThief.H"
+#include "UrikThief.h"
 
 UrikThief::UrikThief()
 {}

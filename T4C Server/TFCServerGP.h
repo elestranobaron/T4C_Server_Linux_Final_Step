@@ -1,9 +1,29 @@
 #ifndef __TFCSERVERGP_H
 #define __TFCSERVERGP_H
 
+#include "StandardTypes.h"
+#include "Portability.h"
+#ifndef _WIN32
+#ifndef LPVOID
+typedef void* LPVOID;
+#endif
+#endif
+#ifdef _WIN32
 #include <eh.h>
+#endif
 #include "TFCException.h"
 //#include "WatchdogNotificator.h"
+
+#ifndef _WIN32
+typedef String CString;
+class CFile;
+#ifndef BOOL
+typedef int BOOL;
+#endif
+#ifndef LPVOID
+typedef void* LPVOID;
+#endif
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////
 void ExceptionFunction(unsigned int u, EXCEPTION_POINTERS* pExp);

@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "CelestinaWaterbreeze.H"
+#include "CelestinaWaterbreeze.h"
 
 CelestinaWaterbreeze::CelestinaWaterbreeze()
 {}

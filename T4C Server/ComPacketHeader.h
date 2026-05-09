@@ -1,6 +1,10 @@
 #ifndef NM_PACKET_HEADER_H
 #define NM_PACKET_HEADER_H
 
+#include "StandardTypes.h"
+#ifndef _WIN32
+#include <netinet/in.h>
+#endif
 
 //#define MAX_PACKET_SIZE     1024//BLBLBL 07/12/2010 je remet à 1024
 #define MAX_PACKET_SIZE     512 //BLBL :  apparement les packet de plus de 512 octets, semblent avoir du mal à se faire router.//je remet

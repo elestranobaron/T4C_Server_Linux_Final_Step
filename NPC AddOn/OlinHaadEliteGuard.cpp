@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "OlinHaadEliteGuard.H"
+#include "OlinHaadEliteGuard.h"
 
 OlinHaadEliteGuard::OlinHaadEliteGuard()
 {}

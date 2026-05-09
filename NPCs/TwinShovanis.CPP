@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "TwinShovanis.H"
+#include "TwinShovanis.h"
 
 TwinShovanis::TwinShovanis()
 {}

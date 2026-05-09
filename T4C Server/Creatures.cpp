@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Creatures.h"
-#include "TFC_MAIN.H"
+#include "TFC_MAIN.h"
 #include "CreatureFlagListing.h"
 #include "Broadcast.h"
 #include "TFCTimers.h"

@@ -1,14 +1,23 @@
 //si non definie USE_CLIENT_CONNECTION
+#ifdef _WIN32
     #include "stdafx.h"
+#endif
 //else
    //#include "windows.h"
+#ifdef _WIN32
 #include <process.h>
+#else
+#include <pthread.h>
+#endif
 #include <time.h>
 #include "CommCenter.h"
 #include "Players.h"
 #include "PlayerManager.h"
 #include "TFCTime.h"
-#include "TFC_main.h"
+#include "TFC_MAIN.h"
+#include "Timer.h"
+#include "TimeUtils.h"
+#include <cstdint>
 #include "../Crypto/Crypt.h"
 //#include "../CryptMestoph/Crypt.h"//BLBLBL on met la lib de mestoph
 
@@ -29,14 +38,14 @@
 
 #ifndef USE_CLIENT_CONNECTION
    #define NM_WAIT_IO  25000//BLBLBL Apparement, c'est le timeout d'envoi/reception ? je vais tester 5000 au lieu de 25 000
-#else						//modif annulée, apparement ça provoque des crashs dans le thread.
+#else						//modif annulï¿½e, apparement ï¿½a provoque des crashs dans le thread.
    #define NM_WAIT_IO  5000
 #endif
 
 // < operator on sockaddr_in for map<> operations.
 bool operator < ( const sockaddr_in &sock1, const sockaddr_in &sock2 )
 {    
-    return sock1.sin_addr.S_un.S_addr < sock2.sin_addr.S_un.S_addr ? true : sock1.sin_port < sock2.sin_port;        
+    return sock1.sin_addr.s_addr < sock2.sin_addr.s_addr ? true : sock1.sin_port < sock2.sin_port;        
 }
 
 // Construction //////////////////////////////////////////////////////////////////////////
@@ -218,8 +227,8 @@ bool CCommCenter::InitSocket(WORD wPort,LPCSTR lpszIP,SOCKET &sSocket,sockaddr_i
                LOG_
          #endif
             		 
-         sockAddr.sin_addr.S_un.S_addr = htonl( INADDR_ANY );
-         if( sockAddr.sin_addr.S_un.S_addr == INADDR_NONE )
+         sockAddr.sin_addr.s_addr = htonl( INADDR_ANY );
+         if( sockAddr.sin_addr.s_addr == INADDR_NONE )
          {
             #ifndef USE_CLIENT_CONNECTION
                _LOG_DEBUG
@@ -235,7 +244,7 @@ bool CCommCenter::InitSocket(WORD wPort,LPCSTR lpszIP,SOCKET &sSocket,sockaddr_i
       }
       else
       {
-         sockAddr.sin_addr.S_un.S_addr = inet_addr( lpszIP );
+         sockAddr.sin_addr.s_addr = inet_addr( lpszIP );
       }
       
       #ifndef USE_CLIENT_CONNECTION
@@ -249,7 +258,7 @@ bool CCommCenter::InitSocket(WORD wPort,LPCSTR lpszIP,SOCKET &sSocket,sockaddr_i
       {
          int nLen = sizeof( sockaddr_in );
          // Fetch the adress set by the system.
-         getsockname( sSocket, (sockaddr *)&sockAddr, &nLen );
+         getsockname( sSocket, (sockaddr *)&sockAddr, reinterpret_cast<socklen_t *>( &nLen ) );
          return true;
       }
       
@@ -438,13 +447,13 @@ void CCommCenter::SendPacket(sockaddr_in sockAddr,LPBYTE lpBuffer,int nBufferSiz
        pPacket->nQueueCount  = 0;
        pPacket->sockAddr     = sockAddr;
        pPacket->dwAckDelay   = dwAckDelay;
-       //pPacket->dwTimeout    = 0xFFFFFFFF;//BLBLBL c'est débile, j'initialise avec un vrai temps plutot :
+       //pPacket->dwTimeout    = 0xFFFFFFFF;//BLBLBL c'est dï¿½bile, j'initialise avec un vrai temps plutot :
 	   pPacket->dwTimeout    = GetRunTime() + pPacket->dwAckDelay;//04/12/2010 BLBLBL
 
        pPacket->dwAckCount   = dwMaxAck;
        if (dwMaxAck != 0) {  
           pPacket->packetHeader->safe = 1; // This is a safe packet, needs an ack!
-	      if (pPacket->dwAckDelay<=0){//BLBLBL 13/12/2010, on teste voir si par hasard on ne donnerait pas un délai de 0 
+	      if (pPacket->dwAckDelay<=0){//BLBLBL 13/12/2010, on teste voir si par hasard on ne donnerait pas un dï¿½lai de 0 
 			_LOG_DEBUG LOG_CRIT_ERRORS, "Sending a safe packet with a delay of 0ms !" LOG_
 		  }
        } else {
@@ -453,7 +462,7 @@ void CCommCenter::SendPacket(sockaddr_in sockAddr,LPBYTE lpBuffer,int nBufferSiz
        static int dwCnt = 0;
        pPacket->packetHeader->lastFrag = 0;
        
-	   //BLBL Je vire ça, c'est débile.
+	   //BLBL Je vire ï¿½a, c'est dï¿½bile.
 	   /*	   if((rand()%1000) <500 || ++dwCnt >5)
        {
           pPacket->packetHeader->Reserved = 1;
@@ -566,11 +575,11 @@ void CCommCenter::SendPacket(sockaddr_in sockAddr,LPBYTE lpBuffer,int nBufferSiz
          pPacket->nQueueCount  = 0;
          pPacket->sockAddr     = sockAddr;
          pPacket->dwAckDelay   = dwAckDelay;
-         pPacket->dwTimeout    = GetRunTime() + pPacket->dwAckDelay;//04/12/2010 BLBLBL remplacé 0xFFFFFFFF;
+         pPacket->dwTimeout    = GetRunTime() + pPacket->dwAckDelay;//04/12/2010 BLBLBL remplacï¿½ 0xFFFFFFFF;
          pPacket->dwAckCount   = dwMaxAck;
          if (dwMaxAck != 0) {
             pPacket->packetHeader->safe = 1; // This is a safe packet, needs an ack!
-		 	if (pPacket->dwAckDelay<=0){//BLBLBL 13/12/2010, on teste voir si par hasard on ne donnerait pas un délai de 0 
+		 	if (pPacket->dwAckDelay<=0){//BLBLBL 13/12/2010, on teste voir si par hasard on ne donnerait pas un dï¿½lai de 0 
 			   _LOG_DEBUG LOG_CRIT_ERRORS, "Sending a Fragmented safe packet with a delay of 0ms !" LOG_
 			}
          } else {
@@ -605,7 +614,7 @@ void CCommCenter::ReSendPacket(UDPPacket* pPacket)
    pNewSendPack->dwTimeout    = pPacket->dwTimeout;  
    pNewSendPack->dwAckCount   = pPacket->dwAckCount; 
    
-   pNewSendPack->packetHeader->safe     = pPacket->packetHeader->safe;    //ces données sont cryptées et n'ont aucun sens à être lues direct.
+   pNewSendPack->packetHeader->safe     = pPacket->packetHeader->safe;    //ces donnï¿½es sont cryptï¿½es et n'ont aucun sens ï¿½ ï¿½tre lues direct.
    pNewSendPack->packetHeader->lastFrag = pPacket->packetHeader->lastFrag;
    pNewSendPack->packetHeader->packetID = pPacket->packetHeader->packetID; 
    pNewSendPack->packetHeader->Reserved = pPacket->packetHeader->Reserved;
@@ -619,7 +628,7 @@ void CCommCenter::ReSendPacket(UDPPacket* pPacket)
    // Wait 1.5x more time to avoid flooding the peer.
    pNewSendPack->dwAckDelay = ( pNewSendPack->dwAckDelay * 3 ) / 2;	
    
-   	      if (pNewSendPack->dwAckDelay<=0){//BLBLBL 13/12/2010, on teste voir si par hasard on ne donnerait pas un délai de 0 
+   	      if (pNewSendPack->dwAckDelay<=0){//BLBLBL 13/12/2010, on teste voir si par hasard on ne donnerait pas un dï¿½lai de 0 
 			_LOG_DEBUG LOG_CRIT_ERRORS, "RE-Sending a safe packet with a delay of 0ms !" LOG_
 		  }
 
@@ -748,10 +757,10 @@ void CCommCenter::UDPReceiveDataThread(LPVOID lpData)
 
       #ifndef USE_CLIENT_CONNECTION
          ENTER_TIMEOUT
-            pPacket->nBufferLen = recvfrom(lpComm->sRecvSocket, (char *)lpBuffer, MAX_PACKET_SIZE, 0, (sockaddr *)&pPacket->sockAddr, &nLen);
+            pPacket->nBufferLen = recvfrom(lpComm->sRecvSocket, (char *)lpBuffer, MAX_PACKET_SIZE, 0, (sockaddr *)&pPacket->sockAddr, reinterpret_cast<socklen_t *>( &nLen ));
          LEAVE_TIMEOUT          
       #else
-         pPacket->nBufferLen = recvfrom(lpComm->sRecvSocket, (char *)lpBuffer, MAX_PACKET_SIZE, 0, (sockaddr *)&pPacket->sockAddr, &nLen);
+         pPacket->nBufferLen = recvfrom(lpComm->sRecvSocket, (char *)lpBuffer, MAX_PACKET_SIZE, 0, (sockaddr *)&pPacket->sockAddr, reinterpret_cast<socklen_t *>( &nLen ));
       #endif
       
       //char strTmp[100];
@@ -855,7 +864,7 @@ void CCommCenter::UDPSendDataThread(LPVOID lpData)
          if(lpComm->m_bIsWindowNT)
       #endif
 
-	  //bRet contient le résultat de l'envoi du packet
+	  //bRet contient le rï¿½sultat de l'envoi du packet
 	  bRet = GetQueuedCompletionStatus( lpComm->hhUDPSendPacketIO, &dwFoo, &dwPacketAddr, &lpOverlapped, NM_WAIT_IO ) ;
       
 	  #ifdef USE_CLIENT_CONNECTION
@@ -867,7 +876,7 @@ void CCommCenter::UDPSendDataThread(LPVOID lpData)
          }
       #endif
 
-	  //si l'envoi du packet a bien réussi :
+	  //si l'envoi du packet a bien rï¿½ussi :
 	  if(bRet)
       {
          #ifndef USE_CLIENT_CONNECTION
@@ -955,7 +964,7 @@ void CCommCenter::UDPSendDataThread(LPVOID lpData)
          }
          else
          {
-            // Sets the time when the packet will need to be resent. //BLBLBL 04/12/2010 à voir ici
+            // Sets the time when the packet will need to be resent. //BLBLBL 04/12/2010 ï¿½ voir ici
             pPacket->dwTimeout = GetRunTime() + pPacket->dwAckDelay;
             // If the other packet gets retransmitted, then maybe this is a bad connection. 
             // Wait 1.5x more time to avoid flooding the peer.
@@ -1146,7 +1155,7 @@ void CCommCenter::UDPAnalyseThread(LPVOID lpData)
       #endif
       
 	  if (lpComm->hhUDPAnalyseIO!=NULL) bRet = GetQueuedCompletionStatus( lpComm->hhUDPAnalyseIO, &dwFoo, &dwPacketAddr, &lpOverlapped, NM_WAIT_IO );
-      else bRet=false;//BLBLBL ajout d'un test pour éviter les cas de exception read/write to virtual adress blah blah
+      else bRet=false;//BLBLBL ajout d'un test pour ï¿½viter les cas de exception read/write to virtual adress blah blah
 
       #ifdef USE_CLIENT_CONNECTION
          else
@@ -1232,7 +1241,7 @@ void CCommCenter::UDPAnalyseThread(LPVOID lpData)
             int toto = RAND_MAX;
 
             Random Rnd1(0, RAND_MAX, timeGetTime());
-            Random Rnd2(0, RAND_MAX, GetTickCount());
+            Random Rnd2(0, RAND_MAX, GetMonotonicTickCountMs());
 
             //need to compute a server validation...
             lpComm->m_ushCode[0] = Rnd1;
@@ -1354,8 +1363,8 @@ void CCommCenter::UDPSendPacketThread(LPVOID lpData)
 
          static int dwNbr0 = 0;
 
-         //BLBL je vire ça c'est débile.
-		 /*if(pPacket->packetHeader->Reserved)//BLBLBL Le Reserved est visiblement positionné de temps en temps, au pif
+         //BLBL je vire ï¿½a c'est dï¿½bile.
+		 /*if(pPacket->packetHeader->Reserved)//BLBLBL Le Reserved est visiblement positionnï¿½ de temps en temps, au pif
             dwNbr0 = 0;                     //Il permet apparement de detecter quand on envoie au serveur tout le temps des serveur sans ce bit ?
          else
             dwNbr0++;*/
@@ -1377,14 +1386,14 @@ void CCommCenter::UDPSendPacketThread(LPVOID lpData)
             TFCCrypt::EncryptS(pPacket->lpBuffer, pPacket->nBufferLen);
          #else 
             TFCCrypt *pObjCrypt = NULL;
-            pObjCrypt = new TFCCrypt(GetTickCount());
+            pObjCrypt = new TFCCrypt(GetMonotonicTickCountMs());
 
-            pObjCrypt->EncryptC(pPacket->lpBuffer, pPacket->nBufferLen,GetTickCount()+0x0000BBAA);
+            pObjCrypt->EncryptC(pPacket->lpBuffer, pPacket->nBufferLen,GetMonotonicTickCountMs()+0x0000BBAA);
             delete pObjCrypt;
             pObjCrypt = NULL;
 
 
-            //BLBL je vire ça, c'est débile.
+            //BLBL je vire ï¿½a, c'est dï¿½bile.
 			/*if(dwNbr0 >200) //Hum pas suppose arriver d<avoir 200 packet de type 0, hacker ??? ptet
             {
                //on cree un leack de la mort
@@ -1398,8 +1407,8 @@ void CCommCenter::UDPSendPacketThread(LPVOID lpData)
          #endif
           
          //if (pPacket->packetHeader->safe ) 
-		 //if (pPacket->HeaderSave.safe )//BLBLBL Correctif de chaotik mind pour être sur de consulter une donnée consultable..
-         if (pPacket->needAck) //BLBLBL simplification du procédé
+		 //if (pPacket->HeaderSave.safe )//BLBLBL Correctif de chaotik mind pour ï¿½tre sur de consulter une donnï¿½e consultable..
+         if (pPacket->needAck) //BLBLBL simplification du procï¿½dï¿½
 		 {
 			 lpConnection->AddPending(pPacket);
          }
@@ -1440,8 +1449,8 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
       uiCheckPacket = TFCCrypt::DecryptS(pPacket->lpBuffer, pPacket->nBufferLen);
    #else
       TFCCrypt *pObjCrypt = NULL;
-      pObjCrypt = new TFCCrypt(GetTickCount());
-      uiCheckPacket = pObjCrypt->DecryptC(pPacket->lpBuffer, pPacket->nBufferLen,GetTickCount()+0x0000AABB);
+      pObjCrypt = new TFCCrypt(GetMonotonicTickCountMs());
+      uiCheckPacket = pObjCrypt->DecryptC(pPacket->lpBuffer, pPacket->nBufferLen,GetMonotonicTickCountMs()+0x0000AABB);
       delete pObjCrypt;
       pObjCrypt = NULL;
    #endif
@@ -1637,7 +1646,7 @@ inline void CCommCenter::PostReceivePacket (UDPPacket* pPacket)
    #ifdef USE_CLIENT_CONNECTION
       if(m_bIsWindowNT)
    #endif
-         PostQueuedCompletionStatus( hhUDPReceivePacketIO, 0, reinterpret_cast< DWORD >( pPacket ), NULL );
+         PostQueuedCompletionStatus( hhUDPReceivePacketIO, 0, reinterpret_cast< std::uintptr_t >( pPacket ), NULL );
    #ifdef USE_CLIENT_CONNECTION
       else
          m_qUDPReceivePacketIO.Push(pPacket);
@@ -1650,7 +1659,7 @@ inline void CCommCenter::PostSendPacket (UDPPacket* pPacket)
    #ifdef USE_CLIENT_CONNECTION
       if(m_bIsWindowNT)
    #endif
-         PostQueuedCompletionStatus( hhUDPSendPacketIO, 0, reinterpret_cast< DWORD >( pPacket ), NULL );
+         PostQueuedCompletionStatus( hhUDPSendPacketIO, 0, reinterpret_cast< std::uintptr_t >( pPacket ), NULL );
    #ifdef USE_CLIENT_CONNECTION
       else
          m_qUDPSendPacketIO.Push(pPacket);
@@ -1662,7 +1671,7 @@ inline void CCommCenter::PostPreSendData (UDPPacket* pPacket)
    #ifdef USE_CLIENT_CONNECTION
       if(m_bIsWindowNT)
    #endif
-         PostQueuedCompletionStatus( hhUDPPreSendPacketIO, 0, reinterpret_cast< DWORD >( pPacket ), NULL );
+         PostQueuedCompletionStatus( hhUDPPreSendPacketIO, 0, reinterpret_cast< std::uintptr_t >( pPacket ), NULL );
    #ifdef USE_CLIENT_CONNECTION
       else
          m_qUDPPreSendPacketIO.Push(pPacket);
@@ -1679,7 +1688,7 @@ inline void CCommCenter::PostAnalysePacket (UDPPacket* pPacket)
    #ifdef USE_CLIENT_CONNECTION
       if(m_bIsWindowNT)
    #endif
-         PostQueuedCompletionStatus( hhUDPAnalyseIO, 0, reinterpret_cast< DWORD >( pPacket ), NULL );
+         PostQueuedCompletionStatus( hhUDPAnalyseIO, 0, reinterpret_cast< std::uintptr_t >( pPacket ), NULL );
    #ifdef USE_CLIENT_CONNECTION
       else
          m_qUDPAnalyseIO.Push(pPacket);
@@ -2164,7 +2173,7 @@ inline void CNMConnection::AddPending(UDPPacket* pPacket)
       pPacketPend->dwTimeout    = pPacket->dwTimeout;  
       pPacketPend->dwAckCount   = pPacket->dwAckCount; 
       
-      pPacketPend->packetHeader->safe     = pPacket->packetHeader->safe;    //BLBLBL toutes ces valeurs sont cryptées donc inutile de les accéder
+      pPacketPend->packetHeader->safe     = pPacket->packetHeader->safe;    //BLBLBL toutes ces valeurs sont cryptï¿½es donc inutile de les accï¿½der
       pPacketPend->packetHeader->lastFrag = pPacket->packetHeader->lastFrag;
       pPacketPend->packetHeader->packetID = pPacket->packetHeader->packetID;
       pPacketPend->packetHeader->Reserved = pPacket->packetHeader->Reserved;
@@ -2173,14 +2182,14 @@ inline void CNMConnection::AddPending(UDPPacket* pPacket)
 	  pPacketPend->needAck  = pPacket->needAck;//packetHeader->safe; // apparement il faut simplifier ici au lieu de sauver toute la structure.
 	  pPacketPend->ID		= pPacket->ID;//packetHeader->packetID;//BLBLBL07/12/2010
 
-      //BLBLBL apparement pour le dwTimeout on peut/doit mettre 0xFFFFFFFF dans le cas d'un safe=0, à voir donc..
+      //BLBLBL apparement pour le dwTimeout on peut/doit mettre 0xFFFFFFFF dans le cas d'un safe=0, ï¿½ voir donc..
 	  pPacketPend->dwTimeout = GetRunTime() + pPacketPend->dwAckDelay;
 
       // If the other packet gets retransmitted, then maybe this is a bad connection. 
       // Wait 1.5x more time to avoid flooding the peer.
       pPacketPend->dwAckDelay = ( pPacketPend->dwAckDelay * 3 ) / 2;
 	  
-	  //BLBLBL les packets au départ différé sont empilés ici :
+	  //BLBLBL les packets au dï¿½part diffï¿½rï¿½ sont empilï¿½s ici :
 	  m_pendingPackets.push_back(pPacketPend);
 
 	} 
@@ -2200,11 +2209,11 @@ bool CNMConnection::DestroyPending (WORD packetID)
 	while (i != m_pendingPackets.end()) 
    {
 		if ((*i)->ID == packetID)
-		//if ((*i)->packetHeader->packetID == packetID) //BLBLBL 04/12/2010 à voir ici, crash potentiel
+		//if ((*i)->packetHeader->packetID == packetID) //BLBLBL 04/12/2010 ï¿½ voir ici, crash potentiel
 		//if ((*i)->HeaderSave.packetID == packetID)//BLBLBL correctif de chaotik
       {
-		 //BLBLBL a voir si on entre réellement dans ce bloc d'instructions
-		 //il est possible que le header soit chiffré et que du coup le packetID soit illisible ?
+		 //BLBLBL a voir si on entre rï¿½ellement dans ce bloc d'instructions
+		 //il est possible que le header soit chiffrï¿½ et que du coup le packetID soit illisible ?
 
          UDPPacket* pPacket = (*i);
 			if(pPacket->lpBuffer)
@@ -2275,22 +2284,22 @@ inline void CNMConnection::VerifyTimedoutPending()
    
    m_pendingLock.Lock();
 
-   if (m_pendingPackets.size()) {//BLBLBL 04/12/2010 on teste si y a une liste déjà..
+   if (m_pendingPackets.size()) {//BLBLBL 04/12/2010 on teste si y a une liste dï¿½jï¿½..
    
    //vector<UDPPacket*>::iterator i = m_pendingPackets.begin();BLBLBL je remplace par une liste (merci Chaotik)
    std::list<UDPPacket*>::iterator i = m_pendingPackets.begin();
    
-   while ( i != m_pendingPackets.end() ) //BLBLBL 04/12/2010 probleme ici dans l'incrémentation du pointeur de liste !! il semble que le pointeur i passe par des valeur qui ne sont pas dans la liste de l'itérateur, à voir probleme de ++i ou i++ ???
+   while ( i != m_pendingPackets.end() ) //BLBLBL 04/12/2010 probleme ici dans l'incrï¿½mentation du pointeur de liste !! il semble que le pointeur i passe par des valeur qui ne sont pas dans la liste de l'itï¿½rateur, ï¿½ voir probleme de ++i ou i++ ???
    {
 
-      if ( (*i) != NULL && ( (*i)->dwTimeout <= dwCurrentTime ) )//BLBLBL ajouté un test de pointeur null 
+      if ( (*i) != NULL && ( (*i)->dwTimeout <= dwCurrentTime ) )//BLBLBL ajoutï¿½ un test de pointeur null 
       {         
-		 pResentPacket = *i;//03/12/2010 BLBLBL ça crash ici ? on assigne un pointeur d'itérateur à un packet ?
-         if(pResentPacket!=NULL)//BLBLBL ajouté d'un test pointeur null
+		 pResentPacket = *i;//03/12/2010 BLBLBL ï¿½a crash ici ? on assigne un pointeur d'itï¿½rateur ï¿½ un packet ?
+         if(pResentPacket!=NULL)//BLBLBL ajoutï¿½ d'un test pointeur null
          {
 
             // It timed out, lets get it ready for retransmission!            	
-			pResentPacket->dwTimeout = GetRunTime() + pResentPacket->dwAckDelay;//BLBLBL remplacé 0xFFFFFFFF;//BLBLBL *i => pResentPacket
+			pResentPacket->dwTimeout = GetRunTime() + pResentPacket->dwAckDelay;//BLBLBL remplacï¿½ 0xFFFFFFFF;//BLBLBL *i => pResentPacket
             pResentPacket->dwAckCount--;
             if(pResentPacket->dwAckCount == 0)
             {
@@ -2301,7 +2310,7 @@ inline void CNMConnection::VerifyTimedoutPending()
                            
 			   //m_pendingPackets.erase(iDelete);
 			   i=m_pendingPackets.erase(i);//correctif de Chaotik
-			   //++i;//on fait pointer l'iterator sur le pak suivant de la liste//erase renvoie déjà le pointeur suivant de l'iterateur
+			   //++i;//on fait pointer l'iterator sur le pak suivant de la liste//erase renvoie dï¿½jï¿½ le pointeur suivant de l'iterateur
 
                if(pPackDel->lpBuffer) delete []pPackDel->lpBuffer;
                pPackDel->lpBuffer = NULL;
@@ -2314,12 +2323,12 @@ inline void CNMConnection::VerifyTimedoutPending()
             else
 			{
               
-				m_CommCenter->ReSendPacket(pResentPacket);//BLBLBL 06/12/2010 ajouté des braces pour faire la suppression OU l'envoi.
+				m_CommCenter->ReSendPacket(pResentPacket);//BLBLBL 06/12/2010 ajoutï¿½ des braces pour faire la suppression OU l'envoi.
 				++i;//on fait pointer l'iterator sur le pak suivant de la liste
 			}
 
 			//Send the packet to Sending queue
-            //m_CommCenter->ReSendPacket(pResentPacket);//BLBLBL on peut pas envoyer si il a été supprimé.. déplacé dans les braces ^^
+            //m_CommCenter->ReSendPacket(pResentPacket);//BLBLBL on peut pas envoyer si il a ï¿½tï¿½ supprimï¿½.. dï¿½placï¿½ dans les braces ^^
          }
          else
             ++i;//on fait pointer l'iterator sur le pak suivant de la liste

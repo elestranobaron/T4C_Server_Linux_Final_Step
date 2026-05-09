@@ -1,6 +1,8 @@
 #ifndef __LOGGER_H_
 #define __LOGGER_H_
 
+#include "StandardTypes.h"
+#include <mutex>
 #ifndef EXPORT
 #define EXPORT	extern "C" __declspec (dllexport)
 #endif
@@ -22,6 +24,12 @@
 #define LOG_ALL			0xFFFF
 #define LOG_DEBUG_LIGHT ( LOG_CRIT_ERRORS | LOG_GEN_ERRORS | LOG_DEBUG_LVL1 | LOG_DEBUG_LVL2 | LOG_MEMORY | LOG_WARNING | LOG_MISC_1 | LOG_SYSOP )
 #define LOG_DEBUG_HEAVY ( LOG_CRIT_ERRORS | LOG_GEN_ERRORS | LOG_DEBUG_LVL1 | LOG_DEBUG_LVL2 | LOG_MEMORY | LOG_WARNING | LOG_MISC_1 | LOG_SYSOP | LOG_DEBUG_LVL3 | LOG_DEBUG_LVL4 )
+
+#ifndef _WIN32
+#ifndef __declspec
+#define __declspec(x)
+#endif
+#endif
 
 #include <string>
 
@@ -53,7 +61,7 @@ private:
 
     std::string bsLogFile;
     WORD        wSetLogLevels;
-    CRITICAL_SECTION critSection;
+    std::mutex  critSection;
 };
 #endif
 

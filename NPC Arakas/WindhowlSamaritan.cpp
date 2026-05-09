@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "WindhowlSamaritan.H"
+#include "WindhowlSamaritan.h"
 
 WindhowlSamaritan::WindhowlSamaritan()
 {}

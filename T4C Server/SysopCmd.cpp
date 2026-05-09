@@ -4,7 +4,9 @@
 #include "TFC_MAIN.h"
 #include "TFCInit.h"
 #include "TFCPacket.h"
+#ifdef _WIN32
 #include "TFC ServerDlg.h"
+#endif
 #include "RegKeyHandler.h"
 #include "PlayerManager.h"
 #include "AutoConfig.h"
@@ -130,7 +132,7 @@ SysopCmd::SysopCmd( void )
 // 
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-//	DeleteCriticalSection( &csSysLock );
+//	Destroy sys lock.
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -197,8 +199,8 @@ BOOL SysopCmd::GetParameters
 	char *lpszToken = new char[ nCommandTemplateSize + 2 ];
 	lpszSavedToken = lpszToken;	// Save address of token for deletion.
 	memcpy( lpszToken, lpszCommandTemplate, nCommandTemplateSize );
-	// Replace the trailing \0 with a Ø (char 216) to have a last token.
-	lpszToken[ nCommandTemplateSize ] = 'Ø';
+	// Replace the trailing \0 with a ï¿½ (char 216) to have a last token.
+	lpszToken[ nCommandTemplateSize ] = 'ï¿½';
 	lpszToken[ nCommandTemplateSize + 1 ] = 0;
 			
 	int nStrLen = csCommandLine.GetLength();
@@ -354,7 +356,7 @@ BOOL SysopCmd::GetParametersForNPC
 	char *lpszToken = new char[ nCommandTemplateSize + 2 ];
 	lpszSavedToken = lpszToken;	// Save address of token for deletion.
 	memcpy( lpszToken, lpszCommandTemplate, nCommandTemplateSize );
-	// Replace the trailing \0 with a Ø (char 216) to have a last token.
+	// Replace the trailing \0 with a ï¿½ (char 216) to have a last token.
 	lpszToken[ nCommandTemplateSize ] = '.';
 	lpszToken[ nCommandTemplateSize + 1 ] = 0;
 			
@@ -525,7 +527,7 @@ BOOL SysopCmd::VerifySysopCommand
 	csCommand.TrimRight();
 	csCommand.TrimLeft();
 	//csCommand.MakeUpper();
-	csCommand += 'Ø'; // Add command terminator (char 216)
+	csCommand += 'ï¿½'; // Add command terminator (char 216)
 
 	TRACE( "Command line--%s--", (LPCTSTR)csCommand );
 
@@ -590,7 +592,7 @@ BOOL SysopCmd::VerifySysopCommand
 				{
 					/* user->Lock();
 					user->dwKickoutTime = 20 SECONDS TDELAY;
-					user->Unlock(); */ // steph désactivation
+					user->Unlock(); */ // steph dï¿½sactivation
 
 
 					//////////////////////////////////////////////////////////////////////////////////////////
@@ -1405,7 +1407,7 @@ BOOL SysopCmd::VerifySysopCommand
 
 				target->Lock();
 				target->boCanShout = FALSE;
-				target->lCutExpireDate = 0;//BLBLB dans le cas d'un cut sans durée, c'est infini.
+				target->lCutExpireDate = 0;//BLBLB dans le cas d'un cut sans durï¿½e, c'est infini.
 				target->self->SendSystemMessage( csTemp, RGB( 255, 0, 0 ) );
 				target->Unlock();
 
@@ -1742,7 +1744,7 @@ BOOL SysopCmd::VerifySysopCommand
 			//  MMM      M = Monsters
 			//     C     C = caster
 
-			int lineSize = floor(sqrt((double)atoi(PARAM(1))));//BLBLBL on arrondi, autrement on risque de génèrer des positions invalides.. // steph ajout de (double)
+			int lineSize = floor(sqrt((double)atoi(PARAM(1))));//BLBLBL on arrondi, autrement on risque de gï¿½nï¿½rer des positions invalides.. // steph ajout de (double)
 			//As the summoning area is a square, we pick the square root of quantity to know the number of monster per line.
 			
 			wlPos.X -= lineSize;
@@ -1750,8 +1752,8 @@ BOOL SysopCmd::VerifySysopCommand
 			
 			for (int i=0; i< atoi(PARAM(1)); i++) {
 				if (i % lineSize == 0) {
-					wlPos.Y++;//on passe à la ligne suivante
-					wlPos.X -= lineSize; //et on se remet en début de ligne
+					wlPos.Y++;//on passe ï¿½ la ligne suivante
+					wlPos.X -= lineSize; //et on se remet en dï¿½but de ligne
 				} else wlPos.X++;
 				csRepeatCommand.Format("SUMMON MONSTER %s AT %d,%d,%d", PARAM(0), wlPos.X, wlPos.Y,wlPos.world);
 				VerifySysopCommand(user, csRepeatCommand);
@@ -2084,7 +2086,7 @@ BOOL SysopCmd::VerifySysopCommand
 			WorldPos wlPos = { atoi(PARAM(1)),atoi(PARAM(2)),atoi(PARAM(3)) };
 			WorldPos wlInitial = wlPos;
 			
-			for (int a=0;a<180;a+=10){//on parcours les angles de 0 à 180 par incrément de 10.
+			for (int a=0;a<180;a+=10){//on parcours les angles de 0 ï¿½ 180 par incrï¿½ment de 10.
 
 
 				//////////////////////////////////////////////////////////////////////////////////////////
@@ -2170,10 +2172,10 @@ BOOL SysopCmd::VerifySysopCommand
 			
 		if( dwID != 0 && user->self->boAuthGM == true ){
             			
-			WorldPos wlPos = user->self->GetWL();//on prend les coordonnées du lanceur de la commande
+			WorldPos wlPos = user->self->GetWL();//on prend les coordonnï¿½es du lanceur de la commande
 			WorldPos wlInitial = wlPos;
 			
-			for (int a=0;a<180;a+=10){//on parcours les angles de 0 à 180 par incrément de 10.
+			for (int a=0;a<180;a+=10){//on parcours les angles de 0 ï¿½ 180 par incrï¿½ment de 10.
 
 
 				//////////////////////////////////////////////////////////////////////////////////////////
@@ -2741,7 +2743,7 @@ BOOL SysopCmd::VerifySysopCommand
 			COMPONENT( "NAME", GOD_CAN_EDIT_USER_NAME, 1 )
                 CString csName = PARAM( 2 );
                 // Verify that the new name has correct specs.
-                CString csCheckName = csName.SpanIncluding(_T("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -ïëöéèàùä"));
+                CString csCheckName = csName.SpanIncluding(_T("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ -ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"));
                 if( csCheckName == csName ){
                     if( csName.GetLength() <= 19 && csName.GetLength() > 1 ){
                         // Otherwise, do an exhaustive player name search, asynchronously.
@@ -2973,7 +2975,7 @@ BOOL SysopCmd::VerifySysopCommand
 		Players *target = FindCharacter( PARAM( 0 ) );
 		int nDaysLocked = atoi( PARAM( 1 ) );
 
-		if (nDaysLocked <= 0) nDaysLocked=1; //BLBLBL le délai de lock minimum en jours est de 1.
+		if (nDaysLocked <= 0) nDaysLocked=1; //BLBLBL le dï¿½lai de lock minimum en jours est de 1.
 		
 		if( target != NULL && user->self->boAuthGM == true ){
 
@@ -3024,7 +3026,7 @@ BOOL SysopCmd::VerifySysopCommand
 
 	//////////////////////////////////////////////////////////////////////////////////////////	
 	// Ban temporarly user from the game.
-	COMMAND( "LOCKOUT $ FOR $ HOURS", /*GOD_CAN_LOCKOUT_USER*/ GOD_CAN_ZAP )//BLBLBL : pour les lock temporaires inférieurs à 24H on peut donner cette fonction à ceux pouvant ZAPPER.
+	COMMAND( "LOCKOUT $ FOR $ HOURS", /*GOD_CAN_LOCKOUT_USER*/ GOD_CAN_ZAP )//BLBLBL : pour les lock temporaires infï¿½rieurs ï¿½ 24H on peut donner cette fonction ï¿½ ceux pouvant ZAPPER.
 		if( user->self->boAuthGM == false )
 		{
 			_LOG_GAMEOP
@@ -3042,8 +3044,8 @@ BOOL SysopCmd::VerifySysopCommand
 		Players *target = FindCharacter( PARAM( 0 ) );
 		int nHoursLocked = atoi( PARAM( 1 ) );
 		
-		if (nHoursLocked > 48) nHoursLocked=48;//BLBLBL limitation en nombre d'heures à 48 heures, ce qui est déjà beaucoup !
-		else if (nHoursLocked <= 0) nHoursLocked=1; //BLBLBL on ne peut pas mettre à 0 le nombre d'heures restantes, c'est 1 minimum.
+		if (nHoursLocked > 48) nHoursLocked=48;//BLBLBL limitation en nombre d'heures ï¿½ 48 heures, ce qui est dï¿½jï¿½ beaucoup !
+		else if (nHoursLocked <= 0) nHoursLocked=1; //BLBLBL on ne peut pas mettre ï¿½ 0 le nombre d'heures restantes, c'est 1 minimum.
 		
 		if( target != NULL && user->self->boAuthGM == true ){
 

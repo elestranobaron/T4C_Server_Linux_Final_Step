@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "AnthorTheMad.H"
+#include "AnthorTheMad.h"
 
 AnthorTheMad::AnthorTheMad()
 {}

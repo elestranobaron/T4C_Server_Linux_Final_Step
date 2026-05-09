@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "MoonTugGuard1.H"
+#include "MoonTugGuard1.h"
 
 MoonTugGuard1::MoonTugGuard1()
 {}

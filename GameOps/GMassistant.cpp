@@ -361,6 +361,7 @@ INTL( 11721, "Processing... The monster summoning of the Colosseum is now disabl
 GiveGlobalFlag(__COLOSSEUM_MONSTER_DISABLE, 1) 
 
 CmdAND3(INTL( 11722, "STATUS"),INTL( 10737, "COLOSSEUM"),INTL( 1856, "MONSTER")) 
+""
 IF (CheckGlobalFlag(__COLOSSEUM_MONSTER_DISABLE) == 0) 
 	Conversation
 	INTL( 11723, "Processing... It is currently possible for players to summon monsters inside "
@@ -379,6 +380,7 @@ INTL( 11721, "Processing... The Battle Mode is now disabled.")
 GiveGlobalFlag(__BATTLE_MODE_ENABLE, 0) 
 
 CmdAND3(INTL( 20005, "STATUS"),INTL( 20001, "BATTLE"),INTL( 20002, "MODE")) 
+""
 IF (CheckGlobalFlag(__BATTLE_MODE_ENABLE) == 1) 
 	Conversation
 	INTL( 20006, "Processing... the Battle Mode is now enabled. Players can fight,"
@@ -404,6 +406,7 @@ INTL( 7689, "Processing... Command successfully executed. Target completely disp
 CastSpellTarget(__SPELL_MOB_COMPLETE_DISPEL_SPELL)
 
 Command2(INTL( 7344, "DELETE"), INTL( 7345, "SELF-DESTRUCT"))
+""
 CastSpellSelf(__SPELL_NPC_CANTRIP_FREEZE)
 SELF_DESTRUCT;
 

@@ -10,7 +10,7 @@
 
 typedef ObjectStructure *( *DYNOBJCALLBACK)( void );
 
-class _declspec( dllexport ) DynObjManager  
+class __declspec( dllexport ) DynObjManager  
 {
 public:
 	static void RegisterObjectStructureCallback( WORD wStructureID, DYNOBJCALLBACK lpCallback );

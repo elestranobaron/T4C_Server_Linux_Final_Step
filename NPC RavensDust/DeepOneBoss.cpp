@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "DeepOneBoss.H"
+#include "DeepOneBoss.h"
 
 DeepOneBoss::DeepOneBoss()
 {}

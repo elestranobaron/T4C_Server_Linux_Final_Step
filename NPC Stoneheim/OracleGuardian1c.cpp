@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "OracleGuardian1c.H"
+#include "OracleGuardian1c.h"
 
 OracleGuardian1c::OracleGuardian1c()
 {}

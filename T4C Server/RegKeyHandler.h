@@ -5,6 +5,14 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#ifndef _WIN32
+#include "Win32Compat.h"
+#include "StandardTypes.h"
+#ifndef __declspec
+#define __declspec(x)
+#endif
+#endif
+
 class __declspec(dllexport) RegKeyHandler  
 {
 public:

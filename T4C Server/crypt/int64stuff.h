@@ -1,11 +1,13 @@
 #ifndef INT64STUFF_H
 #define INT64STUFF_H
 
+#include <cstdint>
+
 class int64stuff
 {
 public:
-	static unsigned __int64 MyPow(unsigned __int64, unsigned __int64 );
-	static int GetLenght(unsigned __int64);
+	static std::uint64_t MyPow(std::uint64_t, std::uint64_t );
+	static int GetLenght(std::uint64_t);
 };
 
 #endif

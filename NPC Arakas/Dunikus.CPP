@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Dunikus.H"
+#include "Dunikus.h"
 
 Dunikus::Dunikus()
 {}

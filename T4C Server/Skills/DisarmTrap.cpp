@@ -1,6 +1,7 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "DisarmTrap.h"
-#include "..\_item.h"
+#include "../_item.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

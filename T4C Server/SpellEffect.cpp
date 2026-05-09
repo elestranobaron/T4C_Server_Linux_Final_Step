@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "SpellEffect.h"
 #include "TFC_MAIN.h"
-#include "t4clog.h"
+#include "T4CLog.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////
 void SpellEffect::CreateEffectStatus

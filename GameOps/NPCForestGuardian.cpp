@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "NPCForestGuardian.H"
+#include "NPCForestGuardian.h"
 
 NPCForestGuardian::NPCForestGuardian()
 {}

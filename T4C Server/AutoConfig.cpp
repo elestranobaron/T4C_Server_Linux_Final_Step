@@ -3,7 +3,11 @@
 #include "AutoConfig.h"
 #include "RegKeyHandler.h"
 #include "Lock.h"
+#ifdef _WIN32
+#ifdef _WIN32
 #include <process.h>
+#endif
+#endif
 #include <map>
 #include <vector>
 #include "ThreadMonitor.h"

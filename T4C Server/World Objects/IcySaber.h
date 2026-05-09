@@ -5,7 +5,7 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
-#include "..\ObjectStructure.h"
+#include "../ObjectStructure.h"
 
 class IcySaber : public ObjectStructure  
 {

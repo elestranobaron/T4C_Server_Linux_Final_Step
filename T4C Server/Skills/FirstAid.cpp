@@ -1,6 +1,8 @@
 #include "stdafx.h"
+#include "SkillsShared.h"
 #include "FirstAid.h"
-#include "../format.h"
+#include "../Format.h"
+#include <cstdint>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -116,7 +118,7 @@ int FirstAid::Func
         
 		    // Carlos note: Calling RemoveEffect triggers the effect (in this case), so, we must call RemoveEffect *before* calling the SetFlag =)
 			target->RemoveEffect( EFFECT_FIRST_AID_EXHAUST );
-		    target->SetFlag(__FLAG_FIRST_AID_EXHAUST, (UINT)FirstAid::ExhaustRemovallCallback );
+		    target->SetFlag(__FLAG_FIRST_AID_EXHAUST, (UINT)(uintptr_t)(void (*)())FirstAid::ExhaustRemovallCallback );
 		    
 		    CREATE_EFFECT(
 	            target, 

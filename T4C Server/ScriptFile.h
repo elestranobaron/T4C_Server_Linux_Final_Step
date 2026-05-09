@@ -5,7 +5,19 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include "StandardTypes.h"
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <thread>
+#ifndef CALLBACK
+#define CALLBACK
+#endif
+#endif
+
 #include <string>
+#include <filesystem>
 //using namespace std;
 
 class ScriptFile  
@@ -13,26 +25,37 @@ class ScriptFile
 public:
 	static ScriptFile &GetInstance();
 
+#ifdef _WIN32
 	unsigned int GetThreadId() { return nScriptThreadId; };
 	HANDLE GetThreadHandle() { return hScriptThread; };
+#else
+	// GCC/Linux: expose a stable integer id for logging.
+	std::uint64_t GetThreadId() const;
+#endif
 
-	int RunScript( char* szScriptPath );
+	int RunScript( const std::filesystem::path &scriptPath );
 
 private:
 	ScriptFile();
+	~ScriptFile();
 
 	void ThreadFunc( void );
 
 	static unsigned int CALLBACK ScriptThread( void *pParam );
 
-	std::string OpenScript( char* szFile );
+	std::string OpenScript( const std::filesystem::path &filePath );
 	void TranslateScript( std::string strCmd );
 
 	void TraceExecution( const char* msg, ... );
 	void InitTrace( void );
 
+#ifdef _WIN32
     HANDLE hScriptThread;
     unsigned int nScriptThreadId;
+#else
+	std::thread hScriptThread;
+	std::thread::id nScriptThreadId;
+#endif
 
     bool boScriptThreadDone;
 

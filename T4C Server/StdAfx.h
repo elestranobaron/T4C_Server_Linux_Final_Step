@@ -5,6 +5,8 @@
 #pragma once
 #endif // _MSC_VER >= 1000
 
+#ifdef _WIN32
+
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #ifndef _WIN32_WINNT
 	#define _WIN32_WINNT 0x0600
@@ -37,7 +39,20 @@
 
 #include <imagehlp.h>
 
-#ifdef MEM_DEBUG
+#else /* !_WIN32 — Linux / POSIX server build */
+
+#include <cstddef>
+#include <cstring>
+#include "Win32Compat.h"
+#include "Portability.h"
+
+#ifndef TRACE
+#define TRACE(...) ((void)0)
+#endif
+
+#endif /* _WIN32 */
+
+#if defined(MEM_DEBUG) && defined(_WIN32)
     #include <smrtheap.hpp>
 #endif
 
@@ -49,7 +64,15 @@
 #endif
 
 #ifndef ATLASSERT
+#ifdef _WIN32
 #define ATLASSERT ASSERT
+#else
+#include <cassert>
+#define ATLASSERT(expr) assert(expr)
+#ifndef ASSERT
+#define ASSERT(expr) assert(expr)
+#endif
+#endif
 #endif
 namespace vir{};
 using namespace vir;

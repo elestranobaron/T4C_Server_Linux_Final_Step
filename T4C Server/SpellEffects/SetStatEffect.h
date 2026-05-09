@@ -5,8 +5,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
-#include "..\SpellEffectManager.h"
-#include "..\NPCmacroScriptLng.h"
+#include "../SpellEffectManager.h"
+#include "../NPCmacroScriptLng.h"
 
 class SetStatEffect : public SpellEffect 
 {

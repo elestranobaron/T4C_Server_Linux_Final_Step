@@ -1,5 +1,5 @@
 #pragma hdrstop
-#include "Yrian.H"
+#include "Yrian.h"
 
 Yrian::Yrian()
 {}
