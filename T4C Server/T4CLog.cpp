@@ -229,6 +229,12 @@ CLogger *CT4CLog::GetLog
 // Return: CLogger, the logger object
 //////////////////////////////////////////////////////////////////////////////////////////
 {
+    // Sécurité : si l'initialisation statique n'est pas faite, cT4CLogs est NULL
+    // On évite le crash en vérifiant si le pointeur existe
+    if( cT4CLogs == nullptr || dwType >= NB_LOG_TYPES ){ 
+        return NULL;
+    }
+
     if( cT4CLogs[ dwType ].boLog ){    
         return &cT4CLogs[ dwType ].logLog;
     }
@@ -248,36 +254,39 @@ void CT4CLog::DebugLog
 )
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-    // Get the debug logger object.
+    va_list argp;
+    va_start( argp, szText );
+
+    // On récupère le logger (peut être NULL maintenant)
     CLogger *logger = GetLog( LOG_DEBUG );
-    if( logger == NULL ){
+
+    // Cas critique : le système de log n'est pas encore initialisé (static init fiasco)
+    // OU le log spécifique n'est pas actif.
+    if( logger == NULL || !logger->GetLogLevels() ){
+        // On redirige vers la sortie standard Linux pour ne pas perdre l'info
+        printf("[PRE-INIT] ");
+        vprintf( szText, argp );
+        printf("\n");
+        va_end( argp );
         return;
     }
 
-    // If the logging level is not accepted.
+    // Si le niveau de log n'est pas accepté, on sort
     if( !( wLogLevels & logger->GetLogLevels() || wLogLevels == LOG_ALWAYS ) ){
+        va_end( argp );
         return;
     }
-
-    static bool error = false;
 
     char lpBuffer[ 4096 ];
-
-    va_list argp;		
-    va_start( argp, szText );
     vsprintf( lpBuffer, szText, argp );
     va_end( argp );
 
-    // If the application is set to output debug logs to a debug monitor
-    // instead of a file.
-    if( logToMonitor && !error ){
+    if( logToMonitor ){
         DebugLoggerAPI::GetInstance()->Log( lpBuffer );
-    }else{
-        // Send string directly to the logger.
+    } else {
         logger->AsyncLog( wLogLevels, lpBuffer );
     }
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////
 DWORD CT4CLog::GetLogID
@@ -307,16 +316,35 @@ void CT4CLog::SaveToLog
 //////////////////////////////////////////////////////////////////////////////////////////
 {
 
-	char lpBuffer[4096];
-    va_list argp;
-    va_start( argp, szText );
-    vsprintf( lpBuffer, szText, argp );
-    va_end( argp );
+if (szText == nullptr)
+        szText = "(null string)";
 
-	CString tempBuffer(lpBuffer);
-	tempBuffer.Replace("%", "%%");
-	strcpy(lpBuffer, tempBuffer.GetBuffer(0));
-	
+    char lpBuffer[4096] = {0};        // Tout à zéro
+
+    va_list argp;
+    va_start(argp, szText);
+    vsnprintf(lpBuffer, sizeof(lpBuffer)-1, szText, argp);   // vsnprintf au lieu de vsprintf
+    va_end(argp);
+
+    lpBuffer[sizeof(lpBuffer)-1] = '\0';
+
+    // === Protection principale ===
+    CLogger* pLogger = GetLog(dwType);
+    if (pLogger != nullptr) {
+        pLogger->AsyncLog(wLogLevels, lpBuffer);
+    }
+
+    // Partie SQL (avec protections)
+    if (((1<<dwType) & wSQLLogTypes) == 0)
+        return;
+
+    if (wLogLevels != LOG_ALWAYS && (wLogLevels & wSQLLogLevel) == 0)
+        return;
+
+    // === Le reste du code SQL original (à partir d'ici) ===
+    CString tempBuffer(lpBuffer);
+    tempBuffer.Replace("%", "%%");
+    strcpy(lpBuffer, tempBuffer.GetBuffer(0));   // Cette ligne est souvent dangereuse	
 
 	
 	// If it should be logged to text file..
