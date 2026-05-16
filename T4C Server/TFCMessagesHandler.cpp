@@ -325,8 +325,15 @@ void TFCMessagesHandler::Create( void )
         LOG_
 
         // Create the ODBC interface.
-fprintf(stderr, "[HANDLER] Before ODBC connect\n");
-        ODBCAuth.Connect( theApp.sAuth.csODBC_DSN, theApp.sAuth.csODBC_DBUser, theApp.sAuth.csODBC_DBPwd );
+        CString odbcUser = theApp.sAuth.csODBC_DBUser;
+        CString odbcPwd  = theApp.sAuth.csODBC_DBPwd;
+        if (odbcUser.IsEmpty()) {
+            odbcUser = theApp.csDBUser;
+            odbcPwd  = theApp.csDBPwd;
+        }
+fprintf(stderr, "[HANDLER] Before ODBC connect DSN='%s' user='%s'\n",
+        (LPCTSTR)theApp.sAuth.csODBC_DSN, (LPCTSTR)odbcUser);
+        ODBCAuth.Connect( theApp.sAuth.csODBC_DSN, odbcUser, odbcPwd );
 fprintf(stderr, "[HANDLER] After ODBC connect\n");
     }
     ODBCAuth.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
@@ -2339,6 +2346,11 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
 {
 	LPRQSTRUCT_REGISTER_ACCOUNT lpStruct = (LPRQSTRUCT_REGISTER_ACCOUNT)lpData;
 
+	fprintf( stderr,
+	    "[RegisterAccount ODBC] compte='%s' depuis %s\\n",
+	    (LPCTSTR)lpStruct->csAccount,
+	    inet_ntoa( lpStruct->sockAddr.sin_addr ) );
+
 	TFCPacket sending;
     CString csErrorMsg;
     DWORD dwUserCredits = 0xFFFFFFFF;
@@ -2390,17 +2402,6 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
            inet_ntoa( lpStruct->sockAddr.sin_addr )
        LOG_
    }
-   // Otherwise if the user is already logged on this, or another server.    
-   else if( Players::AccountLogged( lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr ) ) ){            
-        // If player is logged on a server.
-        csErrorMsg = _DEFAULT_STR( 2845 );
-        sending << (char)1;
-        _LOG_PC
-            LOG_DEBUG_LVL1,
-            "[RegisterAccount ODBC] REFUS compte='%s' (%s) : compte deja connecte.", (LPCTSTR)lpStruct->csAccount,
-            inet_ntoa( lpStruct->sockAddr.sin_addr )
-        LOG_
-   }
    else
    {
         BOOL dbRowFetched = FALSE;
@@ -2422,77 +2423,46 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
 		lpStruct->csAccount.MakeLower();
         Players::QuotedAccount( szAccount, lpStruct->csAccount );
 
-
-        ODBCAuth.Lock(); //BLBLBLBL commented
-
+        if( Players::AccountLogged( lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr ) ) ){
+            csErrorMsg = _DEFAULT_STR( 2845 );
+            sending << (char)1;
+            _LOG_PC
+                LOG_DEBUG_LVL1,
+                "[RegisterAccount ODBC] REFUS compte='%s' (%s) : compte deja connecte (OnlineUsers).",
+                (LPCTSTR)lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr )
+            LOG_
+        }
+        else
+        {
         TRACE( "\r\nAccountName=%s.", szAccount );
 
-        // If user wants credits checking.
-        if( !theApp.sAuth.csODBC_Credits.IsEmpty() ){                    
-            csQuery.Format(
-                "SELECT %s, %s FROM %s WHERE %s='%s'",
-                theApp.sAuth.csODBC_Pwd,
-                theApp.sAuth.csODBC_Credits,
-                theApp.sAuth.csODBC_Table,
-                theApp.sAuth.csODBC_Account,
-                szAccount
-            );
-        }
-        // Otherwise user doesn't want credits checking.
-        else{
-            csQuery.Format(
-                "SELECT %s FROM %s WHERE %s='%s'",
-                theApp.sAuth.csODBC_Pwd,
-                theApp.sAuth.csODBC_Table,
-                theApp.sAuth.csODBC_Account,
-                szAccount
-            );
-        }
-
-        // Append the supplied where statement if it exists.
-        if( !theApp.sAuth.csODBC_Where.IsEmpty() ){
-            csQuery += " AND (";
-            csQuery += theApp.sAuth.csODBC_Where;
-            csQuery += ")";
-        }
-
-        // Send the request
-        if( ODBCAuth.SendRequest( (LPCTSTR)csQuery ) )
-		{                        
-            if( ODBCAuth.Fetch() )
-			{
-                dbRowFetched = TRUE;
-                // Fetch password.
-                ODBCAuth.GetString( 1, szPassword, 250 );
-
-                // Fetch credits fields if it exists.
-                if( !theApp.sAuth.csODBC_Credits.IsEmpty() )
-				{
-                    ODBCAuth.GetDWORD( 2, &dwUserCredits );
-                }
-            }
-			else
-			{
-                csErrorMsg = _DEFAULT_STR( 462 );
-                boAuth = FALSE;
-            }
-        }else
-		{
+        /* Meme pool ODBC que OnlineUsers (isql / MariaDB) : ODBCAuth echouait avec 459. */
+        const int authSql = Players::QueryAccountPassword( szAccount, szPassword, 250, &dwUserCredits );
+        if( authSql == 0 ){
+            dbRowFetched = TRUE;
+            fprintf( stderr, "[RegisterAccount ODBC] authSql=0 OK compte='%s'\\n", (LPCTSTR)lpStruct->csAccount );
+        } else if( authSql == 1 ){
+            csErrorMsg = _DEFAULT_STR( 462 );
+            boAuth = FALSE;
+            fprintf( stderr,
+                "[RegisterAccount ODBC] authSql=1 (462) compte='%s' table='%s' ? voir aussi PCEdit.log / Debug.log\\n",
+                (LPCTSTR)lpStruct->csAccount, (LPCTSTR)theApp.sAuth.csODBC_Table );
+            _LOG_DEBUG LOG_ALWAYS,
+                "[RegisterAccount ODBC] 462 compte='%s' absent de %s",
+                (LPCTSTR)lpStruct->csAccount, (LPCTSTR)theApp.sAuth.csODBC_Table
+            LOG_
+        } else {
             boDBError = TRUE;
             boAuth = FALSE;
             csErrorMsg = _DEFAULT_STR( 459 );
-        }                    
+            fprintf( stderr, "[RegisterAccount ODBC] authSql=-1 (459) compte='%s'\\n", (LPCTSTR)lpStruct->csAccount );
+            _LOG_DEBUG LOG_ALWAYS,
+                "[RegisterAccount ODBC] 459 erreur SQL compte='%s'",
+                (LPCTSTR)lpStruct->csAccount
+            LOG_
+        }
 
-        // If no DB error occured
-        //if( boDBError ){
-            // Cancel data fetch operation.
-            ODBCAuth.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close//BLBLBL commented
-        //}
-    
-        ODBCAuth.Unlock();//BLBLBBL commented
-
-        _LOG_PC
-            LOG_DEBUG_LVL1,
+        _LOG_DEBUG LOG_DEBUG_LVL1,
             "[RegisterAccount ODBC] post-SQL compte='%s' (%s) rowFetched=%d boAuth(avant_mdp)=%d boDBError=%d "
             "len_champ_mdp_db=%d len_mdp_client=%d dwPasswordCaseSensitive=%u dwEncryptedPassword=%u",
             (LPCTSTR)lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr ), dbRowFetched ? 1 : 0, boAuth ? 1 : 0,
@@ -2520,20 +2490,33 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
 			boAuth = FALSE;
 		}
 
-        _LOG_PC
-            LOG_DEBUG_LVL1,
-            "[RegisterAccount ODBC] apres comparaison mot de passe compte='%s' boAuth_final=%d (0 = refus / compte SQL introuvable / mauvais MDP).",
+        fprintf( stderr,
+            "[RegisterAccount ODBC] apres MDP compte='%s' boAuth_final=%d\\n",
+            (LPCTSTR)lpStruct->csAccount, boAuth ? 1 : 0 );
+        _LOG_DEBUG LOG_DEBUG_LVL1,
+            "[RegisterAccount ODBC] apres comparaison mot de passe compte='%s' boAuth_final=%d",
             (LPCTSTR)lpStruct->csAccount, boAuth ? 1 : 0
         LOG_
         
         // User registered ///////////////////////////////////////////////////////////////////////            
         if( boAuth ){
-            boAccountSuccessfullyLoggedOn = LoadPlayer( lpStruct, csErrorMsg, sending, dwUserCredits );
-            _LOG_PC
-                LOG_DEBUG_LVL1,
-                "[RegisterAccount ODBC] LoadPlayer retour=%d compte='%s'",
-                boAccountSuccessfullyLoggedOn ? 1 : 0, (LPCTSTR)lpStruct->csAccount
-            LOG_
+            if( !Players::ClaimOnlineSlot( lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr ) ) ){
+                csErrorMsg = _DEFAULT_STR( 2845 );
+                sending << (char)1;
+                boAuth = FALSE;
+                _LOG_PC
+                    LOG_DEBUG_LVL1,
+                    "[RegisterAccount ODBC] REFUS compte='%s' : ClaimOnlineSlot (race / deja connecte).",
+                    (LPCTSTR)lpStruct->csAccount
+                LOG_
+            } else {
+                boAccountSuccessfullyLoggedOn = LoadPlayer( lpStruct, csErrorMsg, sending, dwUserCredits );
+                _LOG_PC
+                    LOG_DEBUG_LVL1,
+                    "[RegisterAccount ODBC] LoadPlayer retour=%d compte='%s'",
+                    boAccountSuccessfullyLoggedOn ? 1 : 0, (LPCTSTR)lpStruct->csAccount
+                LOG_
+            }
         }else
         // Database out //////////////////////////////////////////////////////////////////////////            
         if( boDBError ){
@@ -2550,15 +2533,17 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
 
         // If the account did not successfully log on.
         if( !boAccountSuccessfullyLoggedOn ){
-            // Notify the players that the loggon failed.
             Players::AccountLoggonFailed( lpStruct->csAccount );
+        }
         }
     }
 
     sending << csErrorMsg;
-    _LOG_PC
-        LOG_DEBUG_LVL1,
-        "[RegisterAccount ODBC] SendPacket UDP -> %s (compte='%s', message err len=%d).",
+    fprintf( stderr,
+        "[RegisterAccount ODBC] reponse -> %s compte='%s' err='%s'\\n",
+        inet_ntoa( lpStruct->sockAddr.sin_addr ), (LPCTSTR)lpStruct->csAccount, (LPCTSTR)csErrorMsg );
+    _LOG_DEBUG LOG_ALWAYS,
+        "[RegisterAccount ODBC] SendPacket UDP -> %s compte='%s' err len=%d",
         inet_ntoa( lpStruct->sockAddr.sin_addr ), (LPCTSTR)lpStruct->csAccount, csErrorMsg.GetLength()
     LOG_
     WorldPos wlPos = { -1, -1, -1 };
@@ -6376,6 +6361,13 @@ void TFCMessagesHandler::RQFUNC_AuthenticateServerVersion
             // Allow access to the user.
             user->registred = TRUE;
         }else{
+            _LOG_DEBUG LOG_ALWAYS,
+                "[RQ_AuthenticateServerVersion] REFUS version client=%lu serveur=%lu (INI GeneralConfig/Version)",
+                (unsigned long)clientVersion, (unsigned long)TFCServer->dwVersion
+            LOG_
+            fprintf( stderr,
+                "[RQ_AuthenticateServerVersion] REFUS client=%lu serveur=%lu\n",
+                (unsigned long)clientVersion, (unsigned long)TFCServer->dwVersion );
             sending << (RQ_SIZE)RQ_AuthenticateServerVersion;
             sending << (long)0;
         }

@@ -21,7 +21,11 @@ void CThreadMonitor::UnregisterThread(){
 	LOG_
 
 	CAutoLock(this);
-	runningThreadsMap.erase(GetCurrentThreadId());
+	const DWORD tid = GetCurrentThreadId();
+	const ThreadListIterator it = runningThreadsMap.find(tid);
+	if (it != runningThreadsMap.end()) {
+		runningThreadsMap.erase(it);
+	}
 }
 
 bool CThreadMonitor::GetThreadName(DWORD dwThreadID, std::string &sThreadName) {

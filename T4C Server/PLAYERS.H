@@ -178,6 +178,11 @@ public:
     void            SetRadiusPortID( DWORD dwPortID ){ dwRadiusPortID = dwPortID; };
 
 	static bool     AccountLogged( const String &csAccountName, LPCSTR szIP );
+	/** Reserve OnlineUsers row after password OK (not before). Returns false if slot taken. */
+	static bool     ClaimOnlineSlot( const String &csAccountName, LPCSTR szIP );
+	/** 0=OK, 1=compte absent (462), -1=erreur SQL (459). Utilise ODBCUsers (meme DSN que OnlineUsers). */
+	static int      QueryAccountPassword( LPCSTR szAccountQuoted, char *szPassword, int pwdBufLen, DWORD *pdwCredits );
+	static void     ProbeAuthDatabase( void );
 	static int 		IPLogged( LPCSTR szIP );
     static bool     AccountHeartBeat( void );
 	static void     AccountLoggonFailed( const String &csAccountName );

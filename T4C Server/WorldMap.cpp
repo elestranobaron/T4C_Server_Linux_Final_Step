@@ -24,9 +24,9 @@ static char THIS_FILE[]=__FILE__;
 
 #define X_HIVE_CHECK	25 //BL : c'est le "rayon" en cases autour du joueur, chaque case fait 32x16 pixels, 15 = 480 pixels, nouvelle valeur 16 pour se caler sur 1024x768 // steph 25 au lieu de 16
 #define Y_HIVE_CHECK	40 //BL 30 = 480 pixels, nouvelle valeur 32 pour se caler sur 1024x768 // steph 40 au lieu de 32
-						   // Apparement ce truc là ne sert QUE pour faire poper les monstres, donc faut pas le mettre trop elevé sinon ce sera l'invasion !
+						   // Apparement ce truc lÃ  ne sert QUE pour faire poper les monstres, donc faut pas le mettre trop elevÃ© sinon ce sera l'invasion !
 
-#define MAXIMAL_SCAN_RANGE 32 //BLBL de 60 à 40, puisque c'est le rayon maximal dans lequel on informe les unités alentour de qq chose qui se produit. // steph 32 au lieu de 40
+#define MAXIMAL_SCAN_RANGE 32 //BLBL de 60 Ã  40, puisque c'est le rayon maximal dans lequel on informe les unitÃ©s alentour de qq chose qui se produit. // steph 32 au lieu de 40
 							  //on se cale sur _DEFAULT_RANGE quoi ^^
 #define DIVIDER 2
 
@@ -56,6 +56,10 @@ WorldMap::WorldMap()
 	world = 0;
 	MAXX = 0;
 	MAXY = 0;
+	WorldUnits = NULL;
+	EffectList = NULL;
+	map_buffy = NULL;
+	m_bMapCreated = false;
 	bitmask[0] = 0x80;
 	bitmask[1] = 0x40;
 	bitmask[2] = 0x20;
@@ -148,6 +152,7 @@ void WorldMap::Create(unsigned short X, unsigned short Y, unsigned short wld, un
 //	WorldMonsters = regio;
 	//MonsterGroups = Monst;
 
+	m_bMapCreated = true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +182,7 @@ Unit *WorldMap::ViewTopUnit
 // This function drops an object on top of a square
 void WorldMap::deposit_unit(WorldPos where, Unit *obj){	
 
-    //BLBL 3 avril 2009 Modification légères, on ne change pas le type de block d'une case si y avait déjà un joueur dessus
+    //BLBL 3 avril 2009 Modification lÃ©gÃ¨res, on ne change pas le type de block d'une case si y avait dÃ©jÃ  un joueur dessus
 	int XPos = where.X >> DIVIDER;
 	int YPos = where.Y >> DIVIDER;
 	int noBlockChange=0;
@@ -249,7 +254,7 @@ void WorldMap::deposit_unit(WorldPos where, Unit *obj){
 				);
 				if( u != NULL ){
 					underBlock = u->GetUnderBlock();
-					if ( u->GetType() == U_PC || u->GetType() == U_NPC ) noBlockChange=1;//Si on va poser sur un joueur, on change pas le bloc //ajouté ou U_NPC
+					if ( u->GetType() == U_PC || u->GetType() == U_NPC ) noBlockChange=1;//Si on va poser sur un joueur, on change pas le bloc //ajoutÃ© ou U_NPC
 				}
 			}
 			
@@ -264,7 +269,7 @@ void WorldMap::deposit_unit(WorldPos where, Unit *obj){
 			obj->SetUnderBlock( underBlock );
     
 			// Set the blocking of the unit
-			if (!noBlockChange) SetBlocking( where, obj->GetBlock() ); //BLBLBL : test pour éviter qu'un drop d'objet ne rende une case "non joueur"
+			if (!noBlockChange) SetBlocking( where, obj->GetBlock() ); //BLBLBL : test pour Ã©viter qu'un drop d'objet ne rende une case "non joueur"
 
 			// Log spilled item.
 /*			_LOG_ITEMS
@@ -306,7 +311,7 @@ void WorldMap::deposit_unit(WorldPos where, Unit *obj){
 				);
 				if( u != NULL ){
 					underBlock = u->GetUnderBlock();					
-					if ( u->GetType() == U_PC || u->GetType() == U_NPC ) noBlockChange=1;//BLBL on ne change pas le type de sol seulement si dessous c'est un joueur.//ajouté ou U_NPC
+					if ( u->GetType() == U_PC || u->GetType() == U_NPC ) noBlockChange=1;//BLBL on ne change pas le type de sol seulement si dessous c'est un joueur.//ajoutÃ© ou U_NPC
 				}
 			}
 			
@@ -322,7 +327,7 @@ void WorldMap::deposit_unit(WorldPos where, Unit *obj){
 											  
     
 			// Set the blocking of the unit
-			if (!noBlockChange) SetBlocking( where, obj->GetBlock() );//BLBL 3 avril 2009 tentative de suppression du changement de type de bloc en arrivée de téléportation
+			if (!noBlockChange) SetBlocking( where, obj->GetBlock() );//BLBL 3 avril 2009 tentative de suppression du changement de type de bloc en arrivÃ©e de tÃ©lÃ©portation
 
 			Unlock();
 
@@ -508,9 +513,9 @@ BOOL WorldMap::packet_peripheral_units(WorldPos where, unsigned char srange, DIR
    //////////////////////////////////////////////////////////////////////////////////////////
 	const INT xrange = 24;//_DEFAULT_RANGE;//_DEFAULT_RANGE;//18; //12 //BLBLBL : 24=>_DEFAULT_RANGE
 	const INT yrange = 32;//_DEFAULT_RANGE;//_DEFAULT_RANGE+_DEFAULT_RANGE/2;//26; //18 //BLBLBL : 32=>_DEFAULT_RANGE+_DEFAULT_RANGE/2
-				      //Apparmeent quand on met _DEFAULT_RANGE au lieu des valeurs chiffrées
-					  //après dans le jeu les portes ou portails ou défois les PNJ n'apparaissent plus quand on "marche"...
-	                  //par contre quand on se téléporte on voit bien tout.
+				      //Apparmeent quand on met _DEFAULT_RANGE au lieu des valeurs chiffrÃ©es
+					  //aprÃ¨s dans le jeu les portes ou portails ou dÃ©fois les PNJ n'apparaissent plus quand on "marche"...
+	                  //par contre quand on se tÃ©lÃ©porte on voit bien tout.
 
 
 	WORD scanX = 0;
@@ -573,10 +578,10 @@ BOOL WorldMap::packet_peripheral_units(WorldPos where, unsigned char srange, DIR
 
 	TemplateList <Unit> tlFoundItems;
 
-	//if(scanX < MAXX && scanX > 0 && scanY > 0 && scanY < MAXY){ //BLBLBL 03/12/2010 : >0 au lieu de >=0// euh du coup des portes apparaissent pas si on se déplace "pile" vers l'est/west/nord/sud !
+	//if(scanX < MAXX && scanX > 0 && scanY > 0 && scanY < MAXY){ //BLBLBL 03/12/2010 : >0 au lieu de >=0// euh du coup des portes apparaissent pas si on se dÃ©place "pile" vers l'est/west/nord/sud !
 		TRACE(_T("\r\nScanX=%u ScanY=%u   "), scanX, scanY);
 
-		if(scanX>0 && scanX <MAXX){//BLBLBL if (scanX) remplacé par une condition plus large.
+		if(scanX>0 && scanX <MAXX){//BLBLBL if (scanX) remplacÃ© par une condition plus large.
 			// if a X scan was asked	
 			// Scans all capuchon in range
 			for(j = (loY >> DIVIDER); j < (hiY >> DIVIDER) + 1; j++){
@@ -593,7 +598,7 @@ BOOL WorldMap::packet_peripheral_units(WorldPos where, unsigned char srange, DIR
 			}
 		}
 		// if a Y scan was asked
-		if(scanY>0 && scanY <MAXY){//BLBLBL if (scanX) remplacé par une condition plus large.
+		if(scanY>0 && scanY <MAXY){//BLBLBL if (scanX) remplacÃ© par une condition plus large.
 			for(i = ((loX) >> DIVIDER); i < ((hiX) >> DIVIDER) + 1; i++){
 				// if there's a capuchon then send all top units on the square
 				if(WorldUnits[i][scanY >> DIVIDER]){
@@ -1174,11 +1179,11 @@ void WorldMap::remove_world_unit( WorldPos where, DWORD ID ){
             BYTE bObjBlock = lpFoundUnit->GetUnderBlock();
 
             if( lpFoundUnit->GetType() != U_OBJECT){
-			    // Restore old blocking (permet d'éviter de laisser une trace 'blocante' derrière un joueur..)
+			    // Restore old blocking (permet d'Ã©viter de laisser une trace 'blocante' derriÃ¨re un joueur..)
 			    SetBlocking( where, bObjBlock );//BLBLBL TEST TEST TEST
             }else{                
                 //else if it's an object : 
-				//RemoveBlockingUnit( where, lpFoundUnit ); //BLBLBL 28 avril 2009 : pour éviter un abus permettant de se rendre invisible aux monstre en étant SUR un objet qu'on ramasse...
+				//RemoveBlockingUnit( where, lpFoundUnit ); //BLBLBL 28 avril 2009 : pour Ã©viter un abus permettant de se rendre invisible aux monstre en Ã©tant SUR un objet qu'on ramasse...
             }
         }else{
             // If no unit was found, well now its complicated! We *must* find it
@@ -1319,7 +1324,7 @@ BOOL WorldMap::move_world_unit(WorldPos from, WorldPos to, DWORD ID, char direct
                 
                     lpUnit->PacketUnitInformation( sending );		    		
                     // NMNMNM 22
-                    Broadcast::BCast( wlDestination, _DEFAULT_RANGE, sending, lpUnit->GetInvisibleQuery() );//BLBL 25=>_DEFAULT_RANGE (40 ça faisait beaucoup apparement par contre)
+                    Broadcast::BCast( wlDestination, _DEFAULT_RANGE, sending, lpUnit->GetInvisibleQuery() );//BLBL 25=>_DEFAULT_RANGE (40 Ã§a faisait beaucoup apparement par contre)
                 }
                 
                 return return_value;
@@ -1811,7 +1816,7 @@ WorldPos WorldMap::FindValidSpot
 			if( !IsBlocking( wlCheckPos ) ){
 				TRACE( "\r\nFound pos %u, %u, %u", wlCheckPos.X, wlCheckPos.Y, wlCheckPos.world );
 				
-				//BLBLBL on vérifie si y a pas une unité déjà sur la case où on veut dropper :
+				//BLBLBL on vÃ©rifie si y a pas une unitÃ© dÃ©jÃ  sur la case oÃ¹ on veut dropper :
 				if (bAllowPiles || (WorldUnits[ wlCheckPos.X >> DIVIDER ][ wlCheckPos.Y >> DIVIDER ] == NULL) ){
 
 				// Found pos!
@@ -1831,7 +1836,7 @@ WorldPos WorldMap::FindValidSpot
 		wlCheckPos.X = wlCenter.X - nRay;
 		while( wlCheckPos.X < wlCenter.X + nRay + 1 && !boFound ){
 			if( !IsBlocking( wlCheckPos ) ){
-				//BLBLBL on vérifie si y a pas une unité déjà sur la case où on veut dropper :
+				//BLBLBL on vÃ©rifie si y a pas une unitÃ© dÃ©jÃ  sur la case oÃ¹ on veut dropper :
 				if (bAllowPiles || ( WorldUnits[ wlCheckPos.X >> DIVIDER ][ wlCheckPos.Y >> DIVIDER ] == NULL ) ){
 
 				// Found pos!
@@ -1851,7 +1856,7 @@ WorldPos WorldMap::FindValidSpot
 		wlCheckPos.Y = wlCenter.Y - nRay + 1;
 		while( wlCheckPos.Y < wlCenter.Y + nRay && !boFound ){
 			if( !IsBlocking( wlCheckPos ) ){
-				//BLBLBL on vérifie si y a pas une unité déjà sur la case où on veut dropper :
+				//BLBLBL on vÃ©rifie si y a pas une unitÃ© dÃ©jÃ  sur la case oÃ¹ on veut dropper :
 				if (bAllowPiles || ( WorldUnits[ wlCheckPos.X >> DIVIDER ][ wlCheckPos.Y >> DIVIDER ] == NULL ) ){
 
 				// Found pos!
@@ -1872,7 +1877,7 @@ WorldPos WorldMap::FindValidSpot
 		while( wlCheckPos.Y < wlCenter.Y + nRay && !boFound ){
 			if( !IsBlocking( wlCheckPos ) ){
 
-				//BLBLBL on vérifie si y a pas une unité déjà sur la case où on veut dropper :
+				//BLBLBL on vÃ©rifie si y a pas une unitÃ© dÃ©jÃ  sur la case oÃ¹ on veut dropper :
 				if (bAllowPiles || ( WorldUnits[ wlCheckPos.X >> DIVIDER ][ wlCheckPos.Y >> DIVIDER ] == NULL ) ){
 				
 				// Found pos!

@@ -87,7 +87,7 @@ typedef struct _GPEpTn{
 
 //To choose between MYSQL and MSSQL for ODBC : (in order to optimize requests)
 //#define MSSQLSERVER 0//BLBLBL 10/01/2011 (set to 1 if server is MSSQL, use TOP instead of LIMIT in SQL statments)
-// ^^ dùfini dans les options de compilation ^^
+// ^^ d¬ùfini dans les options de compilation ^^
 
 #define VERSION_STRING  "v%u"
 
@@ -800,8 +800,9 @@ int main(int argc,char **argv)
          //theApp.m_aSpellWorld.Add(nWorld);
       }
 	    //BATTLE MODE KEY END//
-		regKey.Open(HKEY_LOCAL_MACHINE, T4C_KEY "Authentication\\");
-		theApp.csDBDns = regKey.GetProfileString("ODBC_DSN", "");
+		/* Meme section INI que sAuth (AUTH_KEY) : evite csDBDns vide si seule [authentication] sans '\' final. */
+		regKey.Open(HKEY_LOCAL_MACHINE, T4C_KEY AUTH_KEY );
+		theApp.csDBDns = regKey.GetProfileString("ODBC_DSN", "T4C Server Authentication");
 		regKey.Open( HKEY_LOCAL_MACHINE, T4C_KEY CHARACTER_KEY );
 		theApp.csDBUser      = regKey.GetProfileString( "DB_USER", "" );
 		theApp.csDBPwd       = regKey.GetProfileString( "DB_PWD",  "" );

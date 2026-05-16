@@ -234,7 +234,8 @@ void cODBCMage::Connect(LPCSTR szDataSource, LPCSTR szUsername, LPCSTR szPasswor
 
 	Lock();	
 	
-    SQLSetConnectOption( hdbc, SQL_ODBC_CURSORS, SQL_CUR_USE_ODBC );
+    /* MariaDB/unixODBC : SQL_CUR_USE_ODBC casse SQLFetch (send=1 fetch=0). Driver natif OK. */
+    SQLSetConnectOption( hdbc, SQL_ODBC_CURSORS, SQL_CUR_USE_DRIVER );
     
     // Updates the stored data source name and the current user names.
     if( szDataSource != NULL ){
@@ -418,23 +419,10 @@ BOOL cODBCMage::Fetch( void )
 // Return: BOOL, 
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-	if( SQLFetch( hstmt ) == SQL_SUCCESS ){
+	const SQLRETURN fetchRc = SQLFetch( hstmt );
+	if( fetchRc == SQL_SUCCESS || fetchRc == SQL_SUCCESS_WITH_INFO ){
 		return TRUE;
 	}
-#ifdef _DEBUG
-	else{
-		BYTE lpbSQLState[ 200 ];		
-		BYTE lpbErrorMsg[ 200 ];
-		SQLINTEGER dwNativeError;
-		short wDummy;
-
-		SQLError( henv, hdbc, hstmt, lpbSQLState, &dwNativeError, lpbErrorMsg, 200, &wDummy );
-		TRACE( "\r\nSQL ERROR [SQLFetch]:" );		
-		TRACE( "\r\n\tSQL State: %s", lpbSQLState );
-		TRACE( "\r\n\tNative Error: %u", dwNativeError );
-		TRACE( "\r\n\tError message: %s", lpbErrorMsg );
-	}
-#endif
 
 	return FALSE;
 }

@@ -44,6 +44,11 @@ TemplateList <Unit::UNIT_TYPE>	Unit::tlUnitTypes;
 std::map<DWORD,Unit *> Unit::unit_map;
 extern Random rnd;
 
+namespace {
+/* Evite O(n^2) scan de lpMessagesProc a chaque REGISTER_NPC pendant l'init statique. */
+WORD g_nextNpcUnitId = 30000;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 void Unit::InitializeMessagesProcs( void )
 //////////////////////////////////////////////////////////////////////////////////////////

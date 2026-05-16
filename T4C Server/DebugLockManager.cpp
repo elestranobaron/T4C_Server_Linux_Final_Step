@@ -20,11 +20,8 @@ namespace{
     class CDebugLockManagerTracer : public CDebugLockManager{
     public:
         CDebugLockManagerTracer(){
-            RegKeyHandler regKey;
-            regKey.Open( HKEY_LOCAL_MACHINE, "Software\\Vircom\\The 4th Coming Server\\Logging" );
-
-            LOCK_TABLE_SIZE = regKey.GetProfileInt( "DeadlockJournalSize", 10000 );
-
+            /* Pas de RegKeyHandler ici : appele depuis le 1er CLock::Lock (init statique). */
+            LOCK_TABLE_SIZE = 10000;
 
             curPos = 0;
             totalLockCount = 0;

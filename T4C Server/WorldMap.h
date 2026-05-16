@@ -97,7 +97,7 @@ public:
     // Returns the position where it would collide betwen Pos1 and Pos2,
     BOOL GetCollisionPos( WorldPos Pos1, WorldPos Pos2, WorldPos *lpReturnPos, Unit **lpCollideUnit, bool boTargetPC = true, bool boTargetNPC = true );
 	bool AttackBlockTest( WorldPos Pos1, WorldPos Pos2, WorldPos *lpReturnPos);
-	void SetBlocking(WorldPos where, unsigned char which);//BLBLBL passage de privù en public
+	void SetBlocking(WorldPos where, unsigned char which);//BLBLBL passage de priv¬ù en public
 
 private:	
 	Unit *GetHiveAt( int nX, int nY );
@@ -119,6 +119,7 @@ private:
 	unsigned int world;
 	unsigned short MAXX, MAXY;
 	unsigned char *map_buffy; // Holds the map for blocking structures (1 blocks, 0 passes)
+	bool m_bMapCreated; // true after Create(); slots in World[] without Create must not run full dtor
 
 
 

@@ -177,8 +177,7 @@ void Players::InitializeODBC( void )
 			(LPCTSTR)theApp.csMachineName
 		)
 	);
-
-
+	ODBCUsers.CloseCursor();
 
     // Flush all online user records.
     ODBCUsers.SendRequest( 
@@ -187,6 +186,8 @@ void Players::InitializeODBC( void )
             (LPCTSTR)theApp.csMachineName 
         ) 
     );
+	ODBCUsers.CloseCursor();
+	ProbeAuthDatabase();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1684,63 +1685,141 @@ bool Players::AccountLogged
 // Return: bool, true if the player is already logged on.
 //////////////////////////////////////////////////////////////////////////////////////////
 {
+	(void)szIP;
 	ODBCUsers.Lock();
-	TFormat format;  
-    bool boLogged = false;
-    if( !ODBCUsers.SendRequest( format(
-                "INSERT INTO OnlineUsers(MachineName,AccountName,PlayerName,IPaddr) VALUES ('%s','%s','<%s>','%s')",
-                (LPCTSTR)theApp.csMachineName,
-                (LPCTSTR)csAccountName,
-                _STR( 2846, _DEFAULT_LNG ),
-                szIP
-            ), false ) )
-	{
-        // He is logged somewhere (this or another server).
-        boLogged = true;
-    }
-	ODBCUsers.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
-
-    ODBCUsers.Unlock();
-
-    return boLogged;
-	//on accept les multi connexion
-
-	
-    ODBCUsers.Lock();
-	//BLBL : check si le joueur est d�j� connect� pour pas g�n�rer d'erreur SQL :
 	CString csQuery;
+	bool boLogged = false;
 #ifdef MSSQLSERVER
-	csQuery.Format( "SELECT TOP 1 AccountName FROM OnlineUsers WHERE AccountName='%s'", (LPCTSTR)csAccountName ); //BLBBL 05/01/2011
+	csQuery.Format( "SELECT TOP 1 AccountName FROM OnlineUsers WHERE AccountName='%s'", (LPCTSTR)csAccountName );
 #else
-	csQuery.Format( "SELECT AccountName FROM OnlineUsers WHERE AccountName='%s' LIMIT 1", (LPCTSTR)csAccountName ); //BLBBL 05/01/2011
+	csQuery.Format( "SELECT AccountName FROM OnlineUsers WHERE AccountName='%s' LIMIT 1", (LPCTSTR)csAccountName );
 #endif
-	ODBCUsers.SendRequest( csQuery );	
+	if( ODBCUsers.SendRequest( (LPCTSTR)csQuery ) && ODBCUsers.Fetch() ){
+		boLogged = true;
+	}
+	ODBCUsers.CloseCursor();
+	ODBCUsers.Unlock();
+	return boLogged;
+}
 
-	if ( ODBCUsers.Fetch() ) {
-	
-		boLogged=true;
-	
-	}else // Send a request to fetch the user from the OnlineUsers table
-		  
-		  ODBCUsers.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close;//on "repositionne le curseur" (truc bizarre de MSSQL si on fait 2 requetes qui se suivent)          
-		  if( !ODBCUsers.SendRequest( format(
-                "INSERT INTO OnlineUsers(MachineName,AccountName,PlayerName,IPaddr) VALUES ('%s','%s','<%s>','%s')",
-                (LPCTSTR)theApp.csMachineName,
-                (LPCTSTR)csAccountName,
-                _STR( 2846, _DEFAULT_LNG ),
-                szIP
-            ), false ) )
-	{
-        // He is logged somewhere (this or another server).
-        boLogged = true;
-    }
+//////////////////////////////////////////////////////////////////////////////////////////
+bool Players::ClaimOnlineSlot
+//////////////////////////////////////////////////////////////////////////////////////////
+(
+ const CString &csAccountName,
+ LPCSTR szIP
+)
+//////////////////////////////////////////////////////////////////////////////////////////
+{
+	TFormat format;
+	ODBCUsers.Lock();
+	const bool claimed = ODBCUsers.SendRequest(
+	    format(
+	        "INSERT INTO OnlineUsers(MachineName,AccountName,PlayerName,IPaddr) VALUES ('%s','%s','<%s>','%s')",
+	        (LPCTSTR)theApp.csMachineName,
+	        (LPCTSTR)csAccountName,
+	        _STR( 2846, _DEFAULT_LNG ),
+	        szIP ),
+	    false );
+	ODBCUsers.CloseCursor();
+	ODBCUsers.Unlock();
+	return claimed;
+}
 
-    // Otherwise the player isn't there.
-    ODBCUsers.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
 
-    ODBCUsers.Unlock();
+int Players::QueryAccountPassword
+(
+ LPCSTR szAccountQuoted,
+ char *szPassword,
+ int pwdBufLen,
+ DWORD *pdwCredits
+)
+{
+	if( !szAccountQuoted || !szPassword || pwdBufLen < 1 ){
+		return -1;
+	}
+	szPassword[ 0 ] = 0;
 
-    return boLogged;
+	CString csQuery;
+	if( !theApp.sAuth.csODBC_Credits.IsEmpty() ){
+		csQuery.Format(
+		    "SELECT %s, %s FROM %s WHERE %s='%s'",
+		    (LPCTSTR)theApp.sAuth.csODBC_Pwd,
+		    (LPCTSTR)theApp.sAuth.csODBC_Credits,
+		    (LPCTSTR)theApp.sAuth.csODBC_Table,
+		    (LPCTSTR)theApp.sAuth.csODBC_Account,
+		    szAccountQuoted );
+	} else {
+		csQuery.Format(
+		    "SELECT %s FROM %s WHERE %s='%s'",
+		    (LPCTSTR)theApp.sAuth.csODBC_Pwd,
+		    (LPCTSTR)theApp.sAuth.csODBC_Table,
+		    (LPCTSTR)theApp.sAuth.csODBC_Account,
+		    szAccountQuoted );
+	}
+	if( !theApp.sAuth.csODBC_Where.IsEmpty() ){
+		csQuery += " AND (";
+		csQuery += theApp.sAuth.csODBC_Where;
+		csQuery += ")";
+	}
+
+	ODBCUsers.Lock();
+	ODBCUsers.CloseCursor();
+	if( !ODBCUsers.SendRequest( (LPCTSTR)csQuery ) ){
+		ODBCUsers.CloseCursor();
+		ODBCUsers.Unlock();
+		return -1;
+	}
+	if( !ODBCUsers.Fetch() ){
+		ODBCUsers.CloseCursor();
+		ODBCUsers.Unlock();
+		return 1;
+	}
+	ODBCUsers.GetString( 1, szPassword, pwdBufLen );
+	if( pdwCredits != NULL && !theApp.sAuth.csODBC_Credits.IsEmpty() ){
+		ODBCUsers.GetDWORD( 2, pdwCredits );
+	}
+	ODBCUsers.CloseCursor();
+	ODBCUsers.Unlock();
+	return 0;
+}
+
+static void AuthProbeSelect( const char *label, const char *sql )
+{
+	ODBCUsers.Lock();
+	ODBCUsers.CloseCursor();
+	const bool sent = ODBCUsers.SendRequest( sql ) ? true : false;
+	const bool gotRow = sent && ODBCUsers.Fetch();
+	char buf[ 128 ];
+	buf[ 0 ] = 0;
+	if( gotRow ){
+		ODBCUsers.GetString( 1, buf, sizeof( buf ) );
+	}
+	ODBCUsers.CloseCursor();
+	ODBCUsers.Unlock();
+	fprintf( stderr, "[AUTH] %-28s send=%d fetch=%d val='%s' | %s\n",
+	    label, sent ? 1 : 0, gotRow ? 1 : 0, buf, sql );
+}
+
+void Players::ProbeAuthDatabase( void )
+{
+	fprintf( stderr,
+	    "[AUTH] ODBCUsers DSN='%s' user='%s' auth_table='%s' account_col='%s' pwd_col='%s'\n",
+	    (LPCTSTR)theApp.csDBDns,
+	    (LPCTSTR)theApp.csDBUser,
+	    (LPCTSTR)theApp.sAuth.csODBC_Table,
+	    (LPCTSTR)theApp.sAuth.csODBC_Account,
+	    (LPCTSTR)theApp.sAuth.csODBC_Pwd );
+
+	AuthProbeSelect( "DATABASE()", "SELECT DATABASE()" );
+	AuthProbeSelect( "COUNT(*)", "SELECT COUNT(*) FROM T4CUsers" );
+	AuthProbeSelect( "direct test", "SELECT Password FROM T4CUsers WHERE Account='test'" );
+
+	char szProbePwd[ 64 ];
+	const int probe = QueryAccountPassword( "test", szProbePwd, sizeof( szProbePwd ), NULL );
+	fprintf( stderr,
+	    "[AUTH] QueryAccountPassword('test') => %d (0=OK, 1=462, -1=459) pwd='%s'\n",
+	    probe, szProbePwd );
 }
 
 /////////////////////////////////////////
@@ -1818,10 +1897,13 @@ void Players::AccountLoggonFailed
     TemplateList< SQL_REQUEST > *lptlSQLRequests = new TemplateList< SQL_REQUEST >;
  	
 
-    csQuery.Format( "DELETE FROM OnlineUsers WHERE AccountName='%s'", csAccountName ); //BLBLBL 05/01/2011
+    csQuery.Format( "DELETE FROM OnlineUsers WHERE AccountName='%s'", (LPCTSTR)csAccountName );
     ADD_QUERY;
 
+    ODBCUsers.Lock();
     ODBCUsers.SendBatchRequest( lptlSQLRequests, NULL, NULL, "ODBCUsers" );
+    ODBCUsers.CloseCursor();
+    ODBCUsers.Unlock();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
