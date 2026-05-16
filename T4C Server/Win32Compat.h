@@ -16,6 +16,9 @@
 #include <cstdio>
 #include <filesystem>
 #include <unistd.h>
+#include <queue>
+#include <mutex>
+#include <condition_variable>
 
 #ifndef _snprintf
 #define _snprintf std::snprintf
@@ -260,7 +263,7 @@ inline BOOL ResetEvent(HANDLE h) {
 #ifndef CREATE_SUSPENDED
 #define CREATE_SUSPENDED 0x00000004
 #endif
-
+/*
 inline HANDLE CreateIoCompletionPort(HANDLE fileHandle, HANDLE existingCompletionPort, DWORD completionKey, DWORD numberOfConcurrentThreads) {
     (void)fileHandle;
     (void)existingCompletionPort;
@@ -298,11 +301,61 @@ inline BOOL GetQueuedCompletionStatus(HANDLE completionPort, DWORD *numberOfByte
     }
     return result;
 }
+*/
+
+struct IoCompletionPort {
+    std::queue<std::pair<std::uintptr_t, DWORD>> items;
+    std::mutex mtx;
+    std::condition_variable cv;
+};
+
+inline HANDLE CreateIoCompletionPort(HANDLE fileHandle, HANDLE existingCompletionPort, DWORD completionKey, DWORD numberOfConcurrentThreads) {
+    (void)fileHandle; (void)completionKey; (void)numberOfConcurrentThreads;
+    if (existingCompletionPort && existingCompletionPort != INVALID_HANDLE_VALUE)
+        return existingCompletionPort;
+    return reinterpret_cast<HANDLE>(new IoCompletionPort());
+}
+
+inline BOOL PostQueuedCompletionStatus(HANDLE completionPort, DWORD numberOfBytesTransferred, std::uintptr_t completionKey, LPOVERLAPPED overlapped) {
+    (void)overlapped; (void)numberOfBytesTransferred;
+    auto *port = reinterpret_cast<IoCompletionPort*>(completionPort);
+    if (!port) return FALSE;
+    std::lock_guard<std::mutex> lock(port->mtx);
+    port->items.push({completionKey, numberOfBytesTransferred});
+    port->cv.notify_one();
+    return TRUE;
+}
+
+inline BOOL GetQueuedCompletionStatus(HANDLE completionPort, DWORD *numberOfBytesTransferred, std::uintptr_t *completionKey, LPOVERLAPPED *overlapped, DWORD milliseconds) {
+    (void)overlapped;
+    auto *port = reinterpret_cast<IoCompletionPort*>(completionPort);
+    if (!port) return FALSE;
+    std::unique_lock<std::mutex> lock(port->mtx);
+    if (milliseconds == INFINITE) {
+        port->cv.wait(lock, [port]{ return !port->items.empty(); });
+    } else {
+        if (!port->cv.wait_for(lock, std::chrono::milliseconds(milliseconds),
+                               [port]{ return !port->items.empty(); }))
+            return FALSE;
+    }
+    auto [key, bytes] = port->items.front();
+    port->items.pop();
+    if (completionKey) *completionKey = key;
+    if (numberOfBytesTransferred) *numberOfBytesTransferred = bytes;
+    return TRUE;
+}
+
+inline BOOL GetQueuedCompletionStatus(HANDLE completionPort, DWORD *numberOfBytesTransferred, DWORD *completionKey, LPOVERLAPPED *overlapped, DWORD milliseconds) {
+    std::uintptr_t key = 0;
+    const BOOL result = GetQueuedCompletionStatus(completionPort, numberOfBytesTransferred, &key, overlapped, milliseconds);
+    if (completionKey) *completionKey = static_cast<DWORD>(key);
+    return result;
+}
 
 inline unsigned long _beginthread(void (*start_address)(void *), unsigned stack_size, void *arglist) {
     (void)stack_size;
     if (start_address) {
-        start_address(arglist);
+        std::thread(start_address, arglist).detach();
     }
     return 1UL;
 }
@@ -315,7 +368,7 @@ inline unsigned long _beginthreadex(void *security, unsigned stack_size, unsigne
         *thrdaddr = 1;
     }
     if (start_address) {
-        start_address(arglist);
+        std::thread(start_address, arglist).detach();
     }
     return 1UL;
 }

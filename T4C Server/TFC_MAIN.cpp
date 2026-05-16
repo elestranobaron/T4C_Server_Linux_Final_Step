@@ -783,7 +783,8 @@ void RegisterObjects( void );
         END_LOG
         exit( FATAL_NO_REQUIRED_DLL2 );
     }*/
-
+      // NPCs are compiled statically into the binary on Linux, no DLL needed
+    LoadDLLList( "NPCDLL", &tlDllInstance );/*
     if( !LoadDLLList( "NPCDLL",    &tlDllInstance ) ){
         _LOG_DEBUG
             LOG_CRIT_ERRORS,
@@ -793,7 +794,7 @@ void RegisterObjects( void );
 
         END_LOG
         exit( FATAL_NO_REQUIRED_DLL3 );
-    }	
+    }	*/
     /*if( !LoadDLLList( "SpellDLL",  &tlDllInstance ) ){
         _LOG_DEBUG
             LOG_CRIT_ERRORS,

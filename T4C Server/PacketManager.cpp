@@ -400,8 +400,10 @@ void CPacketManager::PacketInterpret
 
 
     try{
+fprintf(stderr, "[PACKET] received rqPacketID=%d\n", rqPacketID);
         // Fetch the packet type.
         pRecv.Get( (RQ_SIZE *)&rqPacketID );
+fprintf(stderr, "[PACKET] after pRev.Get rqPacketID=%d\n", rqPacketID);
     }catch( TFCPacketException *e ){
         TRACE( "\r\nPacket ID not found!!" );
 

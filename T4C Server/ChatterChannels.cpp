@@ -49,7 +49,7 @@ void ChatterChannels::AddSystemChannel
 )
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-    CAutoLock cAutoLock( this );
+    //CAutoLock cAutoLock( this );
 
     Channel *lpChannel = &( mSystemChannels[ channelId ] );
     lpChannel->ciChannelID = channelId;
@@ -62,16 +62,16 @@ void ChatterChannels::ClearSystemChannels( void )
 //  Clears all system channels except the main one.
 // 
 //////////////////////////////////////////////////////////////////////////////////////////
-{   
-    CAutoLock cAutoLock( this );
-
+{   fprintf(stderr, "ZERO\n");
+    //CAutoLock cAutoLock( this );
+fprintf(stderr, "[CHATTER] Uno\n");
     mSystemChannels.clear();
-    
+fprintf(stderr, "[CHATTER] Dos\n");
     Channel *lpChannel = &( mSystemChannels[ mainChannel ] );
     lpChannel->ciChannelID = mainChannel;
-
+fprintf(stderr, "[CHATTER] Tres\n");
 //    AddSystemChannel( Bugs );
-	AddSystemChannel( "PVP" ); //BLBLBL
+	//AddSystemChannel( "PVP" ); fprintf(stderr, "[CHATTER] Quadro\n");//BLBLBL
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////

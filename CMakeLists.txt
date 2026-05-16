@@ -4,7 +4,7 @@ project(T4CServer)
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter -Wno-unknown-pragmas -Wno-overloaded-virtual -Wno-mismatched-new-delete -Wno-unused-but-set-variable -Wno-ignored-qualifiers -fcheck-new")
 
 # Find MySQL/MariaDB (optional on Linux migrations)
 find_library(MYSQL_LIBRARIES NAMES mariadb mysqlclient)

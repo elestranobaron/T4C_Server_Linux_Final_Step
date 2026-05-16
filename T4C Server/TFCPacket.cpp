@@ -230,7 +230,33 @@ void TFCPacket::Get(string &str) {
         str = buf;
     }
 }
-
+/*
+BOOL TFCPacket::SetBuffer(LPBYTE lpNewBuffer, int nBufferSize) {
+fprintf(stderr, "[SETBUFFER] nBufferSize=%d vBuffer size after=%zu\n", nBufferSize, vBuffer.size());
+    if (nBufferSize < static_cast<int>(sizeof(RQ_SIZE))) {
+fprintf(stderr, "[SETBUFFER] if (nBufferSize < static_cast<int>(sizeof(RQ_SIZE)))\n");
+        return FALSE;
+    }
+    vBuffer.clear(); //vBuffer.erase(vBuffer.begin(), vBuffer.end());
+fprintf(stderr, "[SETBUFFER] vBuffer after erase nBufferSize=%d vBuffer size after=%zu\n", nBufferSize, vBuffer.size());
+    // Add empty header so Get() can skip it correctly
+    BYTE bHeader[HEADER_SIZE] = {0, 0, 0, 0};
+    vBuffer.insert(vBuffer.end(), bHeader, bHeader + HEADER_SIZE); //copy(bHeader, bHeader + HEADER_SIZE, back_inserter(vBuffer));
+    vBuffer.insert(vBuffer.end(), lpNewBuffer, lpNewBuffer + nBufferSize); //copy(lpNewBuffer, lpNewBuffer + nBufferSize, back_inserter(vBuffer));
+    fprintf(stderr, "[SETBUFFER] nBufferSize=%d vBuffer size after=%zu\n", nBufferSize, vBuffer.size());
+fprintf(stderr, "[SETBUFFER] bytes: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+    vBuffer.size() > 4 ? vBuffer[4] : 0xFF,
+    vBuffer.size() > 5 ? vBuffer[5] : 0xFF,
+    vBuffer.size() > 6 ? vBuffer[6] : 0xFF,
+    vBuffer.size() > 7 ? vBuffer[7] : 0xFF,
+    vBuffer.size() > 8 ? vBuffer[8] : 0xFF,
+    vBuffer.size() > 9 ? vBuffer[9] : 0xFF,
+    vBuffer.size() > 10 ? vBuffer[10] : 0xFF,
+    vBuffer.size() > 11 ? vBuffer[11] : 0xFF);
+    nPos = 0;
+    return TRUE;
+} // this one had an over HEADER SIZE which made him look th packet too far away
+*/
 BOOL TFCPacket::SetBuffer(LPBYTE lpNewBuffer, int nBufferSize) {
     if (nBufferSize < HEADER_SIZE + static_cast<int>(sizeof(RQ_SIZE))) {
         return FALSE;

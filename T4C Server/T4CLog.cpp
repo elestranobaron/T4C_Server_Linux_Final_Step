@@ -78,7 +78,7 @@ void CT4CLog::InitLogs( void )
     CString csLogPath;
     CString csFileName;
     WORD wLevel = 0;//BLBLBL Il faut ajouter une commande SYSOP permettant de mettre ce level au max debug ON/OFF pour les besoins
-	                //de debuggage sans redùmarrer le serveur, ou alors rùintorroger de temps en temps le reglage du serveur dans le
+	                //de debuggage sans redÔøΩmarrer le serveur, ou alors rÔøΩintorroger de temps en temps le reglage du serveur dans le
 	                //panneau de configuration windows.
 
     cT4CLogs = new CT4CLog[ NB_LOG_TYPES ];

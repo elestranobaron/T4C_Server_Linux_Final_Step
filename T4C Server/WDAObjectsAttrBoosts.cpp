@@ -111,7 +111,18 @@ void WDAObjectsAttrBoosts::CreateFrom
     wdaFile.Read( bsBoost );
     wdaFile.Read( dwMinInt );
     wdaFile.Read( dwMinWis );
-
+/*// --- PATCH 1.62 ---
+    DWORD dwOldValue;
+    wdaFile.Read( dwOldValue ); // On lit le nombre brut (4 octets)
+    
+    TFormat cFmt;
+    bsBoost = cFmt("%u", dwOldValue); // On le convertit en texte pour le reste du moteur
+    
+    // On commente ces deux-là, ils n'existent pas dans tes fichiers .WDA
+    // wdaFile.Read( dwMinInt );
+    // wdaFile.Read( dwMinWis );
+    // ------------------
+*/
     TFormat cFormat;
     cOutput.Log(
         dlDebugHigh,

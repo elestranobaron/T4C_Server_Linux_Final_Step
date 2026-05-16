@@ -8,6 +8,7 @@
 #ifndef _WIN32
 #include "Win32Compat.h"
 #include "StandardTypes.h"
+#include <string>
 #ifndef __declspec
 #define __declspec(x)
 #endif
@@ -33,9 +34,13 @@ public:
 	void WriteProfileInt(LPCTSTR item, DWORD value);
 
 private:
+#ifndef _WIN32
+	std::string m_iniSubKey;
+#else
 	LPCTSTR subkey;
 	HKEY    mainkey;
-	HKEY    keyhandle;	
+	HKEY    keyhandle;
+#endif
 	TCHAR	returnstr[1024];
 };
 

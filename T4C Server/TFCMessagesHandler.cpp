@@ -325,21 +325,23 @@ void TFCMessagesHandler::Create( void )
         LOG_
 
         // Create the ODBC interface.
+fprintf(stderr, "[HANDLER] Before ODBC connect\n");
         ODBCAuth.Connect( theApp.sAuth.csODBC_DSN, theApp.sAuth.csODBC_DBUser, theApp.sAuth.csODBC_DBPwd );
+fprintf(stderr, "[HANDLER] After ODBC connect\n");
     }
     ODBCAuth.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
     //ODBCAuth.ConnectOption( SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF );	
-
+fprintf(stderr, "[Handler] After Close Cursor and Before CAutoConfig::AddRegUpdateCallback ( )\n");
     _LOG_DEBUG
         LOG_DEBUG_LVL4,
         "Setting up auto-registry callback"
     LOG_
 
     CAutoConfig::AddRegUpdateCallback( MaxUserUpdate );
-
+fprintf(stderr, "[Handler] After CAutoConfig::AddRegUpdateCallback( MaxUserUpdate  )\n");
     // Get the 'max users' variables
     MaxUserUpdate();
-
+fprintf(stderr, "[HANDLER] Create() done\n");
 #ifndef NO_VOP_ACCT
 
     /*if( theApp.sAuth.bAuthentificationMethod == VOP_AUTH ){
@@ -601,26 +603,27 @@ void TFCMessagesHandler::MaxUserUpdate( void )
 
     regKey.Close();
     regKey.Open( HKEY_LOCAL_MACHINE, T4C_KEY CHARACTER_KEY );
-
+fprintf(stderr, "[Handler] After FIRST\n");
     ChatterChannels &chatter =  CPlayerManager::GetChatter();
     chatter.Lock();
-    
+fprintf(stderr, "[Handler] After SECOND\n");
     chatter.ClearSystemChannels();
-    
+fprintf(stderr, "[Handler] After THIRD\n");
     CString key;
     i = 2;
     string channelId = regKey.GetProfileString( "PublicChannel1", "$NULL$" );
     while( channelId != "$NULL$" ){
+fprintf(stderr, "[HANDLER] Beforefourth\n");
         chatter.AddSystemChannel( channelId );
-
+fprintf(stderr, "[Handler] After FOURTH\n");
         key.Format( "PublicChannel%u", i );
         i++;
         channelId = regKey.GetProfileString( key, "$NULL$" );
     }
-
+fprintf(stderr, "[Handler] After FIFTH\n");
     CPlayerManager::RefreshSystemChannels();
-
-    chatter.Unlock();
+fprintf(stderr, "[Handler] After SIXTH\n");
+    chatter.Unlock();fprintf(stderr, "[Handler] After SEVENTH\n");
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void TFCMessagesHandler::RegisterFunction
@@ -801,7 +804,7 @@ void TFCMessagesHandler::RQFUNC_PlayerMove
 {
     RQ_HEADER;
 
-    const INT MoveExhaust = 0;//BLBLBL 200=>400=>200 remis ù 200 sinon on a un accoup au dùmarrage d'une sùquence de marche // steph ajout de INT // steph 0 au lieu de 200 MILLISECONDS
+    const INT MoveExhaust = 0;//BLBLBL 200=>400=>200 remis ? 200 sinon on a un accoup au d?marrage d'une s?quence de marche // steph ajout de INT // steph 0 au lieu de 200 MILLISECONDS
 
     TFCPacket sending;
 
@@ -833,7 +836,7 @@ void TFCMessagesHandler::RQFUNC_PlayerMove
 					// If user isn't move exhaust
 					// Or if user sends an advanced move exhaust.
 					//if( newExhaust.move <= TFCMAIN::GetRound() || ( newExhaust.boWalking && newExhaust.move - TFCMAIN::GetRound() <= MoveExhaust ) ){
-					if( newExhaust.move <= TFCMAIN::GetRound() /*|| ( newExhaust.boWalking && newExhaust.move - TFCMAIN::GetRound() <= MoveExhaust )*/ ){//BLBL ù mon avis c'est ptet cette condition qui laisse passer trop de paquets de mouvements.
+					if( newExhaust.move <= TFCMAIN::GetRound() /*|| ( newExhaust.boWalking && newExhaust.move - TFCMAIN::GetRound() <= MoveExhaust )*/ ){//BLBL ? mon avis c'est ptet cette condition qui laisse passer trop de paquets de mouvements.
                 
 						switch( rqRequestID )
 						{
@@ -888,14 +891,14 @@ void TFCMessagesHandler::RQFUNC_PlayerMove
 							// Send a system message telling the player that he's exhaust.
 							// This might flood a player with these messages if he keeps his finger on the move button.
 							user->self->SendSystemMessage( _STR( 2776, user->self->GetLang() ) );
-							user->MoveList.clear();//si le joueur est exhaustù on vide sa liste de mouvements
+							user->MoveList.clear();//si le joueur est exhaust? on vide sa liste de mouvements
 
 						}   
 						
-						//on ne mùmorise les dùplacements qui arrivent que si le joueur n'est pas exhaustù :
-						if (user->MoveList.size()<3 &&  newExhaust.move < TFCMAIN::GetRound() /* + 200 MILLISECONDS // steph dùsactivation */) {
+						//on ne m?morise les d?placements qui arrivent que si le joueur n'est pas exhaust? :
+						if (user->MoveList.size()<3 &&  newExhaust.move < TFCMAIN::GetRound() /* + 200 MILLISECONDS // steph d?sactivation */) {
 							//user->Lock();apparement cause un pb de RST (flag qui s'attribue plus bien)
-							user->MoveList.push_back(rqRequestID);//BLBL on stocke la direction qui a foirù
+							user->MoveList.push_back(rqRequestID);//BLBL on stocke la direction qui a foir?
 							//user->Unlock();apparement cause un pb de RST (flag qui s'attribue plus bien)
 						}							
 						
@@ -1279,13 +1282,13 @@ void AsyncRQFUNC_PutPlayerInGame
 
 				int read;
 				sending.Destroy();
-                read = world->packet_inview_units( player_pos, sending, 40, user->self );//BLBLBL _DEFAULT_RANGE est trop petit pour certains endroits ù l'oracle où les portes disparaissent sinon., j'essaye 40
+                read = world->packet_inview_units( player_pos, sending, 40, user->self );//BLBLBL _DEFAULT_RANGE est trop petit pour certains endroits ? l'oracle o? les portes disparaissent sinon., j'essaye 40
                 if( read != 0 )
 				{
                     user->self->SendPlayerMessage( sending );
                 }
 
-                user->SetNextSave(); //BLBLB d'aprùs la fonction, la premiùre sauvegarde du joueur interviens vers 7 ù 10 minutes, puis ce sera toutes les 30 secondes apparement ?
+                user->SetNextSave(); //BLBLB d'apr?s la fonction, la premi?re sauvegarde du joueur interviens vers 7 ? 10 minutes, puis ce sera toutes les 30 secondes apparement ?
 
 				// Sends list of objects			   
 				//TRACE("\r\n-- %u --\r\n", user->self->get_appearance());						
@@ -1514,7 +1517,7 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
 			 		
 	  char result = user->self->PutPlayerInGame( );//return 0 if okay
 
-	  //CPlayerManager::GetChatter().AddToSystemChannels( user );//BLBLBL Dùplacù dans le bloc conditionnel
+	  //CPlayerManager::GetChatter().AddToSystemChannels( user );//BLBLBL D?plac? dans le bloc conditionnel
 
 	  if( !result ){ //if no problem (0 = OK, 1 = Error happened)
 
@@ -1523,7 +1526,7 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
 	  	    user->in_game = TRUE;
 			user->boPreInGame = FALSE;
             user->self->ResetDeath();// If unit teleported, it cannot be dead.
-//			user->lFirstRound=TFCMAIN::GetRound();//BLBLBL quand le joueur entre en jeu on enregistre son round d'entrùe, pour pouvoir calculer son ratio temps de jeu, nombre de paquets de mouvements lMoveCount;
+//			user->lFirstRound=TFCMAIN::GetRound();//BLBLBL quand le joueur entre en jeu on enregistre son round d'entr?e, pour pouvoir calculer son ratio temps de jeu, nombre de paquets de mouvements lMoveCount;
 
             TRACE( "\r\nPlayer's radiance = %u.", user->self->GetRadiance() );
 
@@ -1564,7 +1567,7 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
                 Broadcast::BCast( user->self->GetWL(), _DEFAULT_RANGE, sending, user->self->GetInvisibleQuery() );//BLBLBL 30=>_DEFAULT_RANGE
                 //}
             }            
-	  }else{//BLBL : sinon, si on a pas rùussi ù remettre en jeu le joueur on logue :
+	  }else{//BLBL : sinon, si on a pas r?ussi ? remettre en jeu le joueur on logue :
 		  if (user->self->boLoaded){
 			_LOG_DEBUG
 				LOG_DEBUG_LVL1,
@@ -1945,6 +1948,11 @@ bool LoadPlayer
         _LOG_DEBUG
             LOG_DEBUG_LVL3,
             "Could NOT created player %s",
+            (LPCTSTR)lpStruct->csAccount
+        LOG_
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[LoadPlayer] CreatePlayer=NULL compte='%s' -- emission quand meme (char)0 + STR(453), flag succes=true (branche peu intuitive).",
             (LPCTSTR)lpStruct->csAccount
         LOG_
 
@@ -2354,11 +2362,21 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
    // If the user cap has been reached.
    if( CPlayerManager::GetUserCount() >= (int)GetUserMax( lpStruct->sockAddr ) ){
         csErrorMsg = _DEFAULT_STR( 451 );
-        sending << (char)1;            
+        sending << (char)1;
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[RegisterAccount ODBC] REFUS compte='%s' (%s) : plafond utilisateurs atteint.",
+            (LPCTSTR)lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr )
+        LOG_
    }else
    if( lpStruct->csAccount.GetLength() <= 1 ){
         csErrorMsg = _DEFAULT_STR( 461 );
         sending << (char)1;
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[RegisterAccount ODBC] REFUS (%s) : nom de compte trop court / vide.",
+            inet_ntoa( lpStruct->sockAddr.sin_addr )
+        LOG_
    
    }
    // If multi account per IP isn't allowed
@@ -2366,15 +2384,27 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
    {
 	   csErrorMsg = "An account is already logged in with your IP.";
        sending << (char)1;
+       _LOG_PC
+           LOG_DEBUG_LVL1,
+           "[RegisterAccount ODBC] REFUS compte='%s' (%s) : NO_MULTI_ACC_PER_IP.", (LPCTSTR)lpStruct->csAccount,
+           inet_ntoa( lpStruct->sockAddr.sin_addr )
+       LOG_
    }
    // Otherwise if the user is already logged on this, or another server.    
    else if( Players::AccountLogged( lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr ) ) ){            
         // If player is logged on a server.
         csErrorMsg = _DEFAULT_STR( 2845 );
         sending << (char)1;
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[RegisterAccount ODBC] REFUS compte='%s' (%s) : compte deja connecte.", (LPCTSTR)lpStruct->csAccount,
+            inet_ntoa( lpStruct->sockAddr.sin_addr )
+        LOG_
    }
    else
    {
+        BOOL dbRowFetched = FALSE;
+
         bool boAccountSuccessfullyLoggedOn = false;
 
         // Do authentification
@@ -2431,6 +2461,7 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
 		{                        
             if( ODBCAuth.Fetch() )
 			{
+                dbRowFetched = TRUE;
                 // Fetch password.
                 ODBCAuth.GetString( 1, szPassword, 250 );
 
@@ -2460,6 +2491,15 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
     
         ODBCAuth.Unlock();//BLBLBBL commented
 
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[RegisterAccount ODBC] post-SQL compte='%s' (%s) rowFetched=%d boAuth(avant_mdp)=%d boDBError=%d "
+            "len_champ_mdp_db=%d len_mdp_client=%d dwPasswordCaseSensitive=%u dwEncryptedPassword=%u",
+            (LPCTSTR)lpStruct->csAccount, inet_ntoa( lpStruct->sockAddr.sin_addr ), dbRowFetched ? 1 : 0, boAuth ? 1 : 0,
+            boDBError ? 1 : 0, int( strlen( szPassword ) ), lpStruct->csPassword.GetLength(),
+            unsigned( theApp.dwPasswordCaseSensitive ), unsigned( theApp.dwEncryptedPassword )
+        LOG_
+
 		// If password encryption has been requested
 		if( theApp.dwEncryptedPassword )
 		{
@@ -2477,12 +2517,23 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
         else if( boAuth && stricmp( szPassword, (LPCTSTR)lpStruct->csPassword ) != 0 )
 		{
             csErrorMsg = _DEFAULT_STR( 458 );
-            boAuth = FALSE;
-        }
+			boAuth = FALSE;
+		}
+
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[RegisterAccount ODBC] apres comparaison mot de passe compte='%s' boAuth_final=%d (0 = refus / compte SQL introuvable / mauvais MDP).",
+            (LPCTSTR)lpStruct->csAccount, boAuth ? 1 : 0
+        LOG_
         
         // User registered ///////////////////////////////////////////////////////////////////////            
         if( boAuth ){
             boAccountSuccessfullyLoggedOn = LoadPlayer( lpStruct, csErrorMsg, sending, dwUserCredits );
+            _LOG_PC
+                LOG_DEBUG_LVL1,
+                "[RegisterAccount ODBC] LoadPlayer retour=%d compte='%s'",
+                boAccountSuccessfullyLoggedOn ? 1 : 0, (LPCTSTR)lpStruct->csAccount
+            LOG_
         }else
         // Database out //////////////////////////////////////////////////////////////////////////            
         if( boDBError ){
@@ -2504,8 +2555,12 @@ void TFCMessagesHandler::AsyncRQFUNC_RegisterAccountODBC
         }
     }
 
-
     sending << csErrorMsg;
+    _LOG_PC
+        LOG_DEBUG_LVL1,
+        "[RegisterAccount ODBC] SendPacket UDP -> %s (compte='%s', message err len=%d).",
+        inet_ntoa( lpStruct->sockAddr.sin_addr ), (LPCTSTR)lpStruct->csAccount, csErrorMsg.GetLength()
+    LOG_
     WorldPos wlPos = { -1, -1, -1 };
     CPacketManager::SendPacket( sending, lpStruct->sockAddr, -1, wlPos, FALSE );
 
@@ -2622,6 +2677,14 @@ void TFCMessagesHandler::RQFUNC_RegisterAccount
         
     Players *user = CPlayerManager::GetPlayerResource( sockAddr );
     if( user != NULL ){
+        /* Diag auth : meme reponse "(char)0 + STR 453)" sans rejouer ODBC ni comparer mot de passe. */
+        _LOG_PC
+            LOG_DEBUG_LVL1,
+            "[RQ_RegisterAccount] IP=%s port=%u: ressource joueur deja associee a cette socket ? "
+            "renvoi (char)0 + _DEFAULT_STR(453), aucune reverification MDP.",
+            inet_ntoa( sockAddr.sin_addr ),
+            unsigned( ntohs( sockAddr.sin_port ) )
+        LOG_
         _LOG_DEBUG
             LOG_DEBUG_LVL3,
             "Player was already authenticated. Resending authentication agreement."
@@ -2735,6 +2798,17 @@ void TFCMessagesHandler::RQFUNC_RegisterAccount
                 lpStruct->sockAddr = sockAddr;
 				lpStruct->packetSeedID = msg->GetPacketSeedID();
 
+                _LOG_PC
+                    LOG_DEBUG_LVL1,
+                    "[RQ_RegisterAccount] dispatch async IP=%s port=%u compte='%s' client_pwd_len=%d hi_ver=%u lo_ver=%u auth_method=%u(ODBC=%u)",
+                    inet_ntoa( sockAddr.sin_addr ),
+                    unsigned( ntohs( sockAddr.sin_port ) ),
+                    (LPCTSTR)account,
+                    password.GetLength(),
+                    unsigned( hi_version ), unsigned( lo_version ),
+                    unsigned( theApp.sAuth.bAuthentificationMethod ), unsigned( ODBC_AUTH )
+                LOG_
+
                 
 				TRACE( "\r\n<v>ethod=%u.", theApp.sAuth.bAuthentificationMethod );
 			    // Call asynchronous registering function.
@@ -2832,7 +2906,7 @@ void TFCMessagesHandler::RQFUNC_DeletePlayer
 	if( user->UsePicklock(__FILE__, __LINE__) ){
 		/**********************************************************************************************/
 		// Delete player	
-		if(user->registred && !user->in_game && !user->boPreInGame) // deletes only if you are registred//FIX de PM pour ùviter crash serveur si le mec delete un perso en cours de dùco
+		if(user->registred && !user->in_game && !user->boPreInGame) // deletes only if you are registred//FIX de PM pour ?viter crash serveur si le mec delete un perso en cours de d?co
 		{
 			//CString name;
 			unsigned char temp_length;
@@ -2999,8 +3073,8 @@ void TFCMessagesHandler::RQFUNC_ExitGame
 	lNow = time(NULL);
 	lLastPlayerEvent=user->self->lLastEventTime;
 		 
-        //special havoc (ajouter : "true ||" ù la condition :)
-	if ( lNow-lLastPlayerEvent>=13 || user->self->GetUnderBlock()==__SAFE_HAVEN || user->self->GetUnderBlock()==__INDOOR_SAFE_HAVEN ){//BLBLBL antiplug : 15 secondes d'inactivitù avant de dùconnecter un perso OU en zone PVP off
+        //special havoc (ajouter : "true ||" ? la condition :)
+	if ( lNow-lLastPlayerEvent>=13 || user->self->GetUnderBlock()==__SAFE_HAVEN || user->self->GetUnderBlock()==__INDOOR_SAFE_HAVEN ){//BLBLBL antiplug : 15 secondes d'inactivit? avant de d?connecter un perso OU en zone PVP off
 											//il faut mettre 2 secondes de moins ici, pour laisser le temps au pak d'arriver au client avant qu'il se ferme tout seul au bout de 15 sec^^
    	
 	    /*_LOG_DEBUG
@@ -3012,7 +3086,7 @@ void TFCMessagesHandler::RQFUNC_ExitGame
 
 	    TFCPacket sending;
         sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client
-		sending << (char)1;	// 1 = C'est ok le joueur a ùtù supprimù du serveur, le client peut se fermer direct
+		sending << (char)1;	// 1 = C'est ok le joueur a ?t? supprim? du serveur, le client peut se fermer direct
 		user->self->SendPlayerMessage( sending );
 		
 		user->DeletePlayer();
@@ -3200,7 +3274,7 @@ void TFCMessagesHandler::RQFUNC_Attack
 	//BLBLBL antispeedhack, si on lance un attaque on vide le buffer de mouvement :
 	user->Lock();
 	user->MoveList.clear();
-/*	user->lFirstRound = TFCMAIN::GetRound();//BL dùs qu'un joueur est stoppù on reset son compteur ratio mouvement.
+/*	user->lFirstRound = TFCMAIN::GetRound();//BL d?s qu'un joueur est stopp? on reset son compteur ratio mouvement.
 	user->lMoveCounter = 0;*/
 	user->Unlock();
 
@@ -3526,7 +3600,7 @@ void TFCMessagesHandler::RQFUNC_IndirectTalk
 						sending << (long)dwNameColor;
 			            user->self->SendPlayerMessage( sending );*/
 						
-						//BLBLBL autant l'informer ù la place qu'il ne peut pas parler :
+						//BLBLBL autant l'informer ? la place qu'il ne peut pas parler :
 						if(user->in_game){
 							user->self->SendSystemMessage( "You cannot speak anymore.", RGB( 255, 0, 0 ) );
 						}
@@ -3561,7 +3635,7 @@ void TFCMessagesHandler::RQFUNC_Shout
 	
 	// BEGIN : Mestoph -> Correction for shouts bugs if player not in game...	
 		// Befor : if( user->boCanShout && user->boCanPage ){ 
-    if( user->boCanShout && user->in_game){//BLBLBL le "&& user->boCanPage" n'a rien ù faire la :)
+    if( user->boCanShout && user->in_game){//BLBLBL le "&& user->boCanPage" n'a rien ? faire la :)
 	// END : Mestoph -> Correction for shouts bugs if player not in game...	
 
 		//////////////////////////////////////////////////////////////////////////////////////////////
@@ -3571,8 +3645,8 @@ void TFCMessagesHandler::RQFUNC_Shout
         DWORD  dwColor = 0;
 
         try{            
-            if( user->CanShout() ){//on vùrifie que le player peut shout vis ù vis de son dùlai.
-				//user->ToggleShout(); // steph dùsactivation
+            if( user->CanShout() ){//on v?rifie que le player peut shout vis ? vis de son d?lai.
+				//user->ToggleShout(); // steph d?sactivation
                 // Get data to log.
                 GET_STRING( lpSender );
                 GET_LONG  ( dwColor );
@@ -3621,7 +3695,7 @@ void TFCMessagesHandler::RQFUNC_Shout
             }
         }
 	}else{
-        if (user->in_game) {//BLBLBL ajout un test voir si le joueur est ingame avant de tester tout ùa sinon dùco instantanùe !
+        if (user->in_game) {//BLBLBL ajout un test voir si le joueur est ingame avant de tester tout ?a sinon d?co instantan?e !
 			// Send a shouts revoked message.
 			time_t tTestExpiration;
 			time(&tTestExpiration);
@@ -3766,7 +3840,7 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 
 		WorldPos where = {0,0,0};
 		unsigned short nb_chars = 0;		
-		TFCPacket otherPacket,censoredPacket;//BLBLBL nouveau packet dispo : un texte censurù
+		TFCPacket otherPacket,censoredPacket;//BLBLBL nouveau packet dispo : un texte censur?
 		unsigned char thisChar = 0;
 		unsigned int i;
 		auto_ptr< BYTE > message;
@@ -3823,7 +3897,7 @@ void TFCMessagesHandler::RQFUNC_DirectedTalk
 						otherPacket << (short)nb_chars;			
 						censoredPacket << (short)nb_chars;			
 
-					// Mestoph : Vùrification de la taille des strings avant de lire le contenu du data
+					// Mestoph : V?rification de la taille des strings avant de lire le contenu du data
 						/*
 						TRACE(_T("\r\nNBchars = %u\r\n"), nb_chars);
 						if(nb_chars){
@@ -4037,7 +4111,7 @@ void TFCMessagesHandler::RQFUNC_CastSpell
 	//BLBLBL antispeedhack, si on lance un sort on vide le buffer de mouvement :
 	user->Lock();
 	user->MoveList.clear();
-/*	user->lFirstRound = TFCMAIN::GetRound();//BL dùs qu'un joueur est stoppù on reset son compteur ratio mouvement.
+/*	user->lFirstRound = TFCMAIN::GetRound();//BL d?s qu'un joueur est stopp? on reset son compteur ratio mouvement.
 	user->lMoveCounter = 0;*/
 	user->Unlock();
 
@@ -4196,7 +4270,7 @@ void TFCMessagesHandler::RQFUNC_GetUnitName
 					if (lpChar->GetPlayer()->IsGod()) color = U_GOD_COLOR
 					else color = U_PC_COLOR;
 										
-					csPacketGuildName = lpChar->GetGuildName();//Rùcupùration du nom de guilde pour le paquet
+					csPacketGuildName = lpChar->GetGuildName();//R?cup?ration du nom de guilde pour le paquet
 
 
 				}
@@ -4224,7 +4298,7 @@ void TFCMessagesHandler::RQFUNC_GetUnitName
 		}else{
 		_LOG_DEBUG
             LOG_CRIT_ERRORS,
-            "Attempted to ask unit details for an invalid World position."//BLBLBL ajoutù du log.
+            "Attempted to ask unit details for an invalid World position."//BLBLBL ajout? du log.
         LOG_
 		}
 	}catch(TFCPacketException *e){
@@ -4552,7 +4626,7 @@ void TFCMessagesHandler::RQFUNC_SendPeriphericObjects
 				// If player asks for a valid position
 				if( wl->IsValidPosition( where ) ){
 					if(direction < 9 ){						
-						boSend = //BLBLBL 03/12/2010 on regarde si y a qq chose ù envoyer ou pas
+						boSend = //BLBLBL 03/12/2010 on regarde si y a qq chose ? envoyer ou pas
 						wl->packet_peripheral_units( 
                             where, 
                             _DEFAULT_RANGE,
@@ -4561,7 +4635,7 @@ void TFCMessagesHandler::RQFUNC_SendPeriphericObjects
                             user->self
                         );
 
-                        if (boSend) user->self->SendPlayerMessage( sending ); //BLBL ajoutù un if (boSend)
+                        if (boSend) user->self->SendPlayerMessage( sending ); //BLBL ajout? un if (boSend)
 
                     }	
 				}
@@ -6229,7 +6303,7 @@ void TFCMessagesHandler::RQFUNC_QueryPatchServerInfo
     sending << static_cast< long >( TFCServer->dwVersion );
     
     webPatchServer.Lock();
-        
+
     sending << webPatchServer.csIP;        
     sending << webPatchServer.csImagePath;
     sending << webPatchServer.csUserName;
@@ -6237,7 +6311,8 @@ void TFCMessagesHandler::RQFUNC_QueryPatchServerInfo
     sending << (short)IntlText::GetDefaultLng();
     
     webPatchServer.Unlock();
-
+fprintf(stderr, "[PATCH] Sending QueryPatchServerInfo response, version=%lu ip='%s'\n", 
+        (unsigned long)TFCServer->dwVersion, (const char*)webPatchServer.csIP);
     WorldPos wlPos = { -1, -1, -1 };
     CPacketManager::SendPacket( sending, sockAddr, -1, wlPos, FALSE );
 
@@ -6702,9 +6777,9 @@ void TFCMessagesHandler::RQFUNC_SafePlug //BLBLBL new functino for antiplug
 		if (status == 0){
 			user->self->boClientExitCountDown=true;
 
-			//havoc mettre toujours ù true (pour dùsactiver l'antiplug):
+			//havoc mettre toujours ? true (pour d?sactiver l'antiplug):
 			if ( user->self->GetUnderBlock()==__SAFE_HAVEN || user->self->GetUnderBlock()==__INDOOR_SAFE_HAVEN ){
-				//BLBLBL antiplug : 15 secondes d'inactivitù avant de dùconnecter un perso OU en zone PVP off
+				//BLBLBL antiplug : 15 secondes d'inactivit? avant de d?connecter un perso OU en zone PVP off
    	
 				TFCPacket sending;
 				sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client

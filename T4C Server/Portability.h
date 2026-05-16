@@ -202,7 +202,9 @@ public:
         if (minLen < 0) {
             minLen = 0;
         }
-        resize(static_cast<size_t>(minLen));
+        if (minLen > (int)size()) {
+            resize(static_cast<size_t>(minLen));
+        }
         return size() ? &(*this)[0] : nullptr;
     }
     void ReleaseBuffer(int newLen = -1) {

@@ -1103,7 +1103,11 @@ void TFCInitMaps( void )
     WDAFile editorFile;
 
 	std::string sBaseFolder(TFCMAIN::GetHomeDir());
-	sBaseFolder += "WDA\\";
+	#ifdef _WIN32
+            sBaseFolder += "WDA\\";
+        #else
+            sBaseFolder += "WDA/";
+        #endif   
 
 	std::vector<std::string> vWDAFilenames;
 	std::vector<std::string>::const_iterator fni;
@@ -1271,7 +1275,11 @@ void T4C_Initialization::WDAInitNPC( void )
     regKey.Open( HKEY_LOCAL_MACHINE, "Software\\Vircom\\T4C Editors" );
     
     string sBaseFolder = TFCMAIN::GetHomeDir();
-	sBaseFolder += "WDA\\";
+	#ifdef _WIN32
+            sBaseFolder += "WDA\\";
+        #else
+            sBaseFolder += "WDA/";
+        #endif   
 	string sNPCsWDA(sBaseFolder);
 	sNPCsWDA += "NPCs.WDA";
 	

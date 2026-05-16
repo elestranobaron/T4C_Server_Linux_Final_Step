@@ -59,7 +59,7 @@ public:
     void Read ( signed char &cChar );
     void Read ( signed short &sShort );
     void Read ( double &dblDouble );
-
+long Tell() const { return fFile ? ftell(fFile) : -1; }
 private:
     inline BYTE Encrypt( const BYTE bByte, DWORD dwSeed );
     inline BYTE Decrypt( const BYTE bByte, DWORD dwSeed );

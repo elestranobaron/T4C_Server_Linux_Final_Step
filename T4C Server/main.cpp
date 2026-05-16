@@ -203,9 +203,15 @@ inline void AddTrailingBackslash
 	// Remove trailing white spaces
 	csText.TrimLeft();
 	// If string doesn't have a trailing backslash, add it.
+        #ifdef _WIN32
 	if( csText.GetAt( csText.GetLength() - 1 ) != '\\' ){
-		csText += '\\';
-	}
+            csText += '\\';
+        }
+        #else
+        if( csText.GetAt( csText.GetLength() - 1 ) != '/' ){
+            csText += '/';
+        }
+        #endif
 }
 /////////////////////////////////////////////////////////////////////////////
 // CTFCServerApp
@@ -1604,8 +1610,9 @@ void CDECL EntryFunction(void *cu)
         LOG_
 
         // Start the player and packet manager.
+fprintf(stderr, "[MAIN] Creating AutoConfig\n");
         CAutoConfig::Create( HKEY_LOCAL_MACHINE, "Software\\Vircom\\The 4th Coming Server", "RegUpdate" );
-
+fprintf(stderr, "[MAIN] Creating Sysop\n");
         SysopCmd::Create();
         printf( "\n- Initialised System operator/GM commands" ); //BLBLBL added verbose output
 
@@ -1614,7 +1621,7 @@ void CDECL EntryFunction(void *cu)
             LOG_DEBUG_LVL3,
             "Post-Init phase A"
         LOG_  
-		
+		fprintf(stderr, "[MAIN] Creating gamerule\n");
         GAME_RULES::Create();
         printf( "\n- Initialised Game rules" );
         
@@ -1622,7 +1629,7 @@ void CDECL EntryFunction(void *cu)
             LOG_DEBUG_LVL3,
             "Post-Init phase B"
         LOG_        
-        
+        fprintf(stderr, "[MAIN] Creating deadlock\n");
 		CDeadlockDetector::Create();
         printf( "\n- Initialised Deadlock detector" );
 
@@ -1631,16 +1638,17 @@ void CDECL EntryFunction(void *cu)
             LOG_DEBUG_LVL3,
             "Post-Init phase C"
         LOG_
-        
+//CPlayerManager::Create();
+        fprintf(stderr, "[MAIN] Creating handler\n");
 		TFCMessagesHandler::Create();
 		printf( "\n- Initialised Messages handler" );	
-        
+        fprintf(stderr, "[MAIN] Creating packet\n");
 		_LOG_DEBUG
             LOG_DEBUG_LVL3,
             "Post-Init phase D"
         LOG_        
-        
-		CPacketManager::Create();
+        fprintf(stderr, "[MAIN] About to create PacketManager\n");
+		CPacketManager::Create();fprintf(stderr, "[MAIN] PacketManager created\n");
 		printf( "\n- Initialised Packet manager" );
         
 		_LOG_DEBUG
@@ -1673,7 +1681,7 @@ void CDECL EntryFunction(void *cu)
             "Post-Init phase F"
 		LOG_
 
-        CPlayerManager::Create(); 
+         CPlayerManager::Create(); 
 		printf( "\n- Initialised Player manager" );
 
         _LOG_DEBUG

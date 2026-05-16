@@ -54,6 +54,13 @@ int TFCCrypt::DecryptS(unsigned char *&pBuffer, int &pBufferSize, unsigned int d
 		pBuffer[i] ^= XorKey2[i / /*%*/ 0x200];
 	}
 
+	/* TYPE_MASK (+4 trailing) : EncryptS agrège aussi les derniers octets avant le XOR k2 corps. */
+	if(dwOffset > 0 && pBufferSize > HEADER_SIZE + 1) {
+		for(i = pBufferSize - dwOffset; i < pBufferSize; i++){
+			cbChkSum += pBuffer[i];
+		}
+	}
+
    if(cbChkSum) 
    {
 	   return -1; // invalid checksum

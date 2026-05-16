@@ -282,6 +282,8 @@ bool CCommCenter::InitSocket(WORD wPort,LPCSTR lpszIP,SOCKET &sSocket,sockaddr_i
          }
       #endif
    }
+   fprintf(stderr, "[CommCenter] bind failed: port=%u ip=%s errno=%d (%s)\n",
+           wPort, lpszIP ? lpszIP : "INADDR_ANY", errno, strerror(errno));
    closesocket( sSocket );
    sSocket = NULL;
    return false;
@@ -851,9 +853,9 @@ void CCommCenter::UDPSendDataThread(LPVOID lpData)
    while( lpComm->bUDPSendDataThread )
    {
       
-      DWORD dwFoo               = 0;
-      DWORD dwPacketAddr        = 0;
-      LPOVERLAPPED lpOverlapped = NULL;
+      DWORD dwFoo                 = 0;
+      std::uintptr_t dwPacketAddr = 0;
+      LPOVERLAPPED lpOverlapped   = NULL;
       
       #ifndef USE_CLIENT_CONNECTION
          ENTER_TIMEOUT
@@ -1072,7 +1074,7 @@ void CCommCenter::UDPReceivePacketThread(LPVOID lpData)
    {
       
       DWORD dwFoo = 0;
-      DWORD dwPacketAddr = 0;
+      std::uintptr_t dwPacketAddr = 0;
       LPOVERLAPPED lpOverlapped = NULL;
       
       #ifndef USE_CLIENT_CONNECTION
@@ -1140,7 +1142,7 @@ void CCommCenter::UDPAnalyseThread(LPVOID lpData)
    {
       
       DWORD dwFoo = 0;
-      DWORD dwPacketAddr = 0;
+      std::uintptr_t dwPacketAddr = 0;
       LPOVERLAPPED lpOverlapped = NULL;
       
       #ifndef USE_CLIENT_CONNECTION
@@ -1186,6 +1188,7 @@ void CCommCenter::UDPAnalyseThread(LPVOID lpData)
          #endif
 
 			if (pPacket != NULL) {
+fprintf(stderr, "[ANALYSE] calling callback dataLen=%d\n", pPacket->dataLen);
 				 lpComm->lpReadCallback( pPacket->sockAddr, pPacket->packetData, pPacket->dataLen);
 
 				 if(pPacket->lpBuffer)
@@ -1329,7 +1332,7 @@ void CCommCenter::UDPSendPacketThread(LPVOID lpData)
    {
       
       DWORD dwFoo = 0;
-      DWORD dwPacketAddr = 0;
+      std::uintptr_t dwPacketAddr = 0;
       LPOVERLAPPED lpOverlapped = NULL;
       
       #ifndef USE_CLIENT_CONNECTION
@@ -1443,19 +1446,30 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
       return;
     
    UINT uiCheckPacket = 0;
-   
+   fprintf(stderr, "[BEFORE DECRYPT] bytes: %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+    pPacket->lpBuffer[0], pPacket->lpBuffer[1], pPacket->lpBuffer[2],
+    pPacket->lpBuffer[3], pPacket->lpBuffer[4], pPacket->lpBuffer[5],
+    pPacket->lpBuffer[6], pPacket->lpBuffer[7], pPacket->lpBuffer[8]);
    //DeCrypt Packet and calculate checksum...
    #ifndef USE_CLIENT_CONNECTION
+fprintf(stderr, "[ANALYZE] use client connection defined\n");
       uiCheckPacket = TFCCrypt::DecryptS(pPacket->lpBuffer, pPacket->nBufferLen);
    #else
+fprintf(stderr, "[ANALYZE] use client connection not defined\n");
       TFCCrypt *pObjCrypt = NULL;
       pObjCrypt = new TFCCrypt(GetMonotonicTickCountMs());
       uiCheckPacket = pObjCrypt->DecryptC(pPacket->lpBuffer, pPacket->nBufferLen,GetMonotonicTickCountMs()+0x0000AABB);
       delete pObjCrypt;
       pObjCrypt = NULL;
    #endif
-      
-   
+fprintf(stderr, "[AFTER DECRYPT] bytes: %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+    pPacket->lpBuffer[0], pPacket->lpBuffer[1], pPacket->lpBuffer[2],
+    pPacket->lpBuffer[3], pPacket->lpBuffer[4], pPacket->lpBuffer[5],
+    pPacket->lpBuffer[6], pPacket->lpBuffer[7], pPacket->lpBuffer[8]);
+      // Après DecryptS, recalculer dataLen
+pPacket->dataLen = pPacket->nBufferLen - HEADER_SIZE - CHKSUM_SIZE;
+if (pPacket->dataLen < 0) pPacket->dataLen = 0;
+   fprintf(stderr, "[ANALYZE] uiCheckPacket=%u bufLen=%d\n", uiCheckPacket, pPacket->nBufferLen);
    if(uiCheckPacket != 0) //Checksum invalide or unable to uncrypt packet...
    {
       if(pPacket->lpBuffer)
@@ -1491,6 +1505,8 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
    }
    else  // If packet isn't an ack.
    {
+fprintf(stderr, "[ANALYZE] not an ack, safe=%d packetID=%d bufLen=%d\n", 
+            pPacket->packetHeader->safe, pPacket->packetHeader->packetID, pPacket->nBufferLen);
       //////////////////////////////////////////////////////////////////////////////////////////            
       // If this packet requires an ack
       if( pPacket->packetHeader->safe != 0 )
@@ -1511,6 +1527,7 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
      
       if(ulID == 0x66600666 && ulIDCmd >= 0x666001 && 0x666001 <=0x666010)
       {
+fprintf(stderr, "[ANALYZE] if(ulID == 0x66600666 && ulIDCmd >= 0x666001 && 0x666001 <=0x666010)\n");
          BOOL bDeletePack = TRUE;
 
          //char strtoto[512];
@@ -1553,6 +1570,7 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
       }
       else */if( lpConnection->AlreadyReceivedPacket(pPacket->packetHeader->packetID) == false )
       {
+fprintf(stderr, "[ANALYZE] not if(ulID == 0x66600666 && ulIDCmd >= 0x666001 && 0x666001 <=0x666010) (else)\n");
          // Register the packet on the list of received packets
          lpConnection->RegisterReceivedPacketID(pPacket->packetHeader->packetID);
          
@@ -1560,9 +1578,11 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
          // If this is a packet fragment.
          if( pPacket->packetHeader->packetID < NONFRAGMENTED_PACKETS_IDOFFSET  )
          {
+fprintf(stderr, "[ANALYZE] packet fragment)\n");
             // only last fragments are allowed to have size smaller than max
             if( pPacket->packetHeader->lastFrag == 1 || pPacket->dataLen == MAX_DATA_SIZE)
             {
+fprintf(stderr, "[ANALYZE] if( pPacket->packetHeader->lastFrag == 1 || pPacket->dataLen == MAX_DATA_SIZE)\n");
                //char strTmp[100];
                //sprintf(strTmp,"Split datalength[%d]  Last[%d]\n",pPacket->dataLen,pPacket->packetHeader->lastFrag);
                //OutputDebugString(strTmp);
@@ -1578,6 +1598,7 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
             }
             else
             {
+fprintf(stderr, "[ANALYZE] not if( pPacket->packetHeader->lastFrag == 1 || pPacket->dataLen == MAX_DATA_SIZE) (else)\n");
                if(pPacket->lpBuffer)
                   delete []pPacket->lpBuffer;
                pPacket->lpBuffer = NULL;
@@ -1589,15 +1610,18 @@ void CCommCenter::AnalyzeUPPData(UDPPacket* pPacket)
          // Otherwise simply transfer the packet for analyzing.
          else
          {
+fprintf(stderr, "[ANALYZE] not a packet fragment it's a full packet\n");
             // This flag is unused when this isn't a packet chunck. If its not 0, refuse packet.
             if( pPacket->packetHeader->lastFrag == 0  )
             {
+fprintf(stderr, "[ANALYZE] valid packet \n");
                // This is a valid packet, we're holding it!
                // analyse packet.
                PostAnalysePacket(pPacket);
             }
             else
             {
+fprintf(stderr, "[ANALYZE] invalid packet )\n");
                if(pPacket->lpBuffer)
                   delete []pPacket->lpBuffer;
                pPacket->lpBuffer = NULL;

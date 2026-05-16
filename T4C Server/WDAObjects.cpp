@@ -265,8 +265,11 @@ void WDAObjects::CreateFrom
         "\nLoading objects."
         "\n"
     );
-
-    
+fprintf(stderr, "[WDAObjects] CreateFrom, file pos=%ld\n", wdaFile.Tell());
+fprintf(stderr, "[WDAObjects] wdaFile ptr=%p\n", &wdaFile);
+fprintf(stderr, "[WDAObjects] CreateFrom, file pos=%ld, wdaFile=%p\n", 
+        wdaFile.Tell(), (void*)&wdaFile);
+fprintf(stderr, "[WDAObjects] CreateFrom, file pos=%ld, ptr=%p\n", wdaFile.Tell(), (void*)&wdaFile);    
     // Get the quantity of objects
     DWORD dwSize;
     wdaFile.Read( dwSize );
@@ -280,7 +283,9 @@ void WDAObjects::CreateFrom
         // Write the object's data
         wdaFile.Read( cObject.csID );
         wdaFile.Read( cObject.dwBindedID );
+        // --- PATCH COMPATIBILITÉ 1.62 ---
         wdaFile.Read( cObject.dwStructureID );
+        // --------------------------------
         wdaFile.Read( cObject.csName );
         wdaFile.Read( cObject.dwAppearance );
         wdaFile.Read( cObject.dwSellType );
@@ -297,10 +302,12 @@ void WDAObjects::CreateFrom
         wdaFile.Read( cObject.csLock_KeyID );
         wdaFile.Read( cObject.dwLockDifficulty );
         wdaFile.Read( cObject.csBook_Text );
+        // --- COMMENTE CES 4 LIGNES RETRO 1.62 ---
         wdaFile.Read( cObject.dwContainer_Gold );
         wdaFile.Read( cObject.dwContainer_GlobalRespawn );
         wdaFile.Read( cObject.dwContainer_UserRespawn );
         wdaFile.Read( cObject.csWeapon_Exhaust );
+        // ----------------------------------------
         wdaFile.Read( cObject.dwRadiance );
         wdaFile.Read( cObject.lCharges );
         wdaFile.Read( cObject.dwMinInt );
@@ -308,7 +315,9 @@ void WDAObjects::CreateFrom
         wdaFile.Read( cObject.dwIntlID );
         wdaFile.Read( cObject.dwDropFlags );
         wdaFile.Read( cObject.boUnique );
+        // --- COMMENTE CES 4 LIGNES RETRO 1.62 ---
         wdaFile.Read( cObject.csGmItemLocation );
+        // ----------------------------------------
         wdaFile.Read( cObject.boCanSummon );
         wdaFile.Read( cObject.boWeapon_Ranged );
         wdaFile.Read( cObject.boWeapon_RangedInfiniteAmmo );

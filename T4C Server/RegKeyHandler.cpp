@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "RegKeyHandler.h"
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include <cstring>
+#include <fstream>
+#include <map>
+#include <filesystem>
+#include <string>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -10,49 +17,233 @@ static char THIS_FILE[] = __FILE__;
 
 #ifndef _WIN32
 
+namespace {
+
+std::map<std::string, std::string> g_iniValues;
+bool g_iniLoadedOk = false;
+
+void TrimInPlace(std::string &s) {
+    auto notSpace = [](unsigned char c) { return !std::isspace(c); };
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
+    s.erase(std::find_if(s.rbegin(), s.rend(), notSpace).base(), s.end());
+}
+
+std::string NormalizeIniKey(std::string s) {
+    TrimInPlace(s);
+    std::string out;
+    out.reserve(s.size());
+    bool prevSlash = false;
+    for (unsigned char uc : s) {
+        char c = static_cast<char>(std::tolower(uc));
+        if (c == '/') {
+            c = '\\';
+        }
+        if (c == '\\') {
+            if (!prevSlash) {
+                out += '\\';
+                prevSlash = true;
+            }
+        } else {
+            prevSlash = false;
+            out += c;
+        }
+    }
+    return out;
+}
+
+bool ParseIniFile(const std::filesystem::path &iniPath) {
+    g_iniValues.clear();
+    std::ifstream in(iniPath);
+    if (!in) {
+        g_iniLoadedOk = false;
+        return false;
+    }
+
+    std::string currentSectionNorm;
+    std::string line;
+
+    while (std::getline(in, line)) {
+        TrimInPlace(line);
+        if (line.empty() || line[0] == '#' || line[0] == ';') {
+            continue;
+        }
+
+        if (line.size() >= 2 && line.front() == '[') {
+            std::size_t close = line.find(']');
+            if (close != std::string::npos) {
+                std::string sec = line.substr(1, close - 1);
+                currentSectionNorm = NormalizeIniKey(sec);
+            }
+            continue;
+        }
+
+        std::size_t eq = line.find('=');
+        if (eq == std::string::npos) {
+            continue;
+        }
+
+        std::string rawKey = line.substr(0, eq);
+        std::string val = line.substr(eq + 1);
+        TrimInPlace(rawKey);
+        TrimInPlace(val);
+
+        std::string fullKey;
+        if (currentSectionNorm.empty()) {
+            fullKey = NormalizeIniKey(rawKey);
+        } else {
+            std::string nk = NormalizeIniKey(rawKey);
+            fullKey = currentSectionNorm + "\\" + nk;
+            fullKey = NormalizeIniKey(fullKey);
+        }
+
+        if (!fullKey.empty()) {
+            g_iniValues[fullKey] = val;
+        }
+    }
+
+    g_iniLoadedOk = true;
+    return true;
+}
+
+std::filesystem::path IniFilePath() {
+    TCHAR buf[4096];
+    DWORD n = GetModuleFileName(nullptr, buf, static_cast<DWORD>(sizeof(buf) / sizeof(TCHAR)));
+    if (n == 0) {
+        return std::filesystem::path("T4CServer.ini");
+    }
+    std::filesystem::path exe(static_cast<const char *>(buf));
+    return exe.parent_path() / "T4CServer.ini";
+}
+
+bool ReloadIniFromDisk() {
+    return ParseIniFile(IniFilePath());
+}
+
+std::string LookupKey(const std::string &openedSubKeyNorm, LPCTSTR item) {
+    std::string key = openedSubKeyNorm;
+    if (item && item[0]) {
+        if (!key.empty()) {
+            key += "\\";
+        }
+        key += item;
+    }
+    return NormalizeIniKey(key);
+}
+
+const std::string *FindIniValue(const std::string &openedSubKeyNorm, LPCTSTR item) {
+    std::string lk = LookupKey(openedSubKeyNorm, item);
+    auto it = g_iniValues.find(lk);
+    if (it != g_iniValues.end()) {
+        return &it->second;
+    }
+    return nullptr;
+}
+
+void StoreIniValue(const std::string &openedSubKeyNorm, LPCTSTR item, const std::string &value) {
+    std::string lk = LookupKey(openedSubKeyNorm, item);
+    if (!lk.empty()) {
+        g_iniValues[lk] = value;
+    }
+}
+
+} // namespace
+
 //////////////////////////////////////////////////////////////////////
 RegKeyHandler::RegKeyHandler() {
-    keyhandle = NULL;
-    mainkey = NULL;
-    subkey = NULL;
     returnstr[0] = '\0';
+    ReloadIniFromDisk();
 }
 
 RegKeyHandler::~RegKeyHandler() {}
 
-BOOL RegKeyHandler::Create(HKEY /*main_key*/, LPCTSTR /*sub_key*/) {
-    return FALSE;
+BOOL RegKeyHandler::Create(HKEY /*main_key*/, LPCTSTR sub_key) {
+    // ReloadIniFromDisk();
+    if (!g_iniLoadedOk) {
+        return FALSE;
+    }
+    m_iniSubKey = sub_key ? sub_key : "";
+    m_iniSubKey = NormalizeIniKey(m_iniSubKey);
+    return TRUE;
 }
 
-BOOL RegKeyHandler::Open(HKEY /*main_key*/, LPCTSTR /*sub_key*/) {
-    return FALSE;
+BOOL RegKeyHandler::Open(HKEY /*main_key*/, LPCTSTR sub_key) {
+//fprintf(stderr, "[REGKEY] Open called with: '%s'\n", sub_key ? sub_key : "(null)");
+    // ReloadIniFromDisk(); //trop lent et pas thread safe
+    if (!g_iniLoadedOk) {
+        return FALSE;
+    }
+    m_iniSubKey = sub_key ? sub_key : "";
+    m_iniSubKey = NormalizeIniKey(m_iniSubKey);
+    return TRUE;
 }
 
-void RegKeyHandler::WriteProfileString(LPCTSTR /*item*/, LPCTSTR /*value*/) {}
+void RegKeyHandler::WriteProfileString(LPCTSTR item, LPCTSTR value) {
+    StoreIniValue(m_iniSubKey, item, value ? value : "");
+}
 
-void RegKeyHandler::WriteProfileInt(LPCTSTR /*item*/, DWORD /*value*/) {}
+void RegKeyHandler::WriteProfileInt(LPCTSTR item, DWORD value) {
+    StoreIniValue(m_iniSubKey, item, std::to_string(value));
+}
 
 LPCTSTR RegKeyHandler::GetProfileString(LPCTSTR item, LPCTSTR default_arg) {
-    (void)item;
+fprintf(stderr, "[REGKEY] GetProfileString: subkey='%s' item='%s'\n", 
+            m_iniSubKey.c_str(), item ? item : "(null)");
+    const std::string *found = FindIniValue(m_iniSubKey, item);
+    if (found != nullptr) {
+        std::strncpy(returnstr, found->c_str(), sizeof(returnstr) - 1);
+        returnstr[sizeof(returnstr) - 1] = '\0';
+        return returnstr;
+    }
     std::strncpy(returnstr, default_arg ? default_arg : "", sizeof(returnstr) - 1);
     returnstr[sizeof(returnstr) - 1] = '\0';
     return returnstr;
 }
 
-DWORD RegKeyHandler::GetProfileInt(LPCTSTR /*item*/, DWORD default_arg) {
-    return default_arg;
+DWORD RegKeyHandler::GetProfileInt(LPCTSTR item, DWORD default_arg) {
+    const std::string *found = FindIniValue(m_iniSubKey, item);
+    if (found == nullptr || found->empty()) {
+        return default_arg;
+    }
+    char *end = nullptr;
+    unsigned long v = std::strtoul(found->c_str(), &end, 0);
+    if (end == found->c_str()) {
+        return default_arg;
+    }
+    return static_cast<DWORD>(v);
 }
 
 void RegKeyHandler::Close(void) {
-    keyhandle = NULL;
+    m_iniSubKey.clear();
 }
 
-BOOL RegKeyHandler::DeleteValue(LPCTSTR /*lpszItem*/) {
-    return FALSE;
+BOOL RegKeyHandler::DeleteValue(LPCTSTR lpszItem) {
+    std::string lk = LookupKey(m_iniSubKey, lpszItem);
+    return g_iniValues.erase(lk) != 0 ? TRUE : FALSE;
 }
 
-BOOL RegKeyHandler::DeleteKey(LPCTSTR /*subkey*/) {
-    return FALSE;
+BOOL RegKeyHandler::DeleteKey(LPCTSTR subkey) {
+    std::string base = m_iniSubKey;
+    if (subkey && subkey[0]) {
+        if (!base.empty()) {
+            base += "\\";
+        }
+        base += subkey;
+    }
+    base = NormalizeIniKey(base);
+    if (!base.empty() && base.back() != '\\') {
+        base += "\\";
+    }
+    std::size_t erased = 0;
+    for (auto it = g_iniValues.begin(); it != g_iniValues.end();) {
+        const std::string &k = it->first;
+        if (k.size() >= base.size() && std::equal(base.begin(), base.end(), k.begin())) {
+            it = g_iniValues.erase(it);
+            ++erased;
+        } else {
+            ++it;
+        }
+    }
+    return erased != 0 ? TRUE : FALSE;
 }
 
 #else /* _WIN32 */
