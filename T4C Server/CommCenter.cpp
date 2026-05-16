@@ -8,6 +8,7 @@
 #include <process.h>
 #else
 #include <pthread.h>
+#include <cstring>
 #endif
 #include <time.h>
 #include "CommCenter.h"
@@ -441,10 +442,10 @@ void CCommCenter::SendPacket(sockaddr_in sockAddr,LPBYTE lpBuffer,int nBufferSiz
        pPacket->packetData   = pPacket->lpBuffer + HEADER_SIZE;
        pPacket->dataLen      = nBufferSize;
 
-       // Copy buffer into packet.
+       memset(pPacket->lpBuffer, 0, HEADER_SIZE);
        memcpy( pPacket->packetData, lpBuffer, nBufferSize );
 
-       // Setup the packet structure, leave the header unchanged.
+       // Setup the packet structure (header zeroed before bitfields).
        pPacket->boDelete     = FALSE;
        pPacket->nQueueCount  = 0;
        pPacket->sockAddr     = sockAddr;
@@ -461,7 +462,6 @@ void CCommCenter::SendPacket(sockaddr_in sockAddr,LPBYTE lpBuffer,int nBufferSiz
        } else {
           pPacket->packetHeader->safe = 0;
 	   }
-       static int dwCnt = 0;
        pPacket->packetHeader->lastFrag = 0;
        
 	   //BLBL Je vire �a, c'est d�bile.
@@ -473,6 +473,9 @@ void CCommCenter::SendPacket(sockaddr_in sockAddr,LPBYTE lpBuffer,int nBufferSiz
        }
        else
           pPacket->packetHeader->Reserved = 0;*/
+
+       /* Uninitialized UDP header: random Reserved=1 makes Linux client DecryptS treat TYPE_MASK and run DecryptS2 on plaintext. */
+       pPacket->packetHeader->Reserved = 0;
 
        pPacket->packetHeader->packetID  = lpConnection->GetUnfragmentedPacketID();
 	   pPacket->ID						= pPacket->packetHeader->packetID;//BLBLBL 07/12/2010
@@ -1472,6 +1475,8 @@ if (pPacket->dataLen < 0) pPacket->dataLen = 0;
    fprintf(stderr, "[ANALYZE] uiCheckPacket=%u bufLen=%d\n", uiCheckPacket, pPacket->nBufferLen);
    if(uiCheckPacket != 0) //Checksum invalide or unable to uncrypt packet...
    {
+      fprintf(stderr, "[ANALYZE] DecryptS REJET nBufferLen=%d (paquet ignore, pas de reponse auth)\n",
+              pPacket->nBufferLen);
       if(pPacket->lpBuffer)
          delete []pPacket->lpBuffer;
       pPacket->lpBuffer = NULL;

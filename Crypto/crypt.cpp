@@ -54,7 +54,9 @@ int TFCCrypt::DecryptS(unsigned char *&pBuffer, int &pBufferSize, unsigned int d
 		pBuffer[i] ^= XorKey2[i / /*%*/ 0x200];
 	}
 
-	/* TYPE_MASK (+4 trailing) : EncryptS agrège aussi les derniers octets avant le XOR k2 corps. */
+	/* Aligné client CryptMestoph : avec TYPE_MASK (bit Reserved), les dwOffset derniers octets
+	 * (graine + checksum) entrent dans la somme comme sur EncryptS. Sans cela le serveur
+	 * rejette des paquets valides (register : pas de réponse UDP). */
 	if(dwOffset > 0 && pBufferSize > HEADER_SIZE + 1) {
 		for(i = pBufferSize - dwOffset; i < pBufferSize; i++){
 			cbChkSum += pBuffer[i];
