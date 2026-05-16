@@ -33,6 +33,7 @@
 #include "ThreadMonitor.h"
 //BLBLBLB
 #include "WeatherEffect.h"
+#include <cstdio>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -764,13 +765,22 @@ void RegisterObjects( void );
 	SpellMessageHandler::Create( );		
     
     // Initialize ODBC
+	std::fprintf(stderr, "[BOOT] Players::InitializeODBC (DSN=%s)...\n",
+		(LPCTSTR)theApp.csDBDns);
+	std::fflush(stderr);
 	Players::InitializeODBC();
+	std::fprintf(stderr, "[BOOT] Players::InitializeODBC done\n");
+	std::fflush(stderr);
 	
 #ifdef _WIN32
     SetUnhandledExceptionFilter( DefaultExcpFilter );
 #endif
 
-	Character::InitializeODBC();    
+	std::fprintf(stderr, "[BOOT] Character::InitializeODBC...\n");
+	std::fflush(stderr);
+	Character::InitializeODBC();
+	std::fprintf(stderr, "[BOOT] Character::InitializeODBC done\n");
+	std::fflush(stderr);    
 	Character::InitXPchart();
 	
     /*if( !LoadDLLList( "ObjectDLL", &tlDllInstance ) ){
@@ -805,14 +815,22 @@ void RegisterObjects( void );
         exit( FATAL_NO_REQUIRED_DLL4 );
     }*/
 
+	std::fprintf(stderr, "[BOOT] RegisterObjects...\n");
+	std::fflush(stderr);
     RegisterObjects();
+	std::fprintf(stderr, "[BOOT] SkillRegistration...\n");
+	std::fflush(stderr);
     SkillRegistration();
 
 	// Now that all the DLLs have been loaded and the units registered, initialize the global variables
 	ObjectListing();
 
 	// Then call all the DLL's unit startup functions.
-	TFCMAIN::CallUnitStartupFunctions();    
+	std::fprintf(stderr, "[BOOT] CallUnitStartupFunctions...\n");
+	std::fflush(stderr);
+	TFCMAIN::CallUnitStartupFunctions();
+	std::fprintf(stderr, "[BOOT] CallUnitStartupFunctions done\n");
+	std::fflush(stderr);
 
 	world_number = 0;
 	

@@ -845,7 +845,8 @@ void T4C_Initialization::WDAInitCreatures
                 newMob, 
                 cCreature.csID.c_str(), 
                 U_NPC, 
-                TRUE 
+                TRUE,
+                TRUE
             );
     }    
 
@@ -1112,7 +1113,7 @@ void TFCInitMaps( void )
 	std::vector<std::string> vWDAFilenames;
 	std::vector<std::string>::const_iterator fni;
 	vWDAFilenames.push_back(sBaseFolder+"T4C Worlds.WDA");
-	//vWDAFilenames.push_back(sBaseFolder+"DialsoftV2Edit.WDA"); // steph dùsactivation
+	//vWDAFilenames.push_back(sBaseFolder+"DialsoftV2Edit.WDA"); // steph d?sactivation
 	vWDAFilenames.push_back(sBaseFolder+"T4C Edit.WDA");
 
 	std::vector<WDAFile*> vWDAFiles;
@@ -1248,7 +1249,7 @@ void TFCInitMaps( void )
 		delete wdaFilePtr;
 	}
 	
-	// Load the Weather map //BLBLBL ùa bouffe trop de ram 28mo par carte
+	// Load the Weather map //BLBLBL ?a bouffe trop de ram 28mo par carte
 	//printf( "\n- Loading Weather Maps" );
 	//WeatherEffect::GetInstance()->LoadWeatherMaps();
 }
@@ -1285,7 +1286,7 @@ void T4C_Initialization::WDAInitNPC( void )
 	
 	std::vector<std::string>::const_iterator fi;
 	std::vector<std::string> vFilesToLoad;
-	//vFilesToLoad.push_back( sBaseFolder + "DialsoftV2NPCS.WDA" ); // steph dùsactivation
+	//vFilesToLoad.push_back( sBaseFolder + "DialsoftV2NPCS.WDA" ); // steph d?sactivation
 	vFilesToLoad.push_back( regKey.GetProfileString( "NPCFile", sNPCsWDA.c_str() ) );
 
 	NPC_Editor::NPCManager *npcMan = NPC_Editor::NPCManager::GetInstance();
@@ -1339,7 +1340,7 @@ void T4C_Initialization::WDAInitNPC( void )
 			simpleNpc->npc.InitialPos.world = 0;			
 			simpleNpc->npc.boInit = true;
         
-			if( Unit::RegisterUnitMessageHandler( 30000, simpleNpc, theNpc->GetId().c_str(), U_NPC, TRUE ) == 0 ){
+			if( Unit::RegisterUnitMessageHandler( 30000, simpleNpc, theNpc->GetId().c_str(), U_NPC, TRUE, TRUE ) == 0 ){
 				_LOG_DEBUG
 					LOG_DEBUG_LVL1,
 					"Could not register NPC with ID %s.",

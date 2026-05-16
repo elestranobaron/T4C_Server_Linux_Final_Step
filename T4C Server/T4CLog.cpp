@@ -9,6 +9,7 @@
 #include "TFC_MAIN.h"
 
 #include "DebugLoggerAPI.h"
+#include <cstdio>
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -263,10 +264,11 @@ void CT4CLog::DebugLog
     // Cas critique : le système de log n'est pas encore initialisé (static init fiasco)
     // OU le log spécifique n'est pas actif.
     if( logger == NULL || !logger->GetLogLevels() ){
-        // On redirige vers la sortie standard Linux pour ne pas perdre l'info
-        printf("[PRE-INIT] ");
-        vprintf( szText, argp );
-        printf("\n");
+        /* stderr + fflush : evite blocage si stdout est un pipe plein (gdb, rg, tee). */
+        std::fprintf(stderr, "[PRE-INIT] ");
+        std::vfprintf(stderr, szText, argp);
+        std::fprintf(stderr, "\n");
+        std::fflush(stderr);
         va_end( argp );
         return;
     }

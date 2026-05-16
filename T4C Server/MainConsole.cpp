@@ -388,14 +388,18 @@ wsprintf(lpvMessage, "Un message du serveur" );
 
     AsyncNamedPipeServer pipeServer( "\\\\.\\pipe\\T4CServerMainConsole" );
 
-    if( !pipeServer.Create() ){        
+    if( !pipeServer.Create() ){
+#ifndef _WIN32
+        /* Stub pipe sous Linux : attendu, pas d'alerte console. */
+#else
         _LOG_DEBUG
             LOG_CRIT_ERRORS,
             "Failed to open named pipe for inter-server communication. Error %u.",
             GetLastError()
         LOG_
-        
+
         printf( "\nFailed to open named pipe for inter-server communication." );
+#endif
     }
 
     // While we control the main console.

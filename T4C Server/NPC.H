@@ -69,7 +69,7 @@ void RegisterNPC( void ){
 	}
 #endif
 
-#define REGISTER_NPC( ObjectName )	Unit::RegisterUnitMessageHandler( 30000, &ObjectName, #ObjectName, U_NPC, TRUE );
+#define REGISTER_NPC( ObjectName )	Unit::RegisterUnitMessageHandler( 30000, &ObjectName, #ObjectName, U_NPC, TRUE, TRUE );
 
 #define INIT_NPC_CREATION	void T4C_CREATE_NPC_FUNC_NAME(){
 

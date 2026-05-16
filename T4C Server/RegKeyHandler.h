@@ -33,6 +33,13 @@ public:
 	void WriteProfileString(LPCTSTR item, LPCTSTR value);
 	void WriteProfileInt(LPCTSTR item, DWORD value);
 
+#ifndef _WIN32
+	/** Charge T4CServer.ini une fois (thread-safe). */
+	static void EnsureIniLoaded();
+	/** Recharge le fichier INI sous mutex (AutoConfig / rafraichissement explicite). */
+	static bool ReloadIniFromDisk();
+#endif
+
 private:
 #ifndef _WIN32
 	std::string m_iniSubKey;

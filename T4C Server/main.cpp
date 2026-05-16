@@ -87,7 +87,7 @@ typedef struct _GPEpTn{
 
 //To choose between MYSQL and MSSQL for ODBC : (in order to optimize requests)
 //#define MSSQLSERVER 0//BLBLBL 10/01/2011 (set to 1 if server is MSSQL, use TOP instead of LIMIT in SQL statments)
-// ^^ dfini dans les options de compilation ^^
+// ^^ d?fini dans les options de compilation ^^
 
 #define VERSION_STRING  "v%u"
 
@@ -499,7 +499,9 @@ void sigfunc(int s){
 // Desboys: doing a huge rework of the program, contact me if you wish
 // to add something here.
 int main(int argc,char **argv)
-{	
+{
+	std::fprintf(stderr, "[BOOT] T4CServer main() entered (static init done)\n");
+	std::fflush(stderr);
 	bool startAsService = false;
 	// Setup the signal handler(s).
 	 signal( SIGABRT, sigfunc );
@@ -609,6 +611,9 @@ int main(int argc,char **argv)
         
 		//////////////////////////////////////////////////////////////////////////////////////////
 		// Load the registry!
+#ifndef _WIN32
+		RegKeyHandler::EnsureIniLoaded();
+#endif
 		RegKeyHandler regKey;
 		// Paths.
 		if( regKey.Open( HKEY_LOCAL_MACHINE, T4C_KEY PATHS_KEY ) ){
@@ -804,8 +809,12 @@ int main(int argc,char **argv)
 		regKey.Open(HKEY_LOCAL_MACHINE, T4C_KEY AUTH_KEY );
 		theApp.csDBDns = regKey.GetProfileString("ODBC_DSN", "T4C Server Authentication");
 		regKey.Open( HKEY_LOCAL_MACHINE, T4C_KEY CHARACTER_KEY );
-		theApp.csDBUser      = regKey.GetProfileString( "DB_USER", "" );
-		theApp.csDBPwd       = regKey.GetProfileString( "DB_PWD",  "" );
+		{
+			CString csUser = regKey.GetProfileString( "DB_USER", "" );
+			CString csPwd  = regKey.GetProfileString( "DB_PWD",  "" );
+			theApp.csDBUser = csUser;
+			theApp.csDBPwd  = csPwd;
+		}
 		theApp.dwDeadSpellID = regKey.GetProfileInt   ( "DeadSpellID",  0x00 ); //DEATH_EFFECT_ID
 		if ( theApp.dwCustomStartupPositionOnOff = regKey.GetProfileInt( "StartupPosOnOff", FALSE ) ) {
 			theApp.dwCustomStartupPositionX = regKey.GetProfileInt( "StartupPosX", 0 );
@@ -872,12 +881,20 @@ int main(int argc,char **argv)
 		}
 
 
+		std::fprintf(stderr, "[BOOT] START_LOG / InitLogs...\n");
+		std::fflush(stderr);
 		START_LOG;
+		std::fprintf(stderr, "[BOOT] InitLogs done\n");
+		std::fflush(stderr);
 	// Those lines got moved from below so that it starts the ODBCTrace
 	// Before the first call to the logging functions.
 	// This way we can make logging functions log to SQL as long as TXT files.
         try{
+            std::fprintf(stderr, "[BOOT] ODBCTrace...\n");
+            std::fflush(stderr);
             ODBCHarness = new ODBCTrace;
+            std::fprintf(stderr, "[BOOT] ODBCTrace ok\n");
+            std::fflush(stderr);
             _LOG_DEBUG
                 LOG_CRIT_ERRORS,
                 "Creating ODBCTrace object."
@@ -890,6 +907,11 @@ int main(int argc,char **argv)
             throw;
         }        
 	// End of moved lines
+#ifndef _WIN32
+		/* Evite 12+ AsyncLog d'affilee au boot : bloquait main() (queue logger / IO). */
+		std::fprintf(stderr, "[BOOT] Starting T4C server. %s\n", Version::sBuildStamp.c_str());
+		std::fflush(stderr);
+#else
 		_LOG_DEBUG  LOG_ALWAYS, "-----" LOG_
 		_LOG_DEBUG  LOG_ALWAYS, "Starting T4C server." LOG_
 		_LOG_DEBUG  LOG_ALWAYS, Version::sBuildStamp.c_str() LOG_
@@ -909,7 +931,9 @@ int main(int argc,char **argv)
         _LOG_NPCS   LOG_ALWAYS, "Starting T4C server." LOG_
         _LOG_WORLD  LOG_ALWAYS, "-----" LOG_
         _LOG_WORLD  LOG_ALWAYS, "Starting T4C server." LOG_
-     
+#endif
+        std::fprintf(stderr, "[BOOT] post-startup logs ok\n");
+        std::fflush(stderr);
 
         CString csSource;
         
@@ -956,13 +980,16 @@ int main(int argc,char **argv)
             TFormat format;
 
             int nCount = 1;
-            CString csLangDB = regKey.GetProfileString( "LangDB1", "$NULL$" );
-            while( csLangDB != "$NULL$" ){            
+            CString csLangDB = regKey.GetProfileString( "LangDB1", "t4c_eng.elng" );
+            std::fprintf(stderr, "[BOOT] LoadLngDB loop (1st=%s)...\n", (LPCTSTR)csLangDB);
+            std::fflush(stderr);
+            while( !csLangDB.IsEmpty() && csLangDB != "$NULL$" ){            
                 IntlText::LoadLngDB( (LPCTSTR)csLangDB );
                 theApp.sGeneral.csLang = csLangDB;
-                csLangDB = regKey.GetProfileString( format( "LangDB%u", ++nCount ), "$NULL$" );
+                csLangDB = regKey.GetProfileString( format( "LangDB%u", ++nCount ), "" );
             }
-
+            std::fprintf(stderr, "[BOOT] LoadLngDB done, IsLngOK=%d\n", IntlText::IsLngOK() ? 1 : 0);
+            std::fflush(stderr);
 
 			// fill in the theApp.sGeneral.csLang field //DC
 			// use: if ( theApp.sGeneral.csLang.Compare("t4c_kor.elng") == 0 ) for korean specific actions			
@@ -1271,10 +1298,18 @@ int main(int argc,char **argv)
 
         regKey.Close();
 
-        regKey.Open( HKEY_LOCAL_MACHINE, T4C_KEY CHARACTER_KEY );
-// Those 2 keys were load earlier to make it possible to initialize SQL logs
-//        theApp.csDBUser = regKey.GetProfileString( "DB_USER", "" );
-//        theApp.csDBPwd  = regKey.GetProfileString( "DB_PWD",  "" );
+        if( theApp.csDBUser.IsEmpty() && !theApp.sAuth.csODBC_DBUser.IsEmpty() ){
+            theApp.csDBUser = theApp.sAuth.csODBC_DBUser;
+            theApp.csDBPwd  = theApp.sAuth.csODBC_DBPwd;
+        }
+#ifndef _WIN32
+        std::fprintf(
+            stderr,
+            "[BOOT] ODBC credentials user='%s'\n",
+            theApp.csDBUser.IsEmpty() ? "(empty)" : (LPCTSTR)theApp.csDBUser
+        );
+        std::fflush( stderr );
+#endif
 
 		theApp.InService = FALSE;		
 		CString csExcpFile = ServerPath;
@@ -1526,7 +1561,11 @@ void CDECL EntryFunction(void *cu)
         LOG_
         
         try{
+            std::fprintf(stderr, "[BOOT] new TFC_MAIN...\n");
+            std::fflush(stderr);
             TFCServer = new TFC_MAIN;
+            std::fprintf(stderr, "[BOOT] new TFC_MAIN done\n");
+            std::fflush(stderr);
             _LOG_DEBUG
                 LOG_CRIT_ERRORS,
                 "Creating TFC_MAIN object."

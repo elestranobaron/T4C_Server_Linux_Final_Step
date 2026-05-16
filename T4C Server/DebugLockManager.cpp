@@ -59,14 +59,24 @@ namespace{
         DWORD AddEntry( DWORD callerAddr, DWORD manAddr, LockState state, CLock *lockPtr ){
             Lock();
             totalLockCount++;
-            
-            // Find the 1st entry which is unused.
-            do{
-                curPos++;
-                if( curPos >= LOCK_TABLE_SIZE ){
-                    curPos = 0;
+
+            /* Table pleine ou fuite TryLocked : eviter boucle infinie + curPos hors bornes. */
+            DWORD scanned = 0;
+            DWORD slot = curPos;
+            for( ; scanned < LOCK_TABLE_SIZE; ++scanned ){
+                ++slot;
+                if( slot >= LOCK_TABLE_SIZE ){
+                    slot = 0;
                 }
-            }while( lockTable[ curPos ].lockState != Unlocked );
+                if( lockTable[ slot ].lockState == Unlocked ){
+                    curPos = slot;
+                    break;
+                }
+            }
+            if( scanned >= LOCK_TABLE_SIZE ){
+                Unlock();
+                return CDebugLockManager::EmptyEntry;
+            }
 
             // Fill-in the entry data.
             lockTable[ curPos ].callerAddr = callerAddr;
@@ -88,6 +98,9 @@ namespace{
             DWORD manAddr;
             GET_CALLER_ADDR( manAddr );
             newLockEntry = AddEntry( callerAddr, manAddr, TryLocked, lockPtr );
+            if( newLockEntry == CDebugLockManager::EmptyEntry ){
+                return;
+            }
 
             // Stat info to check the maximum number of entries ever used at one time.
             InterlockedIncrement( reinterpret_cast< long * >( &concurrentLocks ) );
@@ -97,33 +110,38 @@ namespace{
         };
         ////////////////////////////////////////////////////////////////////
         virtual void GotLock( DWORD &newLockEntry, DWORD &previousLockEntry ){
-            // When the lock is fetched, the lockEntry can be safely set
-            // to the entry's value until the next unlock.
-            
-            // Save the previous lockEntry.
+            if( newLockEntry == CDebugLockManager::EmptyEntry ||
+                newLockEntry >= LOCK_TABLE_SIZE ){
+                previousLockEntry = newLockEntry;
+                return;
+            }
+            Lock();
             lockTable[ newLockEntry ].previousEntry = previousLockEntry;
-            // Modify the lock's state. 
             lockTable[ newLockEntry ].lockState = Locked;
 
-            DWORD currentTime = GetRunTime();
-            lockTable[ curPos ].waitTime = lockTable[ newLockEntry ].timeStamp - currentTime;
-            lockTable[ newLockEntry ].timeStamp = currentTime;           
-            
-            // Set the previous lock to the lock's entry.
+            const DWORD currentTime = GetRunTime();
+            lockTable[ newLockEntry ].waitTime =
+                currentTime - lockTable[ newLockEntry ].timeStamp;
+            lockTable[ newLockEntry ].timeStamp = currentTime;
+
             previousLockEntry = newLockEntry;
+            Unlock();
         };
         ////////////////////////////////////////////////////////////////////
         virtual void Unlocking( DWORD &lockEntry ){
 
             if( lockEntry == EmptyEntry ){
-                throw "Double Unlock!";
+                return;
             }
-            // Restore the lock entry.
-            DWORD oldLockEntry = lockEntry;
+            if( lockEntry >= LOCK_TABLE_SIZE ){
+                lockEntry = EmptyEntry;
+                return;
+            }
+            Lock();
+            const DWORD oldLockEntry = lockEntry;
             lockEntry = lockTable[ oldLockEntry ].previousEntry;
-            // Set state last to avoid adding an entry over this one before
-            // the previousEntry was fetched.
             lockTable[ oldLockEntry ].lockState = Unlocked;
+            Unlock();
 
             InterlockedDecrement( reinterpret_cast< long * >( &concurrentLocks ) );
         };
@@ -247,20 +265,24 @@ class CEmptyDebugLockManager : public CDebugLockManager{
 
 // Returns the implementation to use.
 CDebugLockManager *GetCurrentImplementation(){
-     // Query wether or not deadlock logging is enabled.
+#ifndef _WIN32
+    /* Linux : pas de GET_CALLER_ADDR ; traceur non thread-safe sous charge UDP. */
+    static CEmptyDebugLockManager instance;
+    return &instance;
+#else
     RegKeyHandler regKey;
 
     regKey.Open( HKEY_LOCAL_MACHINE, "Software\\Vircom\\The 4th Coming Server\\Logging" );
 
-    DWORD imp = regKey.GetProfileInt( "DeadlockLogging", 1 );
+    const DWORD imp = regKey.GetProfileInt( "DeadlockLogging", 1 );
 
     if( imp != 0 ){
         static CDebugLockManagerTracer instance;
         return &instance;
-    }else{
-        static CEmptyDebugLockManager instance;
-        return &instance;
     }
+    static CEmptyDebugLockManager instance;
+    return &instance;
+#endif
 }
 
 // Returns the debug lock manager instance.

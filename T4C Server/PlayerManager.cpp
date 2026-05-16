@@ -708,7 +708,10 @@ void CPlayerManager::PlayerMaintenance
     while( boMaintenance ){
         KEEP_ALIVE
 
-        cMaintenanceLock.Lock();
+        while( !cMaintenanceLock.PickLock() ){
+            KEEP_ALIVE;
+            Sleep( 10 );
+        }
 
         CCommCenter *lpComm = CPacketManager::GetCommCenter();
         
@@ -1055,7 +1058,9 @@ void CPlayerManager::PlayerMaintenance
 				_LOG_DEBUG  LOG_DEBUG_LVL4, "Oracle Heart Beat sent to the data base" LOG_
 				ttHitTime = ttCurTime;
 
+				KEEP_ALIVE;
 				OracleHit = lpPlayer->AccountHeartBeat();
+				KEEP_ALIVE;
 				if ( OracleHit ){
 //					_LOG_DEBUG  LOG_DEBUG_LVL4, "Oracle have been hit by the Player Manager 3 " LOG_
 				}

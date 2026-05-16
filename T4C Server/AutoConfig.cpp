@@ -363,12 +363,21 @@ void CAutoConfig::ChangeDetectionThread
     while( boRunThread ){
         Sleep( 2000 );
 
+#ifndef _WIN32
+        /* Linux/INI : pas de RegUpdate registry ; evite courses ReloadIni/clear sur g_iniValues. */
+        continue;
+#endif
+
         // Open the key of the check value
         RegKeyHandler regCheckKey;
-        regCheckKey.Open( hCheckMainKey, sCheckSubKey.c_str() );
+        if( !regCheckKey.Open( hCheckMainKey, sCheckSubKey.c_str() ) ){
+            continue;
+        }
 
         // If the check value has been set, then refresh all registered values.
         if( regCheckKey.GetProfileInt( sCheckValue.c_str(), 0 ) != 0 ){
+            // Recharger T4CServer.ini une fois (pas a chaque RegKeyHandler() du constructeur).
+            RegKeyHandler::ReloadIniFromDisk();
             // Delete this registry key, since we've acknowledged that there needs to be a value refresh.
             regCheckKey.DeleteValue( sCheckValue.c_str() );
 

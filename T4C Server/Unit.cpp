@@ -55,12 +55,24 @@ void Unit::InitializeMessagesProcs( void )
 // Initializes the message procs.
 // 
 //////////////////////////////////////////////////////////////////////////////////////////
-{	
+{
+	static bool s_inited = false;
+	if( s_inited ){
+		return;
+	}
+	s_inited = true;
+
+	/* Linux : NPCAutoRegister (static) peut deja avoir rempli lpMessagesProc avant
+	 * TFC_MAIN::TFC_MAIN(). Ne pas effacer ces handlers. */
+	if( g_nextNpcUnitId > 30000 || lpMessagesProc[ 30000 ] != NULL ){
+		return;
+	}
+
 	int i;
 	for( i = 0; i < 65536; i++ ){
-		// No message handling by default
 		lpMessagesProc[ i ] = NULL;
 	}
+	g_nextNpcUnitId = 30000;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -82,24 +94,45 @@ WORD Unit::RegisterUnitMessageHandler
 		return 0;
 	}
 
-	if( !boForceRegistration && GetIDFromName( lpszUnitName, 0, TRUE ) != 0 ){
+	if( !boForceRegistration
+	    && !( boFindNextValidID && bUnitType == U_NPC )
+	    && GetIDFromName( lpszUnitName, 0, TRUE ) != 0 ){
 		_LOG_DEBUG LOG_DEBUG_LVL1, "Two units are using the same global string ID %s.", lpszUnitName LOG_
 		wBaseReferenceID = 0;
 	}else{
 		if( boFindNextValidID ){
-			while( lpMessagesProc[ wBaseReferenceID ] ){
-				wBaseReferenceID++;
+			if( bUnitType == U_NPC ){
+				/* Allocation sequentielle O(1) pour ~30k REGISTER_NPC (evite scan de lpMessagesProc). */
+				wBaseReferenceID = g_nextNpcUnitId;
+				if( lpMessagesProc[ wBaseReferenceID ] != NULL ){
+					unsigned scans = 0;
+					while( lpMessagesProc[ wBaseReferenceID ] ){
+						wBaseReferenceID++;
+						if( ++scans >= 65535u || wBaseReferenceID == 0 ){
+							wBaseReferenceID = 0;
+							break;
+						}
+					}
+				}
+				if( wBaseReferenceID != 0 ){
+					g_nextNpcUnitId = static_cast<WORD>( wBaseReferenceID + 1 );
+				}
+			} else {
+				unsigned scans = 0;
+				while( lpMessagesProc[ wBaseReferenceID ] ){
+					wBaseReferenceID++;
+					if( ++scans >= 65535u || wBaseReferenceID == 0 ){
+						wBaseReferenceID = 0;
+						break;
+					}
+				}
 			}
 		}
 		if( lpMessagesProc[ wBaseReferenceID ] == NULL ){
-			_LOG_DEBUG
-				LOG_DEBUG_HIGH,
-				"Registering unit %u name %s type %u.",
-				wBaseReferenceID,
-				lpszUnitName,
-				bUnitType
-			LOG_
-			
+			if( ( wBaseReferenceID % 5000u ) == 0u ) {
+				std::fprintf(stderr, "[INIT] Registered unit id %u (%s)\n", wBaseReferenceID, lpszUnitName);
+				std::fflush(stderr);
+			}
 			UNIT_TYPE *lpUnitType = new UNIT_TYPE;
 			lpUnitType->bUnitType = bUnitType;
 			lpUnitType->csName = lpszUnitName;

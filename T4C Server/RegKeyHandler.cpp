@@ -4,8 +4,10 @@
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
+#include <cstdio>
 #include <fstream>
 #include <map>
+#include <mutex>
 #include <filesystem>
 #include <string>
 
@@ -21,6 +23,7 @@ namespace {
 
 std::map<std::string, std::string> g_iniValues;
 bool g_iniLoadedOk = false;
+std::recursive_mutex g_iniMutex;
 
 void TrimInPlace(std::string &s) {
     auto notSpace = [](unsigned char c) { return !std::isspace(c); };
@@ -51,8 +54,9 @@ std::string NormalizeIniKey(std::string s) {
     return out;
 }
 
+/** Parse INI. Caller must hold g_iniMutex. Remplace la map d'un coup (swap) pour les lecteurs concurrents. */
 bool ParseIniFile(const std::filesystem::path &iniPath) {
-    g_iniValues.clear();
+    std::map<std::string, std::string> fresh;
     std::ifstream in(iniPath);
     if (!in) {
         g_iniLoadedOk = false;
@@ -97,10 +101,11 @@ bool ParseIniFile(const std::filesystem::path &iniPath) {
         }
 
         if (!fullKey.empty()) {
-            g_iniValues[fullKey] = val;
+            fresh[fullKey] = val;
         }
     }
 
+    g_iniValues.swap(fresh);
     g_iniLoadedOk = true;
     return true;
 }
@@ -115,8 +120,10 @@ std::filesystem::path IniFilePath() {
     return exe.parent_path() / "T4CServer.ini";
 }
 
-bool ReloadIniFromDisk() {
-    return ParseIniFile(IniFilePath());
+void EnsureIniLoadedUnlocked() {
+    if (!g_iniLoadedOk || g_iniValues.empty()) {
+        ParseIniFile(IniFilePath());
+    }
 }
 
 std::string LookupKey(const std::string &openedSubKeyNorm, LPCTSTR item) {
@@ -130,7 +137,7 @@ std::string LookupKey(const std::string &openedSubKeyNorm, LPCTSTR item) {
     return NormalizeIniKey(key);
 }
 
-const std::string *FindIniValue(const std::string &openedSubKeyNorm, LPCTSTR item) {
+const std::string *FindIniValueUnlocked(const std::string &openedSubKeyNorm, LPCTSTR item) {
     std::string lk = LookupKey(openedSubKeyNorm, item);
     auto it = g_iniValues.find(lk);
     if (it != g_iniValues.end()) {
@@ -139,7 +146,7 @@ const std::string *FindIniValue(const std::string &openedSubKeyNorm, LPCTSTR ite
     return nullptr;
 }
 
-void StoreIniValue(const std::string &openedSubKeyNorm, LPCTSTR item, const std::string &value) {
+void StoreIniValueUnlocked(const std::string &openedSubKeyNorm, LPCTSTR item, const std::string &value) {
     std::string lk = LookupKey(openedSubKeyNorm, item);
     if (!lk.empty()) {
         g_iniValues[lk] = value;
@@ -148,16 +155,26 @@ void StoreIniValue(const std::string &openedSubKeyNorm, LPCTSTR item, const std:
 
 } // namespace
 
+void RegKeyHandler::EnsureIniLoaded() {
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    EnsureIniLoadedUnlocked();
+}
+
+bool RegKeyHandler::ReloadIniFromDisk() {
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    return ParseIniFile(IniFilePath());
+}
+
 //////////////////////////////////////////////////////////////////////
 RegKeyHandler::RegKeyHandler() {
     returnstr[0] = '\0';
-    ReloadIniFromDisk();
 }
 
 RegKeyHandler::~RegKeyHandler() {}
 
 BOOL RegKeyHandler::Create(HKEY /*main_key*/, LPCTSTR sub_key) {
-    // ReloadIniFromDisk();
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    EnsureIniLoadedUnlocked();
     if (!g_iniLoadedOk) {
         return FALSE;
     }
@@ -167,8 +184,8 @@ BOOL RegKeyHandler::Create(HKEY /*main_key*/, LPCTSTR sub_key) {
 }
 
 BOOL RegKeyHandler::Open(HKEY /*main_key*/, LPCTSTR sub_key) {
-//fprintf(stderr, "[REGKEY] Open called with: '%s'\n", sub_key ? sub_key : "(null)");
-    // ReloadIniFromDisk(); //trop lent et pas thread safe
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    EnsureIniLoadedUnlocked();
     if (!g_iniLoadedOk) {
         return FALSE;
     }
@@ -178,17 +195,18 @@ BOOL RegKeyHandler::Open(HKEY /*main_key*/, LPCTSTR sub_key) {
 }
 
 void RegKeyHandler::WriteProfileString(LPCTSTR item, LPCTSTR value) {
-    StoreIniValue(m_iniSubKey, item, value ? value : "");
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    StoreIniValueUnlocked(m_iniSubKey, item, value ? value : "");
 }
 
 void RegKeyHandler::WriteProfileInt(LPCTSTR item, DWORD value) {
-    StoreIniValue(m_iniSubKey, item, std::to_string(value));
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    StoreIniValueUnlocked(m_iniSubKey, item, std::to_string(value));
 }
 
 LPCTSTR RegKeyHandler::GetProfileString(LPCTSTR item, LPCTSTR default_arg) {
-fprintf(stderr, "[REGKEY] GetProfileString: subkey='%s' item='%s'\n", 
-            m_iniSubKey.c_str(), item ? item : "(null)");
-    const std::string *found = FindIniValue(m_iniSubKey, item);
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    const std::string *found = FindIniValueUnlocked(m_iniSubKey, item);
     if (found != nullptr) {
         std::strncpy(returnstr, found->c_str(), sizeof(returnstr) - 1);
         returnstr[sizeof(returnstr) - 1] = '\0';
@@ -200,7 +218,8 @@ fprintf(stderr, "[REGKEY] GetProfileString: subkey='%s' item='%s'\n",
 }
 
 DWORD RegKeyHandler::GetProfileInt(LPCTSTR item, DWORD default_arg) {
-    const std::string *found = FindIniValue(m_iniSubKey, item);
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
+    const std::string *found = FindIniValueUnlocked(m_iniSubKey, item);
     if (found == nullptr || found->empty()) {
         return default_arg;
     }
@@ -217,11 +236,13 @@ void RegKeyHandler::Close(void) {
 }
 
 BOOL RegKeyHandler::DeleteValue(LPCTSTR lpszItem) {
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
     std::string lk = LookupKey(m_iniSubKey, lpszItem);
     return g_iniValues.erase(lk) != 0 ? TRUE : FALSE;
 }
 
 BOOL RegKeyHandler::DeleteKey(LPCTSTR subkey) {
+    std::lock_guard<std::recursive_mutex> lock(g_iniMutex);
     std::string base = m_iniSubKey;
     if (subkey && subkey[0]) {
         if (!base.empty()) {
@@ -230,7 +251,10 @@ BOOL RegKeyHandler::DeleteKey(LPCTSTR subkey) {
         base += subkey;
     }
     base = NormalizeIniKey(base);
-    if (!base.empty() && base.back() != '\\') {
+    if (base.empty()) {
+        return FALSE;
+    }
+    if (base.back() != '\\') {
         base += "\\";
     }
     std::size_t erased = 0;

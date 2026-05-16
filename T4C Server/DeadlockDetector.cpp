@@ -10,6 +10,9 @@
 #include "Format.h"
 #include <list>
 #include "ThreadMonitor.h"
+#ifndef _WIN32
+#include <cstdio>
+#endif
 
 
 //#define DEADLOCK_CHECK_OFF //DC To be place in comment for release, then after testing
@@ -170,11 +173,24 @@ void CDeadlockDetector::DeadlockCheckThread
 					//BLBLBL 13 avril 2009 : on oublie cette solution.
                 }catch( ... ){
                 }
-               
+
+#ifndef _WIN32
+                /* Linux : faux positifs frequents (locks longs, pas de SuspendThread reel). */
+                std::fprintf(
+                    stderr,
+                    "[DEADLOCK] Suspected stall in '%s' (thread %u) ? server continues (no exit %d).\n",
+                    (LPCTSTR)watch.csThreadName,
+                    static_cast<unsigned>(watch.nThreadId),
+                    DEADLOCK_CRASH
+                );
+                std::fflush(stderr);
+                watch.dwTimeout = GetRunTime() + watch.dwMaxTimeout;
+#else
                 exit( DEADLOCK_CRASH );
+#endif
 				//BLBLBL 6 avril 2009 on ne ferme plus le serveur en cas de deadlock
 				//BLBLBL 13 avril 2009 : ne pas fermer le serveur empeche les nouveaux joueurs de se co
-				//et laisse certains jouer, mais au prochain reboot, un gùant TW apparait.
+				//et laisse certains jouer, mais au prochain reboot, un g?ant TW apparait.
             }
         }
     }

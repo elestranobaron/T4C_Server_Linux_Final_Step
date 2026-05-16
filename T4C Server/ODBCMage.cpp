@@ -16,6 +16,7 @@
 //#include "EasyMail.h"
 
 #include "Shutdown.h"
+#include <cstdio>
 #include <string>
 #include "ODBCTrace.h"
 #include "ThreadMonitor.h"
@@ -47,6 +48,23 @@ void cODBCMage::CheckDisconnectError( void ){
 
         if( !shutdown ){
             shutdown = true;
+
+            /* Boot (TFC_MAIN / InitLogs) : pas de sequence shutdown -> exit(111) immediate. */
+            if( !theApp.serverStarted ){
+                std::fprintf(
+                    stderr,
+                    "[BOOT] ODBC connection error SQLSTATE=%s native=%ld: %s\n"
+                    "[BOOT] Check DSN '%s' user '%s' and that MariaDB is running.\n",
+                    (const char *)lpbSQLState,
+                    (long)dwNativeError,
+                    (const char *)lpbErrorMsg,
+                    lpszCurrentDSN[0] ? lpszCurrentDSN : "(unset)",
+                    lpszCurrentUser[0] ? lpszCurrentUser : "(empty)"
+                );
+                std::fflush(stderr);
+                return;
+            }
+
             // Add the shutdown key to make sure the process won't start
             // until 5 minutes.
             RegKeyHandler regKey;
