@@ -263,8 +263,11 @@ void CPlayerManager::DeletePlayer
 //////////////////////////////////////////////////////////////////////////////////////////
 {
     if( boStop ) return;
-    // Lock player list.
-    MultiLock3( &cMaintenanceLock, &cUserLock, &cFetchLock );
+    // Note: cMaintenanceLock est deja tenu par le thread appelant (PlayerMaintenance).
+    // std::mutex est non recursif sur Linux : tenter Lock() depuis le meme thread = deadlock.
+    // On verrouille seulement cUserLock + cFetchLock ici.
+    cUserLock.Lock();
+    cFetchLock.Lock();
 
     // Find the player entry.
     BOOL boFound = FALSE;
@@ -285,6 +288,8 @@ void CPlayerManager::DeletePlayer
 
     // If unit hasn't been found, there's nothing to remove.
     if( !boFound ){
+        cFetchLock.Unlock();
+        cUserLock.Unlock();
         return;
     }
 
@@ -303,7 +308,6 @@ void CPlayerManager::DeletePlayer
     // Unlock player list.
     cFetchLock.Unlock();
     cUserLock.Unlock();
-    cMaintenanceLock.Unlock();
     
 
     // If logoffs have not been stopped.
@@ -334,7 +338,10 @@ void CPlayerManager::AsyncDeletePlayer
     while( boMaintenance )
 	{
         DWORD dwBytes = 0;
-        DWORD dwPlayerAddress = 0;
+        // CRITIQUE 64-bit : DWORD tronque les pointeurs Players* (heap >0xFFFFFFFF).
+        // Utiliser std::uintptr_t pour preserver l'adresse complete envoyee
+        // par PostQueuedCompletionStatus(reinterpret_cast<std::uintptr_t>(lpPlayer)).
+        std::uintptr_t dwPlayerAddress = 0;
         LPOVERLAPPED lpOverlapped = NULL;
     
         ENTER_TIMEOUT;
@@ -1043,6 +1050,8 @@ void CPlayerManager::PlayerMaintenance
         
 
         // Delete all players that were added for deletion
+        // Note: DeletePlayer ne re-prend PAS cMaintenanceLock (cf. son code) puisque
+        // ce thread le tient deja. Il prend seulement cUserLock + cFetchLock.
         tlPlayersToDelete.ToHead();
         while( tlPlayersToDelete.QueryNext() ){
             RemoveTargetReferences( tlPlayersToDelete.Object()->self );

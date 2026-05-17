@@ -1,19 +1,23 @@
 #!/bin/bash
-# On évite les chemins absolus Windows (mnt/c/...) si tu es déjà dans le dossier sur Arch
+# Compile T4CServer, puis synchronise res/ → build/ (données runtime).
+# res/ est la source de vérité : T4CServer.ini, WDA/, textfilter.ini, etc.
+# rm -rf build ne détruit donc jamais la config ni les données.
+set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
-cd "$PROJECT_DIR"
+RES_DIR="$PROJECT_DIR/res"
+BUILD_DIR="$PROJECT_DIR/build"
 
-# Nettoyage propre
-rm -rf build
-mkdir build
-cd build
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
 
-# On force le compilateur et le standard C++
-# -j$(nproc) permet d'utiliser tous tes cœurs CPU pour compiler plus vite
+cd "$BUILD_DIR"
 cmake .. -DCMAKE_CXX_STANDARD=17
-if [ $? -eq 0 ]; then
-    make -j$(nproc)
-else
-    echo "Erreur lors de la configuration CMake"
-    exit 1
+make -j"$(nproc)"
+
+# Synchronise res/ → build/ (copie récursive, écrase si plus récent)
+if [[ -d "$RES_DIR" ]]; then
+    rsync -a --exclude='readme' --exclude='*.md' "$RES_DIR/" "$BUILD_DIR/"
+    echo "[build.sh] res/ → build/ synchronisé."
 fi
+
+echo "[build.sh] OK : $BUILD_DIR/T4CServer"

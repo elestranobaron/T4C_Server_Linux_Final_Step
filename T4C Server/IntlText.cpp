@@ -73,16 +73,9 @@ int IntlText::EncParse::GetChar( void )
     //rnd.SetSeed( static_cast< uhyper >( ftell( fFile ) ) * static_cast< uhyper >( 2309281 ) );
     //char bRnd = (char)rnd( -128, 128 );
     
-//    char cEnc = cRandomTable.GetChar( ftell( fFile ) ) ^ (char)ch;//BLBLBL tentative de suppression du chiffrage
-    //char cEnc = bRnd ^ (char)ch;
+    char cEnc = cRandomTable.GetChar( ftell( fFile ) ) ^ (char)ch;
 
-    //qwLastSeed = rnd.GetSeed();
-
-    //TRACE( "%c(%u^%u)", cEnc, ch, cRandomTable.GetChar( ftell( fFile ) ) );
-
-
-    //return cEnc;//BLBLBL tentative de suppression du chiffrage
-	return ch;
+    return (unsigned char)cEnc;
 }
 //////////////////////////////////////////////////////////////////////////////////////////
 void IntlText::EncParse::SeekOneBefore( void )

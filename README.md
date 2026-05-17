@@ -10,6 +10,21 @@ This project represents the successful 2026 port of a legacy C++ MMORPG server e
 - **Native Build System**: Complete integration with CMake and GCC 14+.
 - **Portability Layer**: Custom shim for MFC-specific types and Windows-centric API calls.
 
+## Dossier `build/` (runtime)
+
+Après `cmake` + `make`, lancer **depuis `build/`** :
+
+| Fichier | Rôle |
+|---------|------|
+| `T4CServer` | Binaire (généré par CMake) |
+| `T4CServer.ini` | **Obligatoire** — config (ODBC, ports, chemins maps/Lokalise). Non versionné. Copier `tools/runtime/T4CServer.ini.example` puis éditer. |
+| `textfilter.ini` | Optionnel — filtre de mots |
+| `*.log` | Créés au démarrage (`Debug.log`, `PCEdit.log`, …) |
+
+`/etc/odbc.ini` : DSN `[T4C Server Authentication]` (voir `tools/odbc/t4c-dsn.example.ini`).
+
+`./build.sh` **ne supprime plus** `T4CServer.ini` lors d’un rebuild (sauvegarde/restauration automatique).
+
 ## 🛠️ Project Structure
 
 - `/GameOps`: Core game logic and NPC management.

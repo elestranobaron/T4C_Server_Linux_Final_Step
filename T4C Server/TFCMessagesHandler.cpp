@@ -3073,7 +3073,15 @@ void TFCMessagesHandler::RQFUNC_ExitGame
         sending << (RQ_SIZE)(RQ_SafePlug); //BLBLBL Antiplug : on informe le client
 		sending << (char)1;	// 1 = C'est ok le joueur a ?t? supprim? du serveur, le client peut se fermer direct
 		user->self->SendPlayerMessage( sending );
-		
+
+		// PORT LINUX (FIX RECONNECT) :
+		// DELETE FROM OnlineUsers synchrone immediatement, des l'acceptation de
+		// RQ_ExitGame, sans attendre la chaine async
+		//   PlayerMaintenance -> CPM::DeletePlayer -> AsyncDeletePlayer -> Logoff
+		// qui ne va pas systematiquement jusqu'au DELETE BDD sur Linux et laisse
+		// le compte "deja utilise sur un serveur" pour toute reconnexion immediate.
+		Players::DeleteOnlineUserSync( user->GetAccount() );
+
 		user->DeletePlayer();
     
 		if( user->in_game ){

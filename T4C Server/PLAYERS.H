@@ -186,6 +186,11 @@ public:
 	static int 		IPLogged( LPCSTR szIP );
     static bool     AccountHeartBeat( void );
 	static void     AccountLoggonFailed( const String &csAccountName );
+	/** PORT LINUX (FIX RECONNECT): supprime synchrone l'entree OnlineUsers d'un compte.
+	    Utilise par RQFUNC_ExitGame et Players::Logoff pour garantir la propagation BDD,
+	    sans passer par le batch async (SendBatchRequest) qui ne se vide pas de facon
+	    fiable sur le port Linux (laissait le compte "deja utilise"). */
+	static bool     DeleteOnlineUserSync( const String &csAccountName );
     static bool     NameExists( const string &name );	
 
     void            TogglePage( bool newState ){

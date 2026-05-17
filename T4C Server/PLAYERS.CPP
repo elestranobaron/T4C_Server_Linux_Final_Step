@@ -1583,6 +1583,47 @@ void Players::Logon( void )
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
+bool Players::DeleteOnlineUserSync
+//////////////////////////////////////////////////////////////////////////////////////////
+//  PORT LINUX (FIX RECONNECT) : DELETE synchrone direct sur OnlineUsers.
+//
+//  Pourquoi : sur le port Linux, la chaine
+//      PlayerMaintenance -> CPM::DeletePlayer -> PostQueuedCompletionStatus
+//      -> AsyncDeletePlayer -> Players::Logoff -> ODBCUsers.SendBatchRequest
+//  ne va pas systematiquement jusqu'au DELETE BDD, ce qui laisse l'entree
+//  OnlineUsers en place et bloque toute reconnexion immediate avec le message
+//  "Votre compte est deja utilise sur un serveur" cote client.
+//  On execute le DELETE en synchrone, hors du batch async, des qu'un point
+//  fiable est atteint (RQFUNC_ExitGame ou Players::Logoff).
+// 
+//////////////////////////////////////////////////////////////////////////////////////////
+(
+ const CString &csAccountName
+)
+//////////////////////////////////////////////////////////////////////////////////////////
+{
+    char szAccount[ 1024 ];
+    QuotedAccount( szAccount, csAccountName );
+
+    CString csQuery;
+    csQuery.Format( "DELETE FROM OnlineUsers WHERE AccountName='%s'", szAccount );
+
+    ODBCUsers.Lock();
+    bool boOk = ODBCUsers.SendRequest( (LPCTSTR)csQuery, false ) ? true : false;
+    ODBCUsers.CloseCursor();
+    ODBCUsers.Unlock();
+
+    _LOG_DEBUG
+        LOG_DEBUG_HIGH,
+        "Players::DeleteOnlineUserSync compte='%s' ok=%d",
+        (LPCTSTR)csAccountName,
+        (int)boOk
+    LOG_
+
+    return boOk;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
 void Players::Logoff( void )
 //////////////////////////////////////////////////////////////////////////////////////////
 //  Callback called when player is logged off.
@@ -1597,18 +1638,11 @@ void Players::Logoff( void )
 	// Cancel any running trade
 	self->GetTradeMgr2()->Cancel();
 
-    // Remove player entry from OnlineUser table.
-    char szAccount[ 1024 ];
-    QuotedAccount( szAccount, GetAccount() );
-
-    CString csQuery;
-    TemplateList< SQL_REQUEST > *lptlSQLRequests = new TemplateList< SQL_REQUEST >;
- 	
-
-    csQuery.Format( "DELETE FROM OnlineUsers WHERE AccountName='%s'", szAccount );//BLBLBL 05/01/2011
-    ADD_QUERY;
-
-    ODBCUsers.SendBatchRequest( lptlSQLRequests, NULL, NULL, "ODBCUsers" );
+    // PORT LINUX (FIX RECONNECT) : DELETE synchrone direct sur OnlineUsers
+    // au lieu d'un SendBatchRequest qui ne se vide pas de facon fiable.
+    // Idempotent : sans effet si la ligne a deja ete supprimee plus tot
+    // par RQFUNC_ExitGame.
+    DeleteOnlineUserSync( GetAccount() );
 }
 
 namespace{
