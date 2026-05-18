@@ -60,6 +60,7 @@ public:
     void Read ( signed short &sShort );
     void Read ( double &dblDouble );
 long Tell() const { return fFile ? ftell(fFile) : -1; }
+    void Seek( long pos );
 private:
     inline BYTE Encrypt( const BYTE bByte, DWORD dwSeed );
     inline BYTE Decrypt( const BYTE bByte, DWORD dwSeed );

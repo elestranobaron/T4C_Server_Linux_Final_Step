@@ -184,6 +184,9 @@ public:
     // Creates from a wdaFile.
     virtual void CreateFrom( WDAFile &wdaFile, bool createReadOnly );
 
+    // Avance le fichier après objets (créatures + hives) sans charger en RAM.
+    static void SkipSection( WDAFile &wdaFile, const std::string &wdaPath );
+
     CreatureData *GetWritableCreature( std::string id );
     CreatureData *GetReadOnlyCreature( std::string id );
 

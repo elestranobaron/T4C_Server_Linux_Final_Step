@@ -377,12 +377,17 @@ BOOL WorldMap::SetBlockingUnit(WorldPos where, Unit *obj)
 	
 	UINT y;
 	UINT uHeight = obj->ViewFlag( __FLAG_BLOCKING );
+	if( uHeight == 0 ){
+		uHeight = 1;
+	} else if( uHeight > where.Y + 1 ){
+		uHeight = where.Y + 1;
+	}
 	WorldPos wlBlockPos = where;
 	//int nBlockSpace = obj->ViewFlag(__FLAG_BLOCKING);
 
 	//nBlockSpace = nBlockSpace ? nBlockSpace
 	BOOL boOK = TRUE;
-	for(y = where.Y; y > where.Y - uHeight; y--){
+	for( y = where.Y; y + uHeight > y; y-- ){
 		wlBlockPos.Y = y;
 		if( internalIsBlocking( wlBlockPos ) ){
 			boOK = FALSE;
@@ -391,7 +396,7 @@ BOOL WorldMap::SetBlockingUnit(WorldPos where, Unit *obj)
 	// Only set blocking unit if we can
 	if( boOK ){
 		obj->SetUnderBlock( QueryAreaType( where ) );
-		for(y = where.Y; y > where.Y - uHeight; y--){
+		for( y = where.Y; y + uHeight > y; y-- ){
 			wlBlockPos.Y = y;			
 			SetBlocking(wlBlockPos, obj->GetBlock() );			
 		}		

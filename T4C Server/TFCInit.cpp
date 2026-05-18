@@ -327,9 +327,20 @@ void T4C_Initialization::WDAInitObjects
     // Get the list of loaded items
     vector< WDAObjects::ObjectData > &vObjects = cObjects.GetObjects();
 
+    fprintf(stderr, "[WDAInit] WDAInitObjects: registering %u items (formulas, containers)…\n",
+        (unsigned)vObjects.size());
+    fflush(stderr);
+
     // Scroll through the list of objects.
     vector< WDAObjects::ObjectData >::iterator i;
+    unsigned wdaInitItem = 0;
     for( i = vObjects.begin(); i != vObjects.end(); i++ ){
+        if( (wdaInitItem % 200) == 0 ){
+            fprintf(stderr, "[WDAInit]   item %u / %u (%s)\n",
+                wdaInitItem, (unsigned)vObjects.size(), (*i).csID.c_str());
+            fflush(stderr);
+        }
+        wdaInitItem++;
         WDAObjects::ObjectData &cItem = (*i);
 
         WORD previousExistingBindedID =
@@ -584,16 +595,40 @@ void T4C_Initialization::WDAInitObjects
 	}
     DynObjManager::PostInitDestroy();
 
-    // Loads the world objects
+    // Loads the world objects (positions au sol dans les cartes — peut être long)
     {
         vector< WDAObjectsWorldObjects >::iterator z;
+        const unsigned locTotal = (unsigned)cObjects.GetLocations().size();
+        unsigned locIndex = 0;
+
+        if( getenv( "T4C_SKIP_GROUND_OBJECTS" ) != NULL ){
+            fprintf(stderr, "[WDAInit] T4C_SKIP_GROUND_OBJECTS=1 — skip %u ground spawns\n", locTotal);
+            fflush(stderr);
+        } else {
+        fprintf(stderr, "[WDAInit] placing %u ground objects on maps (create_world_unit)…\n", locTotal);
+        fflush(stderr);
 
         // Scroll through all locations.
-        for( z = cObjects.GetLocations().begin(); z != cObjects.GetLocations().end(); z++ ){
+        for( z = cObjects.GetLocations().begin(); z != cObjects.GetLocations().end(); z++, locIndex++ ){
+            if( (locIndex % 200) == 0 ){
+                fprintf(stderr, "[WDAInit]   ground %u / %u (%s)\n",
+                    locIndex, locTotal, (*z).GetItemID().c_str());
+                fflush(stderr);
+            }
             WDAObjectsWorldObjects &cLoc = (*z);
+            const bool trace = ( locIndex < 3 );
 
+            if( trace ){
+                fprintf(stderr, "[WDAInit]     lookup '%s'…\n", cLoc.GetItemID().c_str());
+                fflush(stderr);
+            }
             // Get the object's ID.
             WORD wID = Unit::GetIDFromName( cLoc.GetItemID().c_str(), U_OBJECT, TRUE );
+            if( trace ){
+                fprintf(stderr, "[WDAInit]     wID=%u world=%u pos=%u,%u\n",
+                    (unsigned)wID, cLoc.GetPos().world, cLoc.GetPos().X, cLoc.GetPos().Y);
+                fflush(stderr);
+            }
 			// If the object exists.
             if( wID != 0 ){
 				//TFCServer->World[rsWorlds.m_ID].create_world_unit(U_OBJECT, wBaseReferenceID, wlObj);
@@ -608,6 +643,10 @@ void T4C_Initialization::WDAInitObjects
 					};
 					
 					if( wlWorld->IsValidPosition( wlPos ) ){
+                        if( trace ){
+                            fprintf(stderr, "[WDAInit]     create_world_unit…\n");
+                            fflush(stderr);
+                        }
 						// Create the world unit.
 						if( wlWorld->create_world_unit( U_OBJECT, wID, wlPos, NULL, FALSE ) == NULL ){
 							_LOG_DEBUG
@@ -619,6 +658,10 @@ void T4C_Initialization::WDAInitObjects
 								cLoc.GetPos().world
 							LOG_
 						}
+                        if( trace ){
+                            fprintf(stderr, "[WDAInit]     create_world_unit done\n");
+                            fflush(stderr);
+                        }
 					}else{
 						boInvalidPos = TRUE;
 					}
@@ -646,7 +689,11 @@ void T4C_Initialization::WDAInitObjects
 				LOG_
 			}
         }
+        }
     }
+    fprintf(stderr, "[WDAInit] WDAInitObjects complete (%u definitions, ground done).\n",
+        (unsigned)cObjects.GetObjects().size());
+    fflush(stderr);
 }
 
 namespace{
@@ -1193,15 +1240,31 @@ void TFCInitMaps( void )
         cInit.WDAInitObjects( cObjects );
     }catch(...){ LOGEXCEPTION( "objects" ) }
 
+    fprintf(stderr, "[BOOT] WDA objects phase done, loading creatures…\n");
+    fflush(stderr);
     printf( "\n- Loading Creatures" );
+    fflush(stdout);
     try{
         WDACreatures cCreatures( cTraceLogger );
+        const bool skipCreatures = ( getenv( "T4C_SKIP_CREATURES" ) != NULL );
+        size_t wdaFileIndex = 0;
 
-		for (fi=vWDAFiles.begin(); fi!=vWDAFiles.end(); fi++) {
-	        cCreatures.CreateFrom( **fi, true );
+        if( skipCreatures ){
+            fprintf(stderr, "[BOOT] T4C_SKIP_CREATURES=1 — skip creature WDA load/init\n");
+            fflush(stderr);
+        }
+
+		for (fi=vWDAFiles.begin(); fi!=vWDAFiles.end(); fi++, wdaFileIndex++) {
+            if( skipCreatures ){
+                WDACreatures::SkipSection( **fi, vWDAFilenames[wdaFileIndex] );
+            } else {
+	            cCreatures.CreateFrom( **fi, true );
+            }
 		}
 
-        cInit.WDAInitCreatures( cCreatures );
+        if( !skipCreatures ){
+            cInit.WDAInitCreatures( cCreatures );
+        }
     }catch(...){ LOGEXCEPTION( "creatures" ) }
 
     cInit.WDAInitNPC();

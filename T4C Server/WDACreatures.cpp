@@ -281,6 +281,157 @@ void WDACreatures::CreateFrom
     }
 }
 
+namespace {
+
+const char *WdaBaseName( const std::string &path )
+{
+    const char *base = path.c_str();
+    const char *s = base;
+    for( ; *s != '\0'; ++s ){
+        if( *s == '/' || *s == '\\' ){
+            base = s + 1;
+        }
+    }
+    return base;
+}
+
+struct WdaCreaturesSkipEntry {
+    const char *name;
+    long startPos;
+    long endPos;
+};
+
+// Offsets WDA LP64 (second_approach) — fin section créatures = début hives
+const WdaCreaturesSkipEntry g_creatureSkipTable[] = {
+    { "T4C Worlds.WDA", 24259466L, 24347015L },
+    { "T4C Edit.WDA",   73203L,    94690L },
+};
+
+void SkipOneCreature( WDAFile &wdaFile )
+{
+    DWORD dwBindedID = 0;
+    std::string csID, csName;
+    DWORD dwDummy = 0;
+    double dblDummy = 0.0;
+    bool boDummy = false;
+
+    wdaFile.Read( dwBindedID );
+    wdaFile.Read( csID );
+    wdaFile.Read( csName );
+    for( int stat = 0; stat < 22; stat++ ){
+        wdaFile.Read( dwDummy );
+    }
+    wdaFile.Read( dblDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dblDummy );
+    wdaFile.Read( dblDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( dwDummy );
+    wdaFile.Read( boDummy );
+
+    DWORD dwAttacks = 0;
+    wdaFile.Read( dwAttacks );
+    DWORD i = 0;
+    for( i = 0; i < dwAttacks; i++ ){
+        std::string csDmgRoll;
+        wdaFile.Read( csDmgRoll );
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( dwDummy );
+    }
+
+    DWORD dwDeathFlags = 0;
+    wdaFile.Read( dwDeathFlags );
+    for( i = 0; i < dwDeathFlags; i++ ){
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( boDummy );
+    }
+
+    DWORD dwItems = 0;
+    wdaFile.Read( dwItems );
+    for( i = 0; i < dwItems; i++ ){
+        wdaFile.Read( dwDummy );
+        wdaFile.Read( dblDummy );
+    }
+}
+
+void SkipCreaturesSlow( WDAFile &wdaFile )
+{
+    DWORD dwCreatures = 0;
+    wdaFile.Read( dwCreatures );
+    DWORD i = 0;
+    for( i = 0; i < dwCreatures; i++ ){
+        SkipOneCreature( wdaFile );
+    }
+}
+
+} // namespace
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void WDACreatures::SkipSection
+//////////////////////////////////////////////////////////////////////////////////////////
+(
+ WDAFile &wdaFile,
+ const std::string &wdaPath
+)
+//////////////////////////////////////////////////////////////////////////////////////////
+{
+    const long cur = wdaFile.Tell();
+    const char *base = WdaBaseName( wdaPath );
+    unsigned t = 0;
+
+    for( t = 0; t < sizeof( g_creatureSkipTable ) / sizeof( g_creatureSkipTable[0] ); t++ ){
+        const WdaCreaturesSkipEntry &e = g_creatureSkipTable[t];
+        if( strcmp( base, e.name ) != 0 ){
+            continue;
+        }
+        if( cur == e.startPos ){
+            wdaFile.Seek( e.endPos );
+            fprintf(
+                stderr,
+                "[WDACreatures] T4C_SKIP_CREATURES: %s seek %ld -> %ld (skip creatures, hives follow)\n",
+                e.name,
+                cur,
+                e.endPos
+            );
+            fflush( stderr );
+            return;
+        }
+        fprintf(
+            stderr,
+            "[WDACreatures] T4C_SKIP_CREATURES: %s pos=%ld expected %ld, slow skip\n",
+            e.name,
+            cur,
+            e.startPos
+        );
+        fflush( stderr );
+        break;
+    }
+
+    SkipCreaturesSlow( wdaFile );
+    fprintf(
+        stderr,
+        "[WDACreatures] T4C_SKIP_CREATURES: slow skip done for %s (now %ld)\n",
+        base,
+        wdaFile.Tell()
+    );
+    fflush( stderr );
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 WDACreatures::CreatureData *WDACreatures::GetReadOnlyCreature( std::string id )
 {

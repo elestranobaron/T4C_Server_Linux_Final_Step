@@ -273,10 +273,16 @@ fprintf(stderr, "[WDAObjects] CreateFrom, file pos=%ld, ptr=%p\n", wdaFile.Tell(
     // Get the quantity of objects
     DWORD dwSize;
     wdaFile.Read( dwSize );
+    fprintf(stderr, "[WDAObjects] loading %u objects (fgetc decrypt — peut prendre 1–3 min)…\n", dwSize);
+    fflush(stderr);
        
     // Scroll through the list of objects.
     DWORD i;
     for( i = 0; i != dwSize; i++ ){
+        if( (i % 100) == 0 ){
+            fprintf(stderr, "[WDAObjects]   object %u / %u, file pos=%ld\n", i, dwSize, wdaFile.Tell());
+            fflush(stderr);
+        }
         // Create a new object.
         ObjectData cObject;
                 
@@ -452,11 +458,15 @@ fprintf(stderr, "[WDAObjects] CreateFrom, file pos=%ld, ptr=%p\n", wdaFile.Tell(
         // Add the object to the list of objects.
         vObjects.push_back( cObject );
     }// for( vObjects ...
+    fprintf(stderr, "[WDAObjects] objects done (%u), loading ground positions…\n", dwSize);
+    fflush(stderr);
 
     // Load the world objects
     {
         DWORD dwQ;
         wdaFile.Read( dwQ );
+        fprintf(stderr, "[WDAObjects]   %u object positions\n", dwQ);
+        fflush(stderr);
 
         DWORD j;
         for( j = 0; j != dwQ; j++ ){
@@ -469,6 +479,8 @@ fprintf(stderr, "[WDAObjects] CreateFrom, file pos=%ld, ptr=%p\n", wdaFile.Tell(
     }
 
     ComputeHighestBoostID();
+    fprintf(stderr, "[WDAObjects] CreateFrom complete, total objects=%u\n", (unsigned)vObjects.size());
+    fflush(stderr);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
