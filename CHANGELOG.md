@@ -255,3 +255,13 @@ export T4C_SKIP_CREATURES=1
 ### Variables d'environnement
 …
 ```
+
+## [2026-05-19] - Routines Asynchrones (Opcode 46) & Correctifs Moteur de Spawn
+### Modifié
+- **Asynchronisme de l'Opcode 46** : Migration de `FinishFromPreInGameToInGame` et `AsyncRQFUNC_FromPreInGameToInGame` sur la file asynchrone globale. Suppression de l'utilisation abusive des verrous `UsePicklock` sur le thread de réception UDP principal pour éradiquer les timeouts intempestifs et les faux codes d'erreur `1 (busy)`.
+
+### Corrigé
+- **Boucle de Retry d'Unité (`PutPlayerInGame`)** : Correction d'une régression historique du code Vircom d'origine où la boucle de repli pour lier une unité sur l'une des 8 cases adjacentes ne tournait jamais. Remplacement du prédicat logique par une condition stricte `while (i < 9 && !binded_unit)`.
+
+### Notes Techniques & Limites Connues
+- **Comportement de l'Opcode 46** : Identification d'un comportement restrictif provoquant l'absence d'acquittement réseau vers le client si `GetWorld(0)` est `NULL` (WDA vide ou non chargé), dû à la condition d'envoi stricte `if (wlWorld != NULL)`. Le joueur reste temporairement bloqué en état logique `boPreInGame` sur le serveur malgré l'affichage visuel local de la carte par le client.

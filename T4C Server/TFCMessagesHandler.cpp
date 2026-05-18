@@ -1571,6 +1571,134 @@ void TFCMessagesHandler::RQFUNC_PutPlayerInGame
 
     RQ_FOOTER( "RQ_PutPlayerInGame" );
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////
+typedef struct _RQSTRUCT_FROM_PREGAME_TO_INGAME {
+    ASYNC_PACKET_FUNC_PARAMS sParams;
+} RQSTRUCT_FROM_PREGAME_TO_INGAME, *LPRQSTRUCT_FROM_PREGAME_TO_INGAME;
+
+//////////////////////////////////////////////////////////////////////////////////////////
+static void FinishFromPreInGameToInGame
+//////////////////////////////////////////////////////////////////////////////////////////
+// Corps commun opcode 46 : PutPlayerInGame + passage in_game + reponse 46.
+(
+ Players *user,
+ TFCPacket &sending
+)
+//////////////////////////////////////////////////////////////////////////////////////////
+{
+    char result = user->self->PutPlayerInGame();
+
+    fprintf( stderr, "[FromPreInGameToInGame] PutPlayerInGame -> %d pour %s pos %u,%u w%u\n",
+             static_cast<int>(result), (LPCTSTR)user->self->GetTrueName(),
+             user->self->GetWL().X, user->self->GetWL().Y, user->self->GetWL().world );
+
+    if( !result ){
+        CPlayerManager::GetChatter().AddToSystemChannels( user );
+        user->in_game = TRUE;
+        user->boPreInGame = FALSE;
+        user->self->ResetDeath();
+        user->self->DeferredLoadEffects();
+        if( user->self->ViewFlag( __FLAG_NUMBER_OF_REMORTS ) > 0 ){
+            user->self->BroadcastSeraphArrival();
+        }else{
+            user->self->BroadcastPopup( user->self->GetWL(), true );
+        }
+        {
+            TFCPacket stats;
+            user->self->PacketStatus( stats );
+            user->self->SendPlayerMessage( stats );
+            stats.Destroy();
+            user->self->PacketPvpRanking( stats );
+            user->self->SendPlayerMessage( stats );
+        }
+        if( user->self->IsPuppet() ){
+            user->self->PacketPuppetInfo( sending );
+            Broadcast::BCast( user->self->GetWL(), _DEFAULT_RANGE, sending,
+                              user->self->GetInvisibleQuery() );
+        }
+    }else{
+        if( user->self->boLoaded ){
+            _LOG_DEBUG
+                LOG_DEBUG_LVL1,
+                "User %s could not be put from PreGame to InGame problem creating bound unit ?",
+                (LPCTSTR)user->GetFullAccountName()
+            LOG_
+        }else{
+            _LOG_DEBUG
+                LOG_DEBUG_LVL1,
+                "User %s could not be put from PreGame to InGame user was not Loaded ?",
+                (LPCTSTR)user->GetFullAccountName()
+            LOG_
+        }
+    }
+
+    WorldMap *wlWorld = TFCMAIN::GetWorld( user->self->GetWL().world );
+    if( wlWorld ){
+        if( !( user->GetGodFlags() & GOD_NO_MONSTERS ) ){
+            wlWorld->VerifyInviewHives( user->self->GetWL() );
+        }
+    }
+
+    sending.Destroy();
+    sending << (RQ_SIZE)RQ_FromPreInGameToInGame;
+    sending << (char)result;
+    if( wlWorld != NULL ){
+        user->self->SendPlayerMessage( sending );
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void AsyncRQFUNC_FromPreInGameToInGame
+//////////////////////////////////////////////////////////////////////////////////////////
+(
+ LPVOID lpData
+)
+//////////////////////////////////////////////////////////////////////////////////////////
+{
+    LPRQSTRUCT_FROM_PREGAME_TO_INGAME lpParams = (LPRQSTRUCT_FROM_PREGAME_TO_INGAME)lpData;
+    Players *user = lpParams->sParams.user;
+
+#if defined(__linux__)
+    if( !user->UsePicklock( __FILE__, __LINE__ ) ){
+        TFCPacket err;
+        err << (RQ_SIZE)RQ_FromPreInGameToInGame;
+        err << (char)1;
+        user->self->SendPlayerMessage( err );
+        fprintf( stderr,
+                 "[FromPreInGameToInGame] async: UsePicklock refuse pour %s\n",
+                 (LPCTSTR)user->GetAccount() );
+        delete lpParams;
+        return;
+    }
+#endif
+
+    struct AutoExit {
+        AutoExit( Players *theUser, LPRQSTRUCT_FROM_PREGAME_TO_INGAME theParams )
+            : user( theUser ), lpParams( theParams ) {}
+        ~AutoExit() {
+            user->UseUnlock( __FILE__, __LINE__ );
+            delete lpParams;
+        }
+        Players *user;
+        LPRQSTRUCT_FROM_PREGAME_TO_INGAME lpParams;
+    } cAutoExit( user, lpParams );
+
+    if( !user->boPreInGame || user->in_game ){
+        return;
+    }
+
+    fprintf( stderr, "[FromPreInGameToInGame] async PutPlayerInGame pour %s\n",
+             (LPCTSTR)user->GetAccount() );
+
+    TFCPacket sending;
+    FinishFromPreInGameToInGame( user, sending );
+
+    fprintf( stderr,
+             "[FromPreInGameToInGame] async termine pour %s (in_game=%d)\n",
+             (LPCTSTR)user->GetAccount(), user->in_game ? 1 : 0 );
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1592,91 +1720,22 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
     TFCPacket sending;
 
 	if( user->boPreInGame && !user->in_game ){
-			 		
-	  char result = user->self->PutPlayerInGame( );//return 0 if okay
 
-	  //CPlayerManager::GetChatter().AddToSystemChannels( user );//BLBLBL D?plac? dans le bloc conditionnel
-
-	  if( !result ){ //if no problem (0 = OK, 1 = Error happened)
-
-			CPlayerManager::GetChatter().AddToSystemChannels( user );
-
-	  	    user->in_game = TRUE;
-			user->boPreInGame = FALSE;
-            user->self->ResetDeath();// If unit teleported, it cannot be dead.
-//			user->lFirstRound=TFCMAIN::GetRound();//BLBLBL quand le joueur entre en jeu on enregistre son round d'entr?e, pour pouvoir calculer son ratio temps de jeu, nombre de paquets de mouvements lMoveCount;
-
-            TRACE( "\r\nPlayer's radiance = %u.", user->self->GetRadiance() );
-
-           // if( user->GetGodFlags() & GOD_TRUE_INVISIBILITY || 
-           //     user->self->ViewFlag( __FLAG_INVISIBILITY ) != 0 ){
-            //    user->self->BroadcastPopup( user->self->GetWL(), false );
-            //}else{
-            user->self->DeferredLoadEffects();
-
-            if( user->self->ViewFlag( __FLAG_NUMBER_OF_REMORTS ) > 0 ){
-                user->self->BroadcastSeraphArrival();
-            }else{
-                user->self->BroadcastPopup( user->self->GetWL(), true );
-            }
-            //}
-
-            // Send the stats after the deferred load effects.
-            {
-                TFCPacket stats;
-                user->self->PacketStatus( stats );	
-                user->self->SendPlayerMessage( stats );
-				// asteryth pvp ranking
-				stats.Destroy();
-                user->self->PacketPvpRanking( stats );
-                user->self->SendPlayerMessage( stats );
-            }
-
-            if( user->self->IsPuppet() ){                
-                user->self->PacketPuppetInfo( sending );
-                // If the player is godly invisible
-                //if( user->GetGodFlags() & GOD_TRUE_INVISIBILITY ||
-                //    user->self->ViewFlag( __FLAG_INVISIBILITY ) != 0 ){
-                    // Send puppet info only to him
-                //    user->self->SendPlayerMessage( sending );
-                //}else{
-                    // Otherwise broadcast it.
-                //NMNMNM 20
-                Broadcast::BCast( user->self->GetWL(), _DEFAULT_RANGE, sending, user->self->GetInvisibleQuery() );//BLBLBL 30=>_DEFAULT_RANGE
-                //}
-            }            
-	  }else{//BLBL : sinon, si on a pas r?ussi ? remettre en jeu le joueur on logue :
-		  if (user->self->boLoaded){
-			_LOG_DEBUG
-				LOG_DEBUG_LVL1,
-				"User %s could not be put from PreGame to InGame problem creating bound unit ?",
-				(LPCTSTR)user->GetFullAccountName()
-			LOG_
-		}else{
-			_LOG_DEBUG
-				LOG_DEBUG_LVL1,
-				"User %s could not be put from PreGame to InGame user was not Loaded ?",
-				(LPCTSTR)user->GetFullAccountName()
-			LOG_
-		  }
-	  }
-	
-	  WorldMap *wlWorld = TFCMAIN::GetWorld( user->self->GetWL().world );
-		if( wlWorld ){
-            if( !( user->GetGodFlags() & GOD_NO_MONSTERS ) ){
-		        wlWorld->VerifyInviewHives( user->self->GetWL() );
-            }
-		}
-
-		sending.Destroy();
-        sending << (RQ_SIZE)RQ_FromPreInGameToInGame;
-		sending << (char)result;
-
-        if( wlWorld != NULL ){
-		// This is already sent when connecting. Before asking to go in-game, client asks for GetNearUnits, which send this packets.
-		// wlWorld->packet_inview_units( user->self->GetWL(), sending, _DEFAULT_RANGE, user->self );
-            user->self->SendPlayerMessage( sending );
-        }
+#if defined(__linux__)
+		/* Ne pas prendre UsePicklock sur le thread UDP : l'async 13 peut encore
+		 * tenir le verrou (backpack / inview) alors que le client envoie deja 46.
+		 * L'async 46 reprend le picklock quand la file lui tourne. */
+		LPRQSTRUCT_FROM_PREGAME_TO_INGAME lpParams = new RQSTRUCT_FROM_PREGAME_TO_INGAME;
+		lpParams->sParams.user = user;
+		lpParams->sParams.rqRequestID = rqRequestID;
+		lpParams->sParams.msg = NULL;
+		AsyncFuncQueue::GetMainQueue()->Call( AsyncRQFUNC_FromPreInGameToInGame, lpParams );
+		fprintf( stderr,
+		         "[FromPreInGameToInGame] charge async pour %s (sans picklock UDP)\n",
+		         (LPCTSTR)user->GetAccount() );
+#else
+		FinishFromPreInGameToInGame( user, sending );
+#endif
 
 	}else{//else de la condition : if( user->boPreInGame && !user->in_game ){
 

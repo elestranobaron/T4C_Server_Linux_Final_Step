@@ -6931,8 +6931,15 @@ char Character::PutPlayerInGame( void )
 		WorldMap *wl;
 			BOOL IsGod = FALSE;
 
-		Unit *binded_unit;
+		Unit *binded_unit = NULL;
 		wl = TFCMAIN::GetWorld((WORD)GetWL().world);
+		if( wl == NULL ){
+			fprintf( stderr,
+			         "[PutPlayerInGame] monde %u introuvable (world_number=%u) pour %s\n",
+			         (unsigned)GetWL().world, (unsigned)TFCMAIN::GetMaxWorlds(),
+			         (LPCTSTR)GetTrueName() );
+			return 1;
+		}
         if( wl != NULL )
 		{
 		    binded_unit = wl->create_world_unit(U_PC, GetAppearance(), GetWL(), this);
@@ -6945,7 +6952,7 @@ char Character::PutPlayerInGame( void )
 			    TRACE("\r\nHerE2");
 
                 i = 1;
-                while( i < 9 && binded_unit != NULL )
+                while( i < 9 && !binded_unit )
 				{
 				    CurPos = OldPos;
 				    switch(i){
