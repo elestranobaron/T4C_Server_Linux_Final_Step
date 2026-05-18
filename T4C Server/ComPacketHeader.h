@@ -6,8 +6,8 @@
 #include <netinet/in.h>
 #endif
 
-//#define MAX_PACKET_SIZE     1024//BLBLBL 07/12/2010 je remet ‡ 1024
-#define MAX_PACKET_SIZE     512 //BLBL :  apparement les packet de plus de 512 octets, semblent avoir du mal ‡ se faire router.//je remet
+//#define MAX_PACKET_SIZE     1024//BLBLBL 07/12/2010 je remet ù 1024
+#define MAX_PACKET_SIZE     512 //BLBL :  apparement les packet de plus de 512 octets, semblent avoir du mal ù se faire router.//je remet
 #define HEADER_SIZE         sizeof( UDPPacketHeader )
 #define CHKSUM_SIZE         1
 #define MAX_DATA_SIZE       ( MAX_PACKET_SIZE - HEADER_SIZE -CHKSUM_SIZE) //1 is checksum...
@@ -59,8 +59,8 @@ typedef struct _UDPPacket
    BYTE				      *packetData;   // Pointer to the data part of the buffer (for ease of use)
    UDPPacketHeader		*packetHeader; // Pointer to the header part of the buffer (for ease of use)
    //UDPPacketHeader		HeaderSave;//BLBLBL Ajout Chaotik pour garder une trace en clair du header.
-   BOOL					needAck;//BLBLBL j'ai simplifiÈ ici par rapport ‡ Chaotik, pour Èviter (peut-Ítre?) les pb de crash
-   DWORD				ID;//BLBLBL j'ai ajoutÈ Áa pour sauvegarder le numÈro de sÈrie d'un pak ajoutÈ cryptÈ ‡ la liste des pendings
+   BOOL					needAck;//BLBLBL j'ai simplifiù ici par rapport ù Chaotik, pour ùviter (peut-ùtre?) les pb de crash
+   DWORD				ID;//BLBLBL j'ai ajoutù ùa pour sauvegarder le numùro de sùrie d'un pak ajoutù cryptù ù la liste des pendings
 } UDPPacket;
 
  
