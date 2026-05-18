@@ -169,7 +169,7 @@ public:
 	void SetClan(WORD newClan);
 
 	DWORD GetTrueMaxHP();
-	void  SetMaxHP(DWORD newMax);
+	void  SetMaxHP(DWORD newMax, bool boNotify = true);
 
 	DWORD GetHP();
 	void  SetHP(DWORD newMax, bool boUpdate );

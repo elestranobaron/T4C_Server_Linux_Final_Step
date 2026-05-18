@@ -4,6 +4,83 @@ Historique des modifications serveur liées au chargement WDA, au boot et aux co
 
 ---
 
+## 2026-05-18 (soir) — `PutPlayerInGame` async, chargement perso Linux, opcode 13 toujours envoyé
+
+### Contexte (problème client Linux)
+
+Le client SDL3 atteignait auth + liste persos, mais l’entrée en jeu (**opcode 13**) échouait ou bloquait côté serveur :
+
+- Chargement **synchrone** de `load_character` sur le thread **`UDPAnalyseThread`** → plus de keepalive UDP → `[DEADLOCK]` et `Connexion has timed out` (~15 s).
+- Sur Linux, `UseUnlock` appelé depuis le thread async après un `UsePicklock` sur le thread UDP → comportement indéfini avec `std::mutex`.
+- `reset_character()` au premier login sur un perso vide → blocage possible.
+- `SetMaxHP(1)` pendant le chargement envoyait un paquet HP erroné (opcode 33, HP 0/1).
+- `packet_equiped()` + `SetGold()` / `SynchronizeGold` pendant verrou ODBC → blocage après inventaire.
+- Requêtes coffre / skills / sorts → blocages ODBC supplémentaires sur le port Linux.
+
+**Résultat attendu après ce patch :** le client reçoit **opcode 13** avec position valide ; envoi 46+60 côté client. **Non résolu dans ce commit :** handler **opcode 46** peut encore rappeler `PutPlayerInGame()` / `create_world_unit` sur le thread UDP si `boPreInGame` — timeout possible après 13 OK.
+
+---
+
+### Fichiers modifiés
+
+#### `T4C Server/TFCMessagesHandler.cpp`
+
+**`RQ_PutPlayerInGame` (handler UDP)**
+
+- Suppression du chargement synchrone sur le thread d’analyse ; enqueue **`AsyncFuncQueue::Call(AsyncRQFUNC_PutPlayerInGame, …)`** uniquement.
+- Commentaire explicite : ne jamais bloquer `UDPAnalyseThread` (keepalive / timeout 15 s).
+- Sous **`#if defined(__linux__)`** : `user->UseUnlock()` immédiatement après enqueue (le thread async reprend le picklock).
+- Logs `stderr` : `[PutPlayerInGame] charge async…`, refus picklock, busy reply code 7.
+- Réponse rapide si déjà `boPreInGame` (stats sans recharger).
+
+**`AsyncRQFUNC_PutPlayerInGame`**
+
+- Sous Linux : **`UsePicklock`** au début de l’async (verrou non transférable entre threads).
+- Toujours envoyer une réponse **opcode 13** au client si aucune n’a été envoyée (`boPutPlayerReplySent`) — y compris codes erreur (position invalide, monde corrompu).
+- Logs : début/fin `load_character`, code retour, envoi 13 forcé.
+
+#### `T4C Server/Character.cpp`
+
+**`load_character`**
+
+- Linux : **`reset_character()`** uniquement si `boLoaded` déjà vrai ; sinon skip + log (premier login perso vide).
+- Windows : comportement inchangé (`reset_character()` systématique).
+
+**`LoadCharacter` (sous `#if defined(__linux__)`)**
+
+- Pendant chargement stats depuis ODBC : **`SetMaxHP(dwTemp, false)`** pour les mises à jour intermédiaires ; notification réseau seulement quand approprié.
+- Après inventaire joueur (`PlayerItems`) :
+  - **Pas** de `packet_equiped()` + `SendPlayerMessage` ni `SetGold()` réseau (équipement/stats arrivent dans la réponse 13).
+  - Assignation locale `gold = dwGold` sous `statsLock`.
+  - **Chemin court** : `ODBC Unlock` + `return 0` — skip chargement coffre, skills, sorts, effets (tables vides suffisantes pour tests ; à réactiver pour parité complète).
+- Logs `stderr` traçant chaque phase : inventaire terminé, or assigné, `FIN OK (chemin court)`.
+
+**`reset_character`**
+
+- `SetMaxHP(1, false)` — placeholder mémoire sans paquet HP parasite.
+
+#### `T4C Server/Character.h`
+
+- `SetMaxHP(DWORD newMax, bool boNotify = true)` — second paramètre pour supprimer l’envoi réseau pendant le load.
+
+#### `T4C Server/ComPacketHeader.h`
+
+- Aucun changement fonctionnel (normalisation encodage commentaires uniquement).
+
+---
+
+### Variables d’environnement / données (inchangées par ce commit)
+
+Les skips WDA du matin (`T4C_SKIP_GROUND_OBJECTS`, `T4C_SKIP_CREATURES`) restent documentés dans l’entrée ci-dessous ; ce commit ne les modifie pas.
+
+### Prochaines étapes serveur (hors ce commit)
+
+1. Corriger **`RQFUNC_FromPreInGameToInGame` (46)** : ne pas relancer un chargement/sync lourd si le perso est déjà `boPreInGame` après l’async 13.
+2. Réactiver chargement coffre/skills sur Linux une fois ODBC stable, ou garder le chemin court jusqu’à parité validée.
+3. Retirer progressivement les contournements dev WDA quand les WDA LP64 / `lCharges` DWORD seront en production.
+
+---
+
 ## 2026-05-18 — Boot WDA : traces, skips dev, seek créatures, fix `WorldMap`
 
 ### Contexte (problème initial)

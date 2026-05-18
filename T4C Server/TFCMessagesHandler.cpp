@@ -1145,6 +1145,22 @@ void AsyncRQFUNC_PutPlayerInGame
 	LPRQSTRUCT_PUT_PLAYER_IN_GAME lpParams = (LPRQSTRUCT_PUT_PLAYER_IN_GAME)lpData;
 	Players *user = lpParams->sParams.user;
 
+#if defined(__linux__)
+	/* Le handler UDP prend le picklock puis enfile l'async : il faut reprendre le verrou
+	 * ici (meme thread que le Unlock) — std::mutex n'est pas transferable entre threads. */
+	if( !user->UsePicklock( __FILE__, __LINE__ ) ){
+		TFCPacket busyReply;
+		busyReply << (RQ_SIZE)RQ_PutPlayerInGame;
+		busyReply << (char)7;
+		user->self->SendPlayerMessage( busyReply );
+		fprintf( stderr,
+		         "[PutPlayerInGame] async: UsePicklock refuse pour « %s »\n",
+		         (LPCTSTR)lpParams->csName );
+		delete lpParams;
+		return;
+	}
+#endif
+
     // Makes sure the user always unlocks its UseLock wherever this function exits.
     struct AutoExit{
         AutoExit( Players *theUser, LPRQSTRUCT_PUT_PLAYER_IN_GAME theParams ) 
@@ -1168,12 +1184,16 @@ void AsyncRQFUNC_PutPlayerInGame
     if( user->in_game ){
         return;
     }
-    
+
+    fprintf( stderr, "[PutPlayerInGame] async load « %s » compte %s\n", (LPCTSTR)lpParams->csName,
+             (LPCTSTR)user->GetAccount() );
+
     //user->Lock();	
     _LOG_DEBUG
         LOG_DEBUG_LVL1,
         "Waiting for character %s memaddr( 0x%x ) to save.",
-        lpParams->csName
+        (LPCTSTR)lpParams->csName,
+        user->self
     LOG_
 	
 	user->self->WaitForSaving();
@@ -1188,10 +1208,12 @@ void AsyncRQFUNC_PutPlayerInGame
             _LOG_DEBUG
                 LOG_DEBUG_LVL1,
                 "Loading character %s data.",
-                lpParams->csName
+                (LPCTSTR)lpParams->csName
             LOG_
             // Load player.
             receive = user->self->load_character( lpParams->csName, user->GetAccount(), 0);
+            fprintf( stderr, "[PutPlayerInGame] load_character(%s) -> code %d\n",
+                     (LPCTSTR)lpParams->csName, static_cast<int>(receive) );
             _LOG_DEBUG
                 LOG_DEBUG_LVL1,
                 "Finished loading."
@@ -1203,6 +1225,8 @@ void AsyncRQFUNC_PutPlayerInGame
 	sending << (char)receive;
 	WorldPos player_pos;
 	player_pos = user->self->GetWL();
+
+	bool boPutPlayerReplySent = false;
 
 	if(player_pos.world < TFCMAIN::GetMaxWorlds())
 	{
@@ -1268,6 +1292,7 @@ void AsyncRQFUNC_PutPlayerInGame
 				
 
 				user->self->SendPlayerMessage( sending );
+				boPutPlayerReplySent = true;
 
                 sending.Destroy();                
 
@@ -1304,14 +1329,47 @@ void AsyncRQFUNC_PutPlayerInGame
 				//user->binded_object->SetID(user->playerID);
 				//user->binded_object->SetMaster((void *)user->self);
 			}
-		}else sending << (char)1;	
+		}else{
+			/* Position invalide alors que load_character a reussi — remplacer le code 0 par 1. */
+			if( receive == 0 ){
+				sending.Destroy();
+				sending << (RQ_SIZE)RQ_PutPlayerInGame;
+				receive = 1;
+				sending << (char)receive;
+				_LOG_DEBUG
+					LOG_DEBUG_LVL1,
+					"PutPlayerInGame: position invalide (%u,%u monde %u) pour %s.",
+					player_pos.X, player_pos.Y, player_pos.world, (LPCTSTR)lpParams->csName
+				LOG_
+			}
+		}
 	}else{
 		TRACE(_T("Player file corrupted"));
-		sending << (char)9; 
+		if( receive == 0 ){
+			receive = 9;
+		}
+		sending.Destroy();
+		sending << (RQ_SIZE)RQ_PutPlayerInGame;
+		sending << (char)receive;
 		user->in_game = FALSE;
 		user->self->reset_character();
+		_LOG_DEBUG
+			LOG_DEBUG_LVL1,
+			"PutPlayerInGame: monde %u invalide (max %u) pour %s.",
+			player_pos.world, TFCMAIN::GetMaxWorlds(), (LPCTSTR)lpParams->csName
+		LOG_
+	}
 
-		//user->self->SendPlayerMessage( sending );
+	/* Le client Linux attend toujours un opcode 13 (court si erreur). */
+	if( !boPutPlayerReplySent ){
+		user->self->SendPlayerMessage( sending );
+		fprintf( stderr, "[PutPlayerInGame] opcode 13 envoye code=%u pour %s\n",
+		         (unsigned)static_cast<unsigned char>(receive), (LPCTSTR)lpParams->csName );
+		_LOG_DEBUG
+			LOG_DEBUG_LVL1,
+			"PutPlayerInGame: reponse opcode 13 envoyee (code erreur %u) pour %s.",
+			(unsigned char)receive, (LPCTSTR)lpParams->csName
+		LOG_
 	}
 
     {
@@ -1437,10 +1495,15 @@ void TFCMessagesHandler::RQFUNC_PutPlayerInGame
 				lpParams->sParams.msg = NULL;
 				lpParams->csName = name;
 							
-				// Call asynchronous loading function
-				//AsyncRQFUNC_PutPlayerInGame(lpParams);
+				/* Ne jamais charger en synchrone sur le thread UDPAnalyseThread : bloque les
+				 * keepalive et provoque « Connexion has timed out » + DEADLOCK detector. */
 				AsyncFuncQueue::GetMainQueue()->Call( AsyncRQFUNC_PutPlayerInGame, lpParams );
-				//user->UseUnlock(__FILE__, __LINE__);
+				fprintf( stderr, "[PutPlayerInGame] charge async en file pour « %s »\n",
+				         (LPCTSTR)name );
+#if defined(__linux__)
+				/* Relacher tout de suite : l'async reprend le picklock sur son thread. */
+				user->UseUnlock( __FILE__, __LINE__ );
+#endif
 
 			}catch(TFCPacketException *e){
 				LOG_PACKET_ERROR( "RQ_PutPlayerInGame" );
@@ -1448,6 +1511,14 @@ void TFCMessagesHandler::RQFUNC_PutPlayerInGame
 				delete e;
 			}
 
+		}else{
+			fprintf( stderr,
+			         "[PutPlayerInGame] UsePicklock refuse (compte %s deja en chargement?)\n",
+			         (LPCTSTR)user->GetAccount() );
+			TFCPacket busyReply;
+			busyReply << (RQ_SIZE)RQ_PutPlayerInGame;
+			busyReply << (char)7;
+			user->self->SendPlayerMessage( busyReply );
 		}
 	}else
 	// If user is between states, then and then only send the stats.
@@ -1647,6 +1718,13 @@ void AsyncRQFUNC_CreatePlayer
 	Players *user = lpStruct->sParams.user;	
     char receive;
 
+#if defined(__linux__)
+	if( !user->UsePicklock( __FILE__, __LINE__ ) ){
+		delete lpStruct;
+		return;
+	}
+#endif
+
 	// Wait for saving.
     user->self->WaitForSaving();
 	
@@ -1734,6 +1812,9 @@ void TFCMessagesHandler::RQFUNC_CreatePlayer
 
 				// Call loading function asynchronously to avoid loading jams.
 				AsyncFuncQueue::GetMainQueue()->Call( AsyncRQFUNC_CreatePlayer, lpStruct );
+#if defined(__linux__)
+				user->UseUnlock( __FILE__, __LINE__ );
+#endif
 						
 			}catch(TFCPacketException *e){
 				user->UseUnlock(__FILE__, __LINE__);

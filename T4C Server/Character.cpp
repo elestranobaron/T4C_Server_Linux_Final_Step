@@ -715,12 +715,30 @@ bool Character::IsNameValid
 char Character::load_character(CString new_name, CString new_account, LPBYTE lpbAnswers )
 {
     
+#if defined(__linux__)
+	/* Premier chargement apres login : perso vide, reset_character() peut bloquer
+	 * (verrous / DeleteUnit) sur le port Linux. */
+	if( boLoaded ){
 		_LOG_DEBUG
 			LOG_DEBUG_HIGH,
 			"Reset_character %s.",
-			new_name
+			(LPCTSTR)new_name
 		LOG_
+		reset_character();
+		fprintf( stderr, "[load_character] reset_character() OK pour %s\n", (LPCTSTR)new_name );
+	}else{
+		fprintf( stderr,
+		         "[load_character] reset_character() skipped (not loaded yet) pour %s\n",
+		         (LPCTSTR)new_name );
+	}
+#else
+	_LOG_DEBUG
+		LOG_DEBUG_HIGH,
+		"Reset_character %s.",
+		(LPCTSTR)new_name
+	LOG_
 	reset_character();
+#endif
     
     CString full_directory;
 
@@ -1608,6 +1626,9 @@ int Character::LoadCharacter
 
 	// Lock the ODBC connection
 	ODBCCharRead.Lock();
+#if defined(__linux__)
+	fprintf( stderr, "[LoadCharacter] ODBC lock OK, SELECT %s\n", (LPCTSTR)csName );
+#endif
 	ODBCCharRead.SendRequest( (LPCTSTR)csQuery );
     _LOG_DEBUG
         LOG_DEBUG_HIGH,
@@ -1660,9 +1681,17 @@ int Character::LoadCharacter
 			FETCH_DWORD( DB_CurrentHP );
 				SetHP( dwTemp, false );
 			FETCH_DWORD( DB_MaxHP );
+#if defined(__linux__)
+				SetMaxHP( dwTemp, false );
+#else
 				SetMaxHP( dwTemp );
+#endif
 			FETCH_WORD( DB_CurrentMana );
+#if defined(__linux__)
+				SetMana( wTemp, FALSE );
+#else
 				SetMana( wTemp );
+#endif
 			FETCH_WORD( DB_MaxMana );
 				SetMaxMana( wTemp );
 //	FETCH_WORD( DB_CurrentFaith );
@@ -1682,7 +1711,11 @@ int Character::LoadCharacter
 				SetWIS( wTemp );
 
 			FETCH_WORD( DB_Level );
+#if defined(__linux__)
+				Unit::SetLevel( wTemp );
+#else
 				SetLevel( wTemp );
+#endif
 
 			FETCH_WORD( DB_AttackSkill );
 				SetATTACK( wTemp );
@@ -1847,8 +1880,16 @@ int Character::LoadCharacter
 
 				csQuery.Format( "SELECT ObjID, EquipPos, ObjType, Qty FROM PlayerItems WHERE OwnerID=%u", GetID() );
 
+#if defined(__linux__)
+				fprintf( stderr, "[LoadCharacter] PlayerItems SQL OwnerID=%u pour %s\n",
+				         GetID(), (LPCTSTR)csName );
+#endif
 				if( ODBCCharRead.SendRequest( (LPCTSTR)csQuery ) )
 				{
+#if defined(__linux__)
+					fprintf( stderr, "[LoadCharacter] PlayerItems SendRequest OK\n" );
+#endif
+					unsigned nPlayerItems = 0;
 					// Scroll through all fetched records.
 					while( ODBCCharRead.Fetch() )
 					{						
@@ -1865,11 +1906,16 @@ int Character::LoadCharacter
 
 						// Add them to the loaded items list.
 						tlLoadedItems.AddToTail( lpLoadedItem );
+						++nPlayerItems;
 					}
 
 					// close the previous fetch operation
 					ODBCCharRead.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
 
+#if defined(__linux__)
+					fprintf( stderr, "[LoadCharacter] PlayerItems: %u ligne(s), instanciation...\n",
+					         nPlayerItems );
+#endif
                     int w;
                     for( w = 0; w < EQUIP_POSITIONS; w++ )
 					{
@@ -1973,15 +2019,52 @@ int Character::LoadCharacter
                         //tlLoadedItems.Remove();
 					}
 				}
+#if defined(__linux__)
+				else{
+					fprintf( stderr, "[LoadCharacter] PlayerItems SendRequest ECHEC\n" );
+				}
+#endif
 				// close previous fetch operation.
 				ODBCCharRead.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
 			}
+#if defined(__linux__)
+			fprintf( stderr, "[LoadCharacter] inventaire joueur termine pour %s\n", (LPCTSTR)csName );
+			fflush( stderr );
+			/* Pas de SendPlayerMessage / SetGold ici : ODBC verrouille + SynchronizeGold peut
+			 * bloquer ; equip/stats arrivent dans la reponse opcode 13. */
+			{
+				CAutoLock autoStatsLock( &statsLock );
+				gold = static_cast<int>( dwGold );
+			}
+			fprintf( stderr, "[LoadCharacter] or assigne (%d), fin chargement etendu (linux)\n", gold );
+			fflush( stderr );
+			/* Coffre / skills / sorts : requetes ODBC ou LearnSkill peuvent bloquer sur le port
+			 * Linux ; les tables vides suffisent pour entrer en jeu. */
+			ODBCCharRead.CloseCursor();
+			ODBCCharRead.Unlock();
+			fprintf( stderr, "[LoadCharacter] FIN OK (chemin court) pour %s\n", (LPCTSTR)csName );
+			fflush( stderr );
+			{
+				BoostFormula bfChestEncumbrance;
+				BOOL boFormulaHaveErrors =
+					!( bfChestEncumbrance.SetFormula( theApp.csChestEncumbranceBoostFormula ) );
+				chest->SetMaxWeight( bfChestEncumbrance.GetBoost( this ) );
+				if( boFormulaHaveErrors ){
+					_LOG_DEBUG
+						LOG_CRIT_ERRORS,
+						"Chest encumbrance formula have errors in it. Chest will have 0 encumbrance. Triggered while loading player %s (acct %s)",
+						(LPCTSTR)csName,
+						(LPCTSTR)lpszUserName
+					LOG_
+				}
+			}
+			return 0;
+#else
             TFCPacket sending;
             packet_equiped( sending );
             SendPlayerMessage( sending );
-            
-            // Now that all 'gold' items have been loaded, set the true gold.
             SetGold( dwGold, false );
+#endif
 			
 
 			//////////////////////////////////////////////////////////////////////////////////////////			
@@ -2013,7 +2096,14 @@ int Character::LoadCharacter
 
 				csQuery.Format( "SELECT ObjID, 0, ObjType, Qty FROM ChestItems WHERE OwnerID=%u", GetID() );
 
+#if defined(__linux__)
+				fprintf( stderr, "[LoadCharacter] ChestItems SQL OwnerID=%u pour %s\n",
+				         GetID(), (LPCTSTR)csName );
+#endif
 				if( ODBCCharRead.SendRequest( (LPCTSTR)csQuery ) ){
+#if defined(__linux__)
+					fprintf( stderr, "[LoadCharacter] ChestItems SendRequest OK\n" );
+#endif
 					// Scroll through all fetched records.
 					while( ODBCCharRead.Fetch() ){						
 
@@ -2096,6 +2186,9 @@ int Character::LoadCharacter
 				// close previous fetch operation.
 				ODBCCharRead.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
 			}
+#if defined(__linux__)
+			fprintf( stderr, "[LoadCharacter] coffre joueur termine pour %s\n", (LPCTSTR)csName );
+#endif
 			
 			//////////////////////////////////////////////////////////////////////////////////
 			// Load user skills
@@ -2118,6 +2211,9 @@ int Character::LoadCharacter
                     "Fetching skills"
                 LOG_
 
+#if defined(__linux__)
+				fprintf( stderr, "[LoadCharacter] PlayerSkills SQL pour %s\n", (LPCTSTR)csName );
+#endif
 				if( ODBCCharRead.SendRequest( (LPCTSTR)csQuery ) )
 				{
 					
@@ -2273,6 +2369,9 @@ int Character::LoadCharacter
 			ODBCCharRead.CloseCursor();//BLBLBL 11/12/2010 : Cancel=>Close
 			ODBCCharRead.Unlock();
 
+#if defined(__linux__)
+			fprintf( stderr, "[LoadCharacter] FIN OK pour %s (return 0)\n", (LPCTSTR)csName );
+#endif
 			BoostFormula bfChestEncumbrance;
 			BOOL boFormulaHaveErrors = !(bfChestEncumbrance.SetFormula( theApp.csChestEncumbranceBoostFormula ));
 			chest->SetMaxWeight( bfChestEncumbrance.GetBoost( this ) );
@@ -5876,7 +5975,7 @@ void Character::reset_character(){
 
 
 	SetHP(0, false);
-	SetMaxHP(1);
+	SetMaxHP(1, false);
 	SetMana(0);
 	SetMaxMana(0);
 	
@@ -6059,14 +6158,16 @@ DWORD Character::GetTrueMaxHP(){
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 // This functions returns the max HP of a player
-void Character::SetMaxHP(DWORD newHP){
+void Character::SetMaxHP(DWORD newHP, bool boNotify){
 	MaxHP = newHP;
 
-    TFCPacket sending;
-    sending << (RQ_SIZE)RQ_HPchanged;
-    sending << (long)GetHP();
-    sending << (long)GetMaxHP();
-    SendPlayerMessage( sending );
+	if( boNotify ){
+		TFCPacket sending;
+		sending << (RQ_SIZE)RQ_HPchanged;
+		sending << (long)GetHP();
+		sending << (long)GetMaxHP();
+		SendPlayerMessage( sending );
+	}
 }
 /////////////////////////////////////////////////////////////////////////////////////////
 // This functions returns the max HP of a player
@@ -7059,7 +7160,18 @@ void Character::WaitForSaving( void )
 // 
 //////////////////////////////////////////////////////////////////////////////////////////
 {
-	WaitForSingleObject( hCreationEvent, INFINITE );	
+	const DWORD kWaitMs = 30000;
+	const DWORD wr = WaitForSingleObject( hCreationEvent, kWaitMs );
+	if( wr == WAIT_TIMEOUT ){
+		fprintf( stderr,
+		         "[T4C] WaitForSaving timeout (%us) for %s — continuation forcee.\n",
+		         kWaitMs / 1000, (LPCTSTR)GetTrueName() );
+		_LOG_DEBUG
+			LOG_WARNING,
+			"WaitForSaving timeout for %s.",
+			(LPCTSTR)GetTrueName()
+		LOG_
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
