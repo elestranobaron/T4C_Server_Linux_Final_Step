@@ -17,7 +17,7 @@ Le client SDL3 atteignait auth + liste persos, mais l’entrée en jeu (**opcode
 - `packet_equiped()` + `SetGold()` / `SynchronizeGold` pendant verrou ODBC → blocage après inventaire.
 - Requêtes coffre / skills / sorts → blocages ODBC supplémentaires sur le port Linux.
 
-**Résultat attendu après ce patch :** le client reçoit **opcode 13** avec position valide ; envoi 46+60 côté client. **Non résolu dans ce commit :** handler **opcode 46** peut encore rappeler `PutPlayerInGame()` / `create_world_unit` sur le thread UDP si `boPreInGame` — timeout possible après 13 OK.
+**Résultat après ce patch :** le client reçoit **opcode 13** avec position valide. Le blocage **opcode 46** est corrigé dans l’entrée **2026-05-19 (mutex + async 46)** ci-dessous.
 
 ---
 
@@ -75,9 +75,63 @@ Les skips WDA du matin (`T4C_SKIP_GROUND_OBJECTS`, `T4C_SKIP_CREATURES`) restent
 
 ### Prochaines étapes serveur (hors ce commit)
 
-1. Corriger **`RQFUNC_FromPreInGameToInGame` (46)** : ne pas relancer un chargement/sync lourd si le perso est déjà `boPreInGame` après l’async 13.
+1. ~~Corriger **opcode 46**~~ — fait (2026-05-19, mutex récursif + async).
 2. Réactiver chargement coffre/skills sur Linux une fois ODBC stable, ou garder le chemin court jusqu’à parité validée.
 3. Retirer progressivement les contournements dev WDA quand les WDA LP64 / `lCharges` DWORD seront en production.
+
+---
+
+## 2026-05-19 — Opcode 46 : fin du deadlock `PutPlayerInGame` (validé client `code=0`)
+
+### Contexte
+
+Après **13** OK et envoi client **46**+**60**, le serveur loguait `Finish: debut PutPlayerInGame…` puis plus rien ; `[DEADLOCK] T5_UDPAnalyseThread` côté serveur, aucun paquet **46** reçu par le client.
+
+**Causes :**
+
+1. **`WorldMap::Lock()`** non récursif : `create_world_unit()` verrouille puis `deposit_unit()` re-verrouille → blocage infini.
+2. **46** traité sur le thread UDP avec picklock tenu pendant `PutPlayerInGame` lourd.
+
+**Résultat validé (2026-05-19 06:10)** : client log `[PHASE] Reponse RQ_FromPreInGameToInGame (46) code=0` ; serveur envoie **43**, **60**, sync position ; plus de stall UDP.
+
+### Fichiers modifiés
+
+#### `T4C Server/Lock.h`
+
+- Sous **`#if defined(__linux__)`** : `std::recursive_mutex` à la place de `std::mutex` pour `CLock` (locks imbriqués carte).
+
+#### `T4C Server/TFCMessagesHandler.cpp`
+
+- Linux : **46** toujours en file async (`AsyncRQFUNC_FromPreInGameToInGame`), plus de chemin sync sur `UDPAnalyseThread`.
+- **`ReleasePicklockEarly()`** dans l’async **46** avant `FinishFromPreInGameToInGame` (comme async **13**).
+- Logs `stderr` : enqueue async, picklock relâché, `Finish: debut PutPlayerInGame…`.
+
+#### `T4C Server/Character.cpp`
+
+- Logs avant/après `create_world_unit` dans `PutPlayerInGame` (diagnostic boot monde).
+
+### Client associé (repo `finalstep/client`)
+
+- Envoie **46**/**60** seulement après **opcode 18** (pas immédiatement après **13**).
+
+---
+
+## 2026-05-19 — Opcode 46 : réponse réseau toujours envoyée (vrai code d’erreur)
+
+### Contexte
+
+Le client envoyait **46** trop tôt (avant `boPreInGame` / avant opcode **18**). Le garde Vircom `if (wlWorld != NULL)` avant `SendPlayerMessage` du **46** est conservé : sans monde WDA valide, pas d’acquittement 46 (log stderr explicite). Les correctifs utiles sont le timing client (46 après 18), `boPreInGame` avant envoi du 13, et des WDA LP64 qui passent les tests.
+
+### Fichiers modifiés
+
+#### `T4C Server/TFCMessagesHandler.cpp`
+
+- **`FinishFromPreInGameToInGame`** : envoi systématique de la réponse opcode **46** avec le `result` de `PutPlayerInGame` (même si `wlWorld == NULL` pour `VerifyInviewHives`) + log `stderr`.
+- **`AsyncRQFUNC_FromPreInGameToInGame`** : si état incohérent (`!boPreInGame` ou déjà `in_game`), renvoi **46** code `1` au lieu de quitter sans paquet.
+
+### Client associé (repo `finalstep/client`)
+
+- Log phase : opcode **18** (ViewBackpack) documenté comme suite du **13**, pas comme réponse au **46**.
 
 ---
 
@@ -255,13 +309,3 @@ export T4C_SKIP_CREATURES=1
 ### Variables d'environnement
 …
 ```
-
-## [2026-05-19] - Routines Asynchrones (Opcode 46) & Correctifs Moteur de Spawn
-### Modifié
-- **Asynchronisme de l'Opcode 46** : Migration de `FinishFromPreInGameToInGame` et `AsyncRQFUNC_FromPreInGameToInGame` sur la file asynchrone globale. Suppression de l'utilisation abusive des verrous `UsePicklock` sur le thread de réception UDP principal pour éradiquer les timeouts intempestifs et les faux codes d'erreur `1 (busy)`.
-
-### Corrigé
-- **Boucle de Retry d'Unité (`PutPlayerInGame`)** : Correction d'une régression historique du code Vircom d'origine où la boucle de repli pour lier une unité sur l'une des 8 cases adjacentes ne tournait jamais. Remplacement du prédicat logique par une condition stricte `while (i < 9 && !binded_unit)`.
-
-### Notes Techniques & Limites Connues
-- **Comportement de l'Opcode 46** : Identification d'un comportement restrictif provoquant l'absence d'acquittement réseau vers le client si `GetWorld(0)` est `NULL` (WDA vide ou non chargé), dû à la condition d'envoi stricte `if (wlWorld != NULL)`. Le joueur reste temporairement bloqué en état logique `boPreInGame` sur le serveur malgré l'affichage visuel local de la carte par le client.

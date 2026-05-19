@@ -76,7 +76,12 @@ private:
     // Entry of lock in the lock table.
     DWORD lockEntry;
 
+#if defined(__linux__)
+    /* create_world_unit() tient deja WorldMap::Lock avant deposit_unit() — std::mutex non recursif = stall 46. */
+    std::recursive_mutex csThreadLock;
+#else
     std::mutex csThreadLock;
+#endif
 
 };
 

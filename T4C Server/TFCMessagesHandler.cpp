@@ -1161,23 +1161,26 @@ void AsyncRQFUNC_PutPlayerInGame
 	}
 #endif
 
-    // Makes sure the user always unlocks its UseLock wherever this function exits.
     struct AutoExit{
-        AutoExit( Players *theUser, LPRQSTRUCT_PUT_PLAYER_IN_GAME theParams ) 
-            : user( theUser ), lpParams( theParams ){
+        AutoExit( Players *theUser, LPRQSTRUCT_PUT_PLAYER_IN_GAME theParams )
+            : user( theUser ), lpParams( theParams ), boHoldsPicklock( true ) {}
+        void ReleasePicklockEarly(){
+            if( boHoldsPicklock ){
+                user->UseUnlock( __FILE__, __LINE__ );
+                boHoldsPicklock = false;
+            }
         }
-        // Auto cleans.
         ~AutoExit(){
-            // Unlock user's UseLock
-            user->UseUnlock(__FILE__, __LINE__);
-            // Delete the parameters.
+            if( boHoldsPicklock ){
+                user->UseUnlock( __FILE__, __LINE__ );
+            }
             delete lpParams;
         }
     private:
         Players *user;
         LPRQSTRUCT_PUT_PLAYER_IN_GAME lpParams;
-    }// Auto object. 
-     cAutoExit( user, lpParams );
+        bool boHoldsPicklock;
+    } cAutoExit( user, lpParams );
 
 
     // If user is already in_game, then its CERTAIN that the user has knowledge of being in_game.
@@ -1233,7 +1236,11 @@ void AsyncRQFUNC_PutPlayerInGame
 		WorldMap *world = TFCMAIN::GetWorld(player_pos.world);
 		if( world != NULL && world->IsValidPosition(player_pos) ){
 			if(receive == 0)
-            {	
+            {
+				/* Avant tout envoi reseau (13, 18…) : le client Linux envoie 46 des reception du 13. */
+			    user->boPreInGame = TRUE;
+                user->in_game = FALSE;
+
 				TRACE(_T("Opened %s for %s\r\n"), (LPCTSTR)lpParams->csName, (LPCTSTR)user->GetAccount());
 				//user->playerID = CurrentGlobalID++;
 				//sending << (long)user->playerID;			
@@ -1306,19 +1313,27 @@ void AsyncRQFUNC_PutPlayerInGame
 				TRACE(_T("\r\nPlayer is located at (%u, %u) in world #%u\r\n"), player_pos.X, player_pos.Y, player_pos.world);
 
 				TemplateList <TFCPacket> theList;
-									
-			    user->boPreInGame = TRUE;
-                user->in_game = FALSE;
 
                 user->BeginSession();
 
+#if defined(__linux__)
+                /* Le client envoie 46+60 tout de suite : ne pas garder le picklock sur
+                 * packet_inview (l'async 46 attend le meme verrou → stall + DEADLOCK UDP). */
+                cAutoExit.ReleasePicklockEarly();
+                fprintf( stderr,
+                         "[PutPlayerInGame] picklock relache apres 13/18 pour %s (46/60)\n",
+                         (LPCTSTR)lpParams->csName );
+                user->SetNextSave();
+                /* Finir l'async 13 ici : la file AsyncFuncQueue ne doit pas bloquer le 46. */
+                return;
+#else
 				int read;
 				sending.Destroy();
-                read = world->packet_inview_units( player_pos, sending, 40, user->self );//BLBLBL _DEFAULT_RANGE est trop petit pour certains endroits ? l'oracle o? les portes disparaissent sinon., j'essaye 40
-                if( read != 0 )
-				{
+                read = world->packet_inview_units( player_pos, sending, 40, user->self );
+                if( read != 0 ){
                     user->self->SendPlayerMessage( sending );
                 }
+#endif
 
                 user->SetNextSave(); //BLBLB d'apr?s la fonction, la premi?re sauvegarde du joueur interviens vers 7 ? 10 minutes, puis ce sera toutes les 30 secondes apparement ?
 
@@ -1587,6 +1602,12 @@ static void FinishFromPreInGameToInGame
 )
 //////////////////////////////////////////////////////////////////////////////////////////
 {
+    fprintf( stderr,
+             "[FromPreInGameToInGame] Finish: debut PutPlayerInGame pour %s (monde %u)…\n",
+             (LPCTSTR)user->GetAccount(),
+             user->self->GetWL().world );
+    fflush( stderr );
+
     char result = user->self->PutPlayerInGame();
 
     fprintf( stderr, "[FromPreInGameToInGame] PutPlayerInGame -> %d pour %s pos %u,%u w%u\n",
@@ -1633,7 +1654,21 @@ static void FinishFromPreInGameToInGame
         }
     }
 
-    WorldMap *wlWorld = TFCMAIN::GetWorld( user->self->GetWL().world );
+    const unsigned wIndex = user->self->GetWL().world;
+    const WORD maxWorlds = TFCMAIN::GetMaxWorlds();
+    WorldMap *wlWorld = TFCMAIN::GetWorld( static_cast<unsigned short>( wIndex ) );
+
+    fprintf( stderr,
+             "[FromPreInGameToInGame] DEBUG wlWorld compte=%s monde=%u GetMaxWorlds=%u "
+             "wlWorld=%p (wlWorld!=NULL => %d) PutPlayerInGame=%d\n",
+             (LPCTSTR)user->GetAccount(),
+             wIndex,
+             static_cast<unsigned>( maxWorlds ),
+             static_cast<void *>( wlWorld ),
+             wlWorld != NULL ? 1 : 0,
+             static_cast<int>( result ) );
+    fflush( stderr );
+
     if( wlWorld ){
         if( !( user->GetGodFlags() & GOD_NO_MONSTERS ) ){
             wlWorld->VerifyInviewHives( user->self->GetWL() );
@@ -1643,9 +1678,28 @@ static void FinishFromPreInGameToInGame
     sending.Destroy();
     sending << (RQ_SIZE)RQ_FromPreInGameToInGame;
     sending << (char)result;
+    /* Comportement Vircom : pas de 46 reseau si le monde WDA n'existe pas — corriger WDA/GetWorld, pas mentir au client. */
     if( wlWorld != NULL ){
+        fprintf( stderr,
+                 "[FromPreInGameToInGame] DEBUG envoi 46 (wlWorld!=NULL) code=%d pour %s\n",
+                 static_cast<int>( static_cast<unsigned char>( result ) ),
+                 (LPCTSTR)user->GetAccount() );
+        fflush( stderr );
         user->self->SendPlayerMessage( sending );
+        fprintf( stderr,
+                 "[FromPreInGameToInGame] opcode 46 envoye code=%d pour %s\n",
+                 static_cast<int>(static_cast<unsigned char>(result)),
+                 (LPCTSTR)user->GetAccount() );
+    } else {
+        fprintf( stderr,
+                 "[FromPreInGameToInGame] opcode 46 NON envoye (GetWorld(%u) NULL, maxWorlds=%u, "
+                 "PutPlayerInGame=%d) pour %s\n",
+                 wIndex,
+                 static_cast<unsigned>( maxWorlds ),
+                 static_cast<int>(result),
+                 (LPCTSTR)user->GetAccount() );
     }
+    fflush( stderr );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -1675,21 +1729,47 @@ void AsyncRQFUNC_FromPreInGameToInGame
 
     struct AutoExit {
         AutoExit( Players *theUser, LPRQSTRUCT_FROM_PREGAME_TO_INGAME theParams )
-            : user( theUser ), lpParams( theParams ) {}
+            : user( theUser ), lpParams( theParams ), boHoldsPicklock( true ) {}
+        void ReleasePicklockEarly() {
+            if( boHoldsPicklock ) {
+                user->UseUnlock( __FILE__, __LINE__ );
+                boHoldsPicklock = false;
+            }
+        }
         ~AutoExit() {
-            user->UseUnlock( __FILE__, __LINE__ );
+            if( boHoldsPicklock ) {
+                user->UseUnlock( __FILE__, __LINE__ );
+            }
             delete lpParams;
         }
         Players *user;
         LPRQSTRUCT_FROM_PREGAME_TO_INGAME lpParams;
+        bool boHoldsPicklock;
     } cAutoExit( user, lpParams );
 
     if( !user->boPreInGame || user->in_game ){
+        TFCPacket noop;
+        noop << (RQ_SIZE)RQ_FromPreInGameToInGame;
+        noop << (char)1;
+        user->self->SendPlayerMessage( noop );
+        fprintf( stderr,
+                 "[FromPreInGameToInGame] async refuse (preInGame=%d in_game=%d) pour %s\n",
+                 user->boPreInGame ? 1 : 0, user->in_game ? 1 : 0,
+                 (LPCTSTR)user->GetAccount() );
         return;
     }
 
     fprintf( stderr, "[FromPreInGameToInGame] async PutPlayerInGame pour %s\n",
              (LPCTSTR)user->GetAccount() );
+    fflush( stderr );
+
+#if defined(__linux__)
+    cAutoExit.ReleasePicklockEarly();
+    fprintf( stderr,
+             "[FromPreInGameToInGame] picklock relache avant PutPlayerInGame (46) pour %s\n",
+             (LPCTSTR)user->GetAccount() );
+    fflush( stderr );
+#endif
 
     TFCPacket sending;
     FinishFromPreInGameToInGame( user, sending );
@@ -1719,20 +1799,25 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
     
     TFCPacket sending;
 
+    fprintf( stderr,
+             "[FromPreInGameToInGame] UDP req %s (preInGame=%d in_game=%d registred=%d)\n",
+             (LPCTSTR)user->GetAccount(),
+             user->boPreInGame ? 1 : 0, user->in_game ? 1 : 0, user->registred ? 1 : 0 );
+
 	if( user->boPreInGame && !user->in_game ){
 
 #if defined(__linux__)
-		/* Ne pas prendre UsePicklock sur le thread UDP : l'async 13 peut encore
-		 * tenir le verrou (backpack / inview) alors que le client envoie deja 46.
-		 * L'async 46 reprend le picklock quand la file lui tourne. */
+		/* PutPlayerInGame() peut bloquer longtemps (create_world_unit, locks) :
+		 * ne jamais l'appeler sur T5_UDPAnalyseThread — sinon stall + pas de reponse 46. */
 		LPRQSTRUCT_FROM_PREGAME_TO_INGAME lpParams = new RQSTRUCT_FROM_PREGAME_TO_INGAME;
 		lpParams->sParams.user = user;
 		lpParams->sParams.rqRequestID = rqRequestID;
 		lpParams->sParams.msg = NULL;
 		AsyncFuncQueue::GetMainQueue()->Call( AsyncRQFUNC_FromPreInGameToInGame, lpParams );
 		fprintf( stderr,
-		         "[FromPreInGameToInGame] charge async pour %s (sans picklock UDP)\n",
+		         "[FromPreInGameToInGame] enqueue async (Linux) pour %s\n",
 		         (LPCTSTR)user->GetAccount() );
+		fflush( stderr );
 #else
 		FinishFromPreInGameToInGame( user, sending );
 #endif
@@ -1741,7 +1826,21 @@ void TFCMessagesHandler::RQFUNC_FromPreInGameToInGame
 
 		sending << (RQ_SIZE)RQ_FromPreInGameToInGame;
 		sending << (char)1; // user already in game
-		user->self->SendPlayerMessage( sending );		
+		user->self->SendPlayerMessage( sending );
+        {
+            const unsigned wIndex = user->self->GetWL().world;
+            const WORD maxWorlds = TFCMAIN::GetMaxWorlds();
+            WorldMap *wlWorld = TFCMAIN::GetWorld( static_cast<unsigned short>( wIndex ) );
+            fprintf( stderr,
+                     "[FromPreInGameToInGame] DEBUG branche deja-en-jeu compte=%s monde=%u "
+                     "GetMaxWorlds=%u wlWorld=%p (wlWorld!=NULL => %d)\n",
+                     (LPCTSTR)user->GetAccount(),
+                     wIndex,
+                     static_cast<unsigned>( maxWorlds ),
+                     static_cast<void *>( wlWorld ),
+                     wlWorld != NULL ? 1 : 0 );
+            fflush( stderr );
+        }
         WorldMap *wlWorld = TFCMAIN::GetWorld( user->self->GetWL().world );
 		int read;//BLBLBL 03/12/2010 : ajout d'une variable pour stocker resultat d'appel
         if( wlWorld != NULL ){

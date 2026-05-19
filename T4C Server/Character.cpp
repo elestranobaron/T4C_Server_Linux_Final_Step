@@ -6933,7 +6933,7 @@ char Character::PutPlayerInGame( void )
 
 		Unit *binded_unit = NULL;
 		wl = TFCMAIN::GetWorld((WORD)GetWL().world);
-		if( wl == NULL ){
+        if( wl == NULL ){
 			fprintf( stderr,
 			         "[PutPlayerInGame] monde %u introuvable (world_number=%u) pour %s\n",
 			         (unsigned)GetWL().world, (unsigned)TFCMAIN::GetMaxWorlds(),
@@ -6942,7 +6942,16 @@ char Character::PutPlayerInGame( void )
 		}
         if( wl != NULL )
 		{
+		    fprintf( stderr,
+		             "[PutPlayerInGame] create_world_unit @ %u,%u w%u pour %s…\n",
+		             (unsigned)GetWL().X, (unsigned)GetWL().Y, (unsigned)GetWL().world,
+		             (LPCTSTR)GetTrueName() );
+		    fflush( stderr );
 		    binded_unit = wl->create_world_unit(U_PC, GetAppearance(), GetWL(), this);
+		    fprintf( stderr,
+		             "[PutPlayerInGame] create_world_unit -> %p pour %s\n",
+		             static_cast<void *>( binded_unit ), (LPCTSTR)GetTrueName() );
+		    fflush( stderr );
 			    
 		    // if unit wasn't create well euh..
 		    int i;
