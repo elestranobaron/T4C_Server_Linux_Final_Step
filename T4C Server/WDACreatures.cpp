@@ -167,18 +167,27 @@ void WDACreatures::CreateFrom
     cOutput.Log(
         dlInfo,
         "\n----- WDA -----"
-        "\nLoading objects."
+        "\nLoading creatures."
         "\n"
     );
 
+    const long posStart = wdaFile.Tell();
     
-    // Get the quantity of objects
+    // Get the quantity of creatures
     DWORD dwSize;
     wdaFile.Read( dwSize );
+    fprintf(stderr, "[WDACreatures] CreateFrom pos=%ld, loading %u creatures…\n",
+        posStart, (unsigned)dwSize);
+    fflush(stderr);
        
-    // Scroll through the list of objects.
+    // Scroll through the list of creatures.
     DWORD i;
     for( i = 0; i != dwSize; i++ ){
+        if( (i % 100) == 0 ){
+            fprintf(stderr, "[WDACreatures]   creature %u / %u, file pos=%ld\n",
+                (unsigned)i, (unsigned)dwSize, wdaFile.Tell());
+            fflush(stderr);
+        }
         CreatureData cCreature;
 
         wdaFile.Read( cCreature.dwBindedID );
@@ -279,6 +288,9 @@ void WDACreatures::CreateFrom
 
         vCreatures.push_back( cCreature );
     }
+    fprintf(stderr, "[WDACreatures] CreateFrom done: %u creatures, pos=%ld -> %ld\n",
+        (unsigned)dwSize, posStart, wdaFile.Tell());
+    fflush(stderr);
 }
 
 namespace {

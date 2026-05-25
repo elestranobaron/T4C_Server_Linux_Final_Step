@@ -1264,10 +1264,26 @@ void TFCInitMaps( void )
 
         if( !skipCreatures ){
             cInit.WDAInitCreatures( cCreatures );
+            fprintf(stderr, "[WDAInit] WDAInitCreatures done, %zu creatures registered\n",
+                cCreatures.GetCreatures().size());
+            fflush(stderr);
         }
     }catch(...){ LOGEXCEPTION( "creatures" ) }
 
-    cInit.WDAInitNPC();
+    fprintf(stderr, "[BOOT] loading NPCs (NPCs.WDA)…\n");
+    fflush(stderr);
+    try{
+        cInit.WDAInitNPC();
+        fprintf(stderr, "[WDAInit] WDAInitNPC done\n");
+        fflush(stderr);
+    }catch(...){
+        fprintf(stderr, "[WDAInit] WDAInitNPC FAILED — see [NPC] logs (creatures OK, continuing boot)…\n");
+        fflush(stderr);
+        _LOG_DEBUG
+            LOG_CRIT_ERRORS,
+            "Crashed initializing npcs (continuing boot)."
+        LOG_
+    }
 
     printf( "\n- Loading Hives" );
     try{

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "CompositeInstruction.h"
 #include "InstructionFactory.h"
+#include <cstdio>
 
 using namespace std;
 
@@ -177,6 +178,10 @@ void CompositeInstruction::Load
 
         Instruction *ins = InstructionFactory::GetInstance()->CreateInstruction( (InstructionIds)theId );
         if( ins == NULL ){
+            fprintf(stderr,
+                "[NPC] CompositeInstruction: unknown opcode %u (0x%x) at sub-instruction %u / %u\n",
+                (unsigned)theId, (unsigned)theId, (unsigned)i, (unsigned)size);
+            fflush(stderr);
             throw "Program Error";
         }
         

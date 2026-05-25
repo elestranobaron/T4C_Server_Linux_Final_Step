@@ -43,9 +43,11 @@ CREATE TABLE IF NOT EXISTS OnlineUsers (
 ) ENGINE=InnoDB;
 
 -- Liste persos (peut être vide ; requise par Players::LoadAccount)
+-- PlayerName VARCHAR(64) : la suppression indirecte (Character::DeleteCharacter) renomme en
+--   $YYYYMMDDHHMMSS-RRR$<nom> (~20 octets de préfixe + nom) ; VARCHAR(20) fait échouer opcode 15 code 3.
 CREATE TABLE IF NOT EXISTS PlayingCharacters (
   UserID        INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  PlayerName    VARCHAR(20)  NOT NULL,
+  PlayerName    VARCHAR(64)  NOT NULL,
   AccountName   VARCHAR(64)  NOT NULL,
   Appearance    SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   CurrentLevel  INT UNSIGNED NOT NULL DEFAULT 1,

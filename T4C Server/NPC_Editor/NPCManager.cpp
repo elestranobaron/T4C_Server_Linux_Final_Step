@@ -173,6 +173,10 @@ void NPCManager::Load
         // Create the new
         NPC *newNpc = new NPC( name, id );
 
+        fprintf(stderr, "[NPC] loading NPC id=%s name=%s (%u / %u)\n",
+            id.c_str(), name.c_str(), (unsigned)(i + 1), (unsigned)npcQty);
+        fflush(stderr);
+
         // Load the NPC from the file.
         newNpc->Load( file );
 

@@ -2,6 +2,78 @@
 
 Historique des modifications serveur liées au chargement WDA, au boot et aux contournements de développement.
 
+> **Convention :** chaque entrée significative est horodatée **`YYYY-MM-DD HH:MM:SS`** (logs boot, tests client ou fin de patch).
+
+---
+
+## 2026-05-25 — Collision map, auth MariaDB, logs boot WDA
+
+### 2026-05-25 23:03:07 — Validation client LH (creatures actives)
+
+Test utilisateur avec client SDL3 (`finalstep/client`, non commité) :
+
+- Serveur : creatures WDA chargées (sans `T4C_SKIP_CREATURES` si retiré en local), flood opcode **1** mobs (`0x4E26`) + acks joueur (`0x271B` / `0x271C`).
+- Client : rendu unités distantes + déplacement serveur-autoritaire OK — *« tout est rentré dans l'ordre »*.
+- **Commit parent documenté :** `35f5d5a` (opcode 46). Correctifs ci-dessous : **non commités**.
+
+---
+
+### 2026-05-25 (session) — `WorldMap::SetBlockingUnit` (boucle Y)
+
+**Symptôme :** placement / blocage d'unités multi-tiles incorrect sur l'axe Y (boucle infinie ou mauvaise couverture).
+
+**Fix — `T4C Server/WorldMap.cpp` :**
+
+```cpp
+// Avant (incorrect) : for( y = where.Y; y + uHeight > y; y-- )
+for( y = where.Y; y > where.Y - uHeight; y-- )
+```
+
+Appliqué aux deux boucles (test `internalIsBlocking` + pose `SetBlocking`).
+
+---
+
+### 2026-05-25 (session) — Auth MariaDB : longueur `PlayerName`
+
+**Symptôme :** suppression perso (opcode **15**) → code erreur **3** — le rename interne `$YYYYMMDDHHMMSS-RRR$<nom>` dépasse `VARCHAR(20)`.
+
+**Fix — `tools/sql/bootstrap_auth_mariadb.sql` :** `PlayerName VARCHAR(64)`.
+
+Migration existante : `tools/sql/fix_playingcharacters_playername_length_mariadb.sql` (non trackée).
+
+---
+
+### 2026-05-25 (session) — Logs boot WDA (creatures + NPCs)
+
+| Fichier | Ajout |
+|---------|--------|
+| `TFCInit.cpp` | `[BOOT] loading NPCs`, `[WDAInit] WDAInitCreatures done`, try/catch `WDAInitNPC` (boot continue si échec NPC) |
+| `WDACreatures.cpp` | Progression `CreateFrom` (pos fichier, creature N / total) |
+| `NPC_Editor/NPCManager.cpp` | Log par NPC chargé (`id`, `name`, index / qty) |
+| `NPC_Editor/CompositeInstruction.cpp` | `stderr` opcode inconnu avant throw (aligné fix **2026-05-21**) |
+
+---
+
+## 2026-05-21 — NPCs.WDA : trailer DWORD après commandes feuilles
+
+### 2026-05-21 (session) — Crash `WDAInitNPC` au 1er PNJ
+
+`WDAInitNPC()` échouait au 1er PNJ (`A Drunk Lady`) :
+
+```text
+[NPC] CompositeInstruction: unknown opcode 1705050123 (0x65a1000b) at sub-instruction 0 / 2
+```
+
+### Cause
+
+Le format Havoc (`Format du fichier NPCs.wda.txt`) écrit un **`DWORD = 1`** après chaque **commande feuille** (`SayText`, `BreakConversation`, …) dans un arbre composite. `CompositeInstruction::Load` ne consommait pas ce trailer → le prochain opcode était lu au milieu du texte ou d’un champ suivant.
+
+### Fix
+
+**`T4C Server/NPC_Editor/CompositeInstruction.cpp`** : lire/écrire ce trailer **uniquement** pour les instructions qui ne sont pas des `CompositeInstruction` (`Keyword`, `If`, `While`, … n’ont pas de trailer ici).
+
+**Test :** copier `tiforci/havoc2/NPCs.WDA` vers `build/WDA/NPCs.WDA`, recompiler, boot complet → attendre `[WDAInit] WDAInitNPC done` (logs stderr depuis **2026-05-25**).
+
 ---
 
 ## 2026-05-18 (soir) — `PutPlayerInGame` async, chargement perso Linux, opcode 13 toujours envoyé
