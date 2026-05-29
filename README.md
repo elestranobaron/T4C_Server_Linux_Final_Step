@@ -25,6 +25,15 @@ Après `cmake` + `make`, lancer **depuis `build/`** :
 
 `./build.sh` **ne supprime plus** `T4CServer.ini` lors d’un rebuild (sauvegarde/restauration automatique).
 
+## Docker
+
+Voir [`docker/README.md`](docker/README.md).
+
+```bash
+./docker/sync-runtime-from-build.sh
+docker compose up --build
+```
+
 ## 🛠️ Project Structure
 
 - `/GameOps`: Core game logic and NPC management.

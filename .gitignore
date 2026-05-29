@@ -2,6 +2,12 @@
 build/
 cmake-build-debug/
 
+# Runtime jeu (ne pas publier)
+docker/runtime/WDA/*.WDA
+docker/runtime/*.elng
+res/
+.env
+
 # Fichiers et dossiers de l'IDE JetBrains (déjà présent)
 .idea/
 

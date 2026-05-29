@@ -8,11 +8,57 @@ Historique des modifications serveur liées au chargement WDA, au boot et aux co
 
 ## 2026-05-25 — Collision map, auth MariaDB, logs boot WDA
 
+### 2026-05-25 (session) — Skips WDA retirés du boot par défaut
+
+**`tools/debug/t4c_env.sh`** : `T4C_SKIP_GROUND_OBJECTS` et `T4C_SKIP_CREATURES` **commentés** (plus exportés au lancement normal).
+
+| Phase WDA | Statut sans skip |
+|-----------|------------------|
+| Objets au sol (~2601) | OK après fix `WorldMap::SetBlockingUnit` (**2026-05-25**) |
+| Creatures + `WDAInitCreatures` | OK — validation client **23:03:07** (brigands `0x4E26`) |
+| `WDAInitNPC` (NPCs.WDA) | Fix trailer **2026-05-21** ; attendre log `[WDAInit] WDAInitNPC done` |
+| Hives / links / clans | OK (boot continue même si NPC échoue — try/catch) |
+
+**Code conservé (temporaire) :** `getenv("T4C_SKIP_*")` dans `TFCInit.cpp` / `WDACreatures.cpp` — bypass dev pour isoler une phase. **À supprimer** quand le boot LP64 est stable partout (plus besoin de contournement).
+
+---
+
+### 2026-05-25 (session) — `load_character` Linux : chemin court vs long
+
+**Aujourd’hui (Linux, `Character.cpp` / `LoadCharacter`)** : le **`SELECT PlayingCharacters`** charge d’abord le perso complet depuis MariaDB, puis un **`return` anticipé** après l’inventaire équipé (`PlayerItems`).
+
+| Donnée | Chargée ? | Source / moment |
+|--------|-----------|-----------------|
+| **Position déconnexion** (`wlX`, `wlY`, `world`) | **Oui** | `PlayingCharacters` → `SetWL()` — **avant** le chemin court |
+| Stats, HP/mana, or, apparence, niveau, XP | **Oui** | même `SELECT` |
+| **Inventaire** (objets équipés / sac) | **Oui** | `PlayerItems` |
+| **Coffre** banque (`ChestItems`) | **Non** | après le `return` Linux |
+| **Skills** (`PlayerSkills`) | **Non** | idem |
+| **Sorts** (`PlayerSpells`) + effets / boosts | **Non** | idem |
+
+→ Le client reçoit bien la **dernière position sauvegardée** dans l’opcode **13** ; ce n’est **pas** affecté par le chemin court.
+
+**Effet chemin court :** entrer en jeu OK ; perso avec coffre/skills/sorts en base **ne les récupère pas** à la connexion — pas un bug client.
+
+**Chemin long (Windows / objectif Linux)** : même flux ODBC jusqu’au bout (coffre → skills → sorts → effets). **À réactiver** quand ODBC Linux ne bloque plus (historique : deadlock / timeout).
+
+---
+
+### 2026-05-25 (session) — Perf boot : `WDAFile::Read` (non fait)
+
+**Constat code :** `WDAFile.cpp` lit encore **1 octet à la fois** (`fgetc` + XOR). Log `[WDAObjects] loading N objects (fgetc decrypt — peut prendre 1–3 min)`.
+
+**Ce n’est pas un blocage fonctionnel** — le serveur finit par démarrer. **Optimisation future :** `fread` par blocs + déchiffrement buffer → boot plus rapide (surtout creatures + objets).
+
+**Pipeline LP64 (outils client `second_approach/`)** : scripts pour adapter Worlds/Edit (`lCharges` 4→8 o) ; WDA runtime dans `build/WDA/` doit rester variante LP64. Specs txt + scripts **pas encore commités** — distinct de la perf `fread`.
+
+---
+
 ### 2026-05-25 23:03:07 — Validation client LH (creatures actives)
 
 Test utilisateur avec client SDL3 (`finalstep/client`, non commité) :
 
-- Serveur : creatures WDA chargées (sans `T4C_SKIP_CREATURES` si retiré en local), flood opcode **1** mobs (`0x4E26`) + acks joueur (`0x271B` / `0x271C`).
+- Serveur : boot **sans skips** ; creatures WDA chargées ; flood opcode **1** mobs (`0x4E26`) + acks joueur (`0x271B` / `0x271C`).
 - Client : rendu unités distantes + déplacement serveur-autoritaire OK — *« tout est rentré dans l'ordre »*.
 - **Commit parent documenté :** `35f5d5a` (opcode 46). Correctifs ci-dessous : **non commités**.
 
@@ -124,7 +170,7 @@ Le client SDL3 atteignait auth + liste persos, mais l’entrée en jeu (**opcode
 - Après inventaire joueur (`PlayerItems`) :
   - **Pas** de `packet_equiped()` + `SendPlayerMessage` ni `SetGold()` réseau (équipement/stats arrivent dans la réponse 13).
   - Assignation locale `gold = dwGold` sous `statsLock`.
-  - **Chemin court** : `ODBC Unlock` + `return 0` — skip chargement coffre, skills, sorts, effets (tables vides suffisantes pour tests ; à réactiver pour parité complète).
+  - **Chemin court** : `ODBC Unlock` + `return 0` — skip coffre, skills, sorts, effets (**position wlX/Y/world + inventaire déjà chargés** ; à réactiver pour parité complète).
 - Logs `stderr` traçant chaque phase : inventaire terminé, or assigné, `FIN OK (chemin court)`.
 
 **`reset_character`**
@@ -347,15 +393,15 @@ export T4C_SKIP_CREATURES=1
 
 ---
 
-### Marche à suivre (prochaines étapes)
+### Marche à suivre (prochaines étapes — mis à jour 2026-05-25)
 
-1. **Commit** ce lot serveur (traces + skips + `Seek` + `WorldMap`).
-2. **Données** : déployer uniquement les WDA LP64 (`client/second_approach/install_to_build.sh` vers `build/WDA/`), vérifier les MD5.
-3. **Fix structurel recommandé** : lire `lCharges` en `DWORD` (4 octets) dans `WDAObjects` → compatibilité Havoc brut sans regénérer tout le WDA LP64.
-4. **Performance** : remplacer la lecture `fgetc` par blocs (`fread` + déchiffrement par buffer) dans `WDAFile::Read` — gain majeur sur objets/créatures.
-5. **Placement au sol** : retester sans `T4C_SKIP_GROUND_OBJECTS` après fix `WorldMap` ; si blocage persiste, tracer `WorldMap::Lock` / `create_world_unit`.
-6. **Créatures** : retester sans `T4C_SKIP_CREATURES` après fix perf ou fix `lCharges`.
-7. **Client** : test connexion + entrée en jeu contre ce serveur.
+1. ~~Boot sans skips~~ — **fait** (`t4c_env.sh`, fix `WorldMap`)
+2. ~~Validation client en jeu~~ — **2026-05-25 23:03:07**
+3. **Commit** lot serveur (NPC trailer, WorldMap, SQL, logs, skips commentés)
+4. **Perf** : `WDAFile::Read` en blocs (`fread`) — confort boot
+5. **`load_character` chemin long** : coffre + skills + sorts sur Linux
+6. **Données** : WDA LP64 dans `build/WDA/` ; commit scripts `second_approach/` (repo client)
+7. **Nettoyage** : retirer code `getenv(T4C_SKIP_*)` quand stable
 
 ### Correctifs hors dépôt serveur (référence)
 
